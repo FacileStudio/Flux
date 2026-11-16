@@ -1,0 +1,101 @@
+window.flux-lock,
+window.flux-lock.backdrop {
+  background-color: @fc_page;
+}
+
+.lock {
+  background-color: @fc_page;
+}
+
+.scrim {
+  background-color: alpha(@fc_page, 0.62);
+}
+
+.content {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  padding: 24px 32px;
+}
+
+.content.shown {
+  opacity: 1;
+}
+
+.clock {
+  font-size: 96px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: @fc_fg;
+}
+
+.date {
+  font-size: 22px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.hint {
+  margin-top: 48px;
+  font-size: 14px;
+  color: @fc_fg_muted;
+}
+
+.name {
+  margin-top: 40px;
+  font-size: 18px;
+  font-weight: 600;
+  color: @fc_fg;
+}
+
+passwordentry.secret {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background-color: alpha(@fc_component, 0.92);
+  color: @fc_fg;
+  font-size: 16px;
+  outline: 0 solid transparent;
+  transition: background-color 150ms ease-out;
+}
+
+passwordentry.secret:focus-within {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+passwordentry.secret.error {
+  background-color: mix(@fc_component, @fc_danger, 0.12);
+}
+
+passwordentry.secret:disabled {
+  color: @fc_fg_muted;
+}
+
+passwordentry.secret text placeholder {
+  color: @fc_fg_muted;
+}
+
+.message {
+  min-height: 20px;
+  font-size: 14px;
+  color: @fc_fg_muted;
+}
+
+passwordentry.error ~ .message {
+  color: @fc_danger;
+}
+
+.footer {
+  min-height: 24px;
+}
+
+.status,
+.caps {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg_muted;
+}
+
+.caps {
+  color: @fc_warning;
+}
