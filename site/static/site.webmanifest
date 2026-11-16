@@ -1,0 +1,21 @@
+{
+  "name": "Flux",
+  "short_name": "Flux",
+  "description": "Flux is the Linux system of Facile Studio: every Facile app and tool preinstalled, and the whole system in one config you can roll back.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#fafafa",
+  "background_color": "#fafafa",
+  "display": "standalone",
+  "start_url": "/"
+}

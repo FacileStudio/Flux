@@ -1,0 +1,110 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  iso:
+    name: iso (${{ matrix.system }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            system: x86_64-linux
+          - runner: ubuntu-24.04-arm
+            system: aarch64-linux
+    runs-on: ${{ matrix.runner }}
+    env:
+      SYSTEM: ${{ matrix.system }}
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/share/powershell \
+            /usr/share/swift /usr/local/julia* /opt/microsoft /opt/google
+          sudo docker image prune --all --force || true
+          df -h /
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - name: Build the ISO
+        run: nix build --print-build-logs ".#packages.$SYSTEM.iso"
+      - name: Name and size-check the ISO
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mapfile -t isos < <(find -L result/iso -maxdepth 1 -name '*.iso')
+          if [ "${#isos[@]}" -ne 1 ]; then
+            echo "Expected one ISO under result/iso, found ${#isos[@]}"
+            exit 1
+          fi
+          mkdir -p dist
+          name="flux-$version-$SYSTEM.iso"
+          cp -L "${isos[0]}" "dist/$name"
+          size=$(stat -c %s "dist/$name")
+          echo "$name: $size bytes"
+          if [ "$size" -ge 2147483648 ]; then
+            echo "$name is 2 GiB or larger, over the GitHub release asset limit"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: iso-${{ matrix.system }}
+          path: dist/*.iso
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    name: publish
+    needs: iso
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: iso-*
+          path: dist
+          merge-multiple: true
+      - name: Check the tag against the version file
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [ "$(cat version)" != "$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version file $(cat version)"
+            exit 1
+          fi
+      - name: Write checksums
+        working-directory: dist
+        run: |
+          sha256sum -- *.iso > SHA256SUMS
+          cat SHA256SUMS
+      - name: Extract release notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "CHANGELOG.md has no section for $version"
+            exit 1
+          fi
+          cat notes.md
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --prerelease \
+            --verify-tag \
+            --title "Flux ${GITHUB_REF_NAME#v}" \
+            --notes-file notes.md \
+            dist/*.iso dist/SHA256SUMS
