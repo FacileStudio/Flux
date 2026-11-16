@@ -11,6 +11,7 @@
       dirsIn = path: lib.attrNames (lib.filterAttrs (_: t: t == "directory") (builtins.readDir path));
       mkHost = system: host: lib.nixosSystem {
         inherit system;
+        specialArgs.fluxFlake = self;
         modules = [ self.nixosModules.flux ./hosts/${host} ];
       };
       hosts = dirsIn ./hosts;
