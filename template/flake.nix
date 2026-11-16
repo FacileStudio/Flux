@@ -10,6 +10,7 @@
         flux.nixosModules.flux
         ./hardware-configuration.nix
         ./configuration.nix
+        { flux.settingsFile = ./settings.json; }
       ];
     };
   };

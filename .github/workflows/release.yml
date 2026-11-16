@@ -113,10 +113,11 @@ jobs:
 
   boot-test:
     name: boot test
-    needs: check
+    needs: iso
     uses: ./.github/workflows/boot-test.yml
     with:
       strict: true
+      iso-artifact: iso-x86_64-linux
 
   publish:
     name: publish

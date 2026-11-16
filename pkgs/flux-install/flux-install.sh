@@ -1,10 +1,7 @@
 log=/tmp/flux-install.log
 keymaps="us gb fr de es it pt br be ch ca nl se no dk fi pl cz latam"
 locales="en_US.UTF-8 en_GB.UTF-8 fr_FR.UTF-8 fr_BE.UTF-8 fr_CH.UTF-8 fr_CA.UTF-8 es_ES.UTF-8 de_DE.UTF-8 de_CH.UTF-8 it_IT.UTF-8 pt_PT.UTF-8 pt_BR.UTF-8 nl_NL.UTF-8"
-reserved_users="root bin daemon adm lp sync shutdown halt mail news uucp operator games ftp man nobody nogroup
-  users wheel admin sudo audio video input render kvm disk tty dialout floppy cdrom tape kmem utmp lock
-  networkmanager messagebus dbus polkituser sshd nscd avahi rtkit geoclue pipewire greeter regreet
-  colord cups fwupd-refresh flatpak nm-openvpn nm-iodine usbmux tss uinput systemd-journal"
+reserved_users=$(jq -r '.reservedUsers | join(" ")' "$FLUX_RULES")
 reserved_hosts="localhost localdomain"
 cache=https://cache.nixos.org
 
@@ -339,16 +336,19 @@ configure() {
   [[ "$detected" == *"}"* ]] || fail "nixos-generate-config printed no hardware configuration"
   hardware "$detected" >"$stage/hardware-configuration.nix"
   sed -i "s|system = \"x86_64-linux\";|system = \"$system\";|" "$stage/flake.nix"
-  sed -i \
-    -e "s|^  hostName = .*;|  hostName = \"$hostname\";|" \
-    -e "s|^  userName = .*;|  userName = \"$username\";|" \
-    -e "s|^  fullName = .*;|  fullName = \"$full_name\";|" \
-    -e "s|^  timeZone = .*;|  timeZone = \"$timezone\";|" \
-    -e "s|^  keyMap = .*;|  keyMap = \"$keymap\";|" \
-    -e "s|^  locale = .*;|  locale = \"$locale\";|" \
-    -e "s|^  system.stateVersion = .*;|  system.stateVersion = \"$release\";|" \
-    "$stage/configuration.nix"
+  sed -i "s|^  system.stateVersion = .*;|  system.stateVersion = \"$release\";|" "$stage/configuration.nix"
+  settings_json >"$stage/settings.json"
+  chmod 0644 "$stage/settings.json"
   emit config 4 "Configuration written"
+}
+
+settings_json() {
+  printf '{\n  "version": 1,\n  "hostname": "%s",\n  "timezone": "%s",\n  "locale": "%s",\n' \
+    "$hostname" "$timezone" "$locale"
+  printf '  "formats": null,\n  "keymap": "%s",\n  "users": [\n' "$keymap"
+  printf '    { "name": "%s", "fullName": "%s", "admin": true, "groups": ["networkmanager", "video", "audio", "lp"] }\n' \
+    "$username" "$(json_escape "$full_name")"
+  printf '  ],\n  "updates": { "automatic": false }\n}\n'
 }
 
 drvs_to_build() {

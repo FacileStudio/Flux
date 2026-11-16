@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hostname": "flux",
+  "timezone": "UTC",
+  "locale": "en_US.UTF-8",
+  "formats": null,
+  "keymap": "us",
+  "users": [
+    {
+      "name": "flux",
+      "fullName": "Flux",
+      "admin": true,
+      "groups": ["networkmanager", "video", "audio", "lp"]
+    }
+  ],
+  "updates": {
+    "automatic": false
+  }
+}

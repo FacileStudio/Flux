@@ -36,6 +36,7 @@ let
     modules = [
       fluxFlake.nixosModules.flux
       ../../template/configuration.nix
+      { flux.settingsFile = ../../template/settings.json; }
       ./reference-hardware.nix
     ];
   };
@@ -113,7 +114,6 @@ in
   };
 
   networking.networkmanager.enable = true;
-  networking.wireless.enable = lib.mkForce false;
 
   isoImage.storeContents = [
     fluxFlake.outPath

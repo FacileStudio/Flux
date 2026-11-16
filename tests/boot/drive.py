@@ -78,12 +78,12 @@ case "$mode" in
     else
       flux-install --disk /dev/vda --hostname flux-test --full-name "Flux Test" --user test \
         --password-hash '@HASH@' --timezone Europe/Paris --keymap us --locale en_US.UTF-8 \
-        --yes --progress json 2>/tmp/flux-install.log | while IFS= read -r line; do
+        --yes --progress json 2>/tmp/flux-install.stderr | while IFS= read -r line; do
           printf '%s\n' "$line"
           say "FLUX-PROGRESS $line"
         done
       rc=${PIPESTATUS[0]}
-      tail -n 200 /tmp/flux-install.log | sed 's/^/FLUX-LOG /' > /dev/ttyS0
+      { tail -n 200 /tmp/flux-install.log; tail -n 50 /tmp/flux-install.stderr; } 2>/dev/null | sed 's/^/FLUX-LOG /' > /dev/ttyS0
       say "FLUX-INSTALL-EXIT $rc"
     fi
     ;;
@@ -658,6 +658,8 @@ class Run:
                         raise PhaseError("install", f"unknown progress step {step!r} in {payload!r}")
                     self.log(f"[install] {step} {event.get('percent', '')} {event.get('message', '')}")
                     if step == "error":
+                        for tail in str(event.get("log_tail", "")).splitlines():
+                            self.log(f"[install] log: {tail}")
                         m.shot("05-install-error")
                         raise PhaseError("install", f"installer reported: {event.get('message')}")
                     if step not in step_shots:

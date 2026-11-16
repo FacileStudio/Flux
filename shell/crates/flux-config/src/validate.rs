@@ -30,8 +30,11 @@ pub const KEYMAPS: &[&str] = &[
 pub const RESERVED_USERS: &[&str] = &[
     "root", "bin", "daemon", "adm", "lp", "sync", "shutdown", "halt", "mail", "news", "uucp", "operator", "games",
     "ftp", "nobody", "nogroup", "nixbld", "messagebus", "polkituser", "sshd", "avahi", "greeter", "nscd", "dbus",
-    "users", "wheel", "admin", "audio", "video", "input", "kvm", "render", "disk", "tty", "networkmanager", "geoclue",
-    "rtkit", "pipewire", "systemd-network", "systemd-resolve", "systemd-timesync", "systemd-oom", "systemd-coredump",
+    "users", "wheel", "admin", "audio", "video", "input", "kvm", "render", "disk", "tty", "networkmanager",
+    "geoclue", "rtkit", "pipewire", "systemd-network", "systemd-resolve", "systemd-timesync", "systemd-oom",
+    "systemd-coredump", "man", "sudo", "dialout", "floppy", "cdrom", "tape", "kmem", "utmp", "lock", "regreet",
+    "colord", "cups", "fwupd-refresh", "flatpak", "nm-openvpn", "nm-iodine", "usbmux", "tss", "uinput",
+    "systemd-journal",
 ];
 
 /// The extra groups a person may be given besides `wheel`.
