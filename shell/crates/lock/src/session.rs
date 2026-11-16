@@ -263,8 +263,8 @@ fn refresh_status(lock: &Rc<Lock>) {
             return;
         };
         let line = battery.map(|(level, charging)| match charging {
-            true => format!("{level} % · {}", lock.text.charging),
-            false => format!("{level} %"),
+            true => format!("{} · {}", lock.text.percent.replace("{n}", &level.to_string()), lock.text.charging),
+            false => lock.text.percent.replace("{n}", &level.to_string()),
         });
         lock.each(|surface| {
             surface.battery.set_visible(line.is_some());
@@ -309,6 +309,6 @@ pub fn preview_state(lock: &Rc<Lock>, surface: &Surface, state: &str) {
     }
     surface.layout.set_text("English (US)");
     surface.layout.set_visible(true);
-    surface.battery.set_text("76 %");
+    surface.battery.set_text(&lock.text.percent.replace("{n}", "76"));
     surface.battery.set_visible(true);
 }

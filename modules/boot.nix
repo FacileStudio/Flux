@@ -13,6 +13,7 @@ in
         vendorName = "Facile Studio";
         extraOSReleaseArgs = {
           PRETTY_NAME = "Flux ${version}";
+          VERSION = version;
           HOME_URL = "https://flux.facile.studio";
           SUPPORT_URL = "https://github.com/FacileStudio/Flux";
           BUG_REPORT_URL = "https://github.com/FacileStudio/Flux/issues";

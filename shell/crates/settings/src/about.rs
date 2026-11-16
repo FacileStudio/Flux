@@ -28,8 +28,8 @@ pub fn title() -> String {
 /// What a preview shows in place of this machine.
 fn sample() -> Details {
     Details {
-        system: Some("Flux 0.11.1".to_string()),
-        version: Some("0.11.1".to_string()),
+        system: Some("Flux 0.1.1".to_string()),
+        version: Some("0.1.1".to_string()),
         hostname: Some("ada-flux".to_string()),
         processor: Some("AMD Ryzen 7 7840U w/ Radeon 780M Graphics × 16".to_string()),
         memory: Some(32 * 1024 * 1024 * 1024),

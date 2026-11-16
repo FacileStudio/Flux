@@ -8,6 +8,7 @@ pub struct Text {
     pub unavailable: &'static str,
     pub caps_lock: &'static str,
     pub charging: &'static str,
+    pub percent: &'static str,
     pub preview: &'static str,
 }
 
@@ -19,6 +20,7 @@ pub const EN: Text = Text {
     unavailable: "Flux cannot check passwords right now. The session stays locked.",
     caps_lock: "Caps Lock is on",
     charging: "charging",
+    percent: "{n}%",
     preview: "Preview: nothing is locked",
 };
 
@@ -30,6 +32,7 @@ pub const FR: Text = Text {
     unavailable: "Flux ne peut pas vérifier les mots de passe pour l'instant. La session reste verrouillée.",
     caps_lock: "Verr. Maj est activé",
     charging: "en charge",
+    percent: "{n}\u{202f}%",
     preview: "Aperçu : rien n'est verrouillé",
 };
 

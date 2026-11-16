@@ -129,6 +129,9 @@ pub fn preview(spec: &str) -> i32 {
         let surface = lock.attach(window.upcast_ref());
         window.present();
         session::preview_state(&lock, &surface, &state);
+        window.connect_destroy(move |_| {
+            let _ = &lock;
+        });
     });
     let _ = shell_common::app::run(&application, "flux-lock");
     0
