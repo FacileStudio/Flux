@@ -28,5 +28,27 @@ in
   networking.networkmanager.enable = true;
   networking.wireless.enable = lib.mkForce false;
 
-  environment.systemPackages = [ pkgs.flux-install ];
+  environment.systemPackages = [
+    pkgs.flux-install
+    (pkgs.makeDesktopItem {
+      name = "flux-installer";
+      desktopName = "Install Flux";
+      comment = "Install Flux on this computer";
+      exec = "flux-installer";
+      icon = "system-software-install";
+      categories = [ "System" ];
+    })
+  ];
+
+  systemd.user.services.flux-installer = {
+    description = "Flux installer";
+    wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    path = [ "/run/wrappers" "/run/current-system/sw" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.flux-shell}/bin/flux-installer";
+      Restart = "no";
+    };
+  };
 }

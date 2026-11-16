@@ -6,6 +6,7 @@ members = [
     "crates/sidebar",
     "crates/launcher",
     "crates/exit",
+    "crates/installer",
 ]
 
 [workspace.package]

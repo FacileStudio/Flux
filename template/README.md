@@ -19,4 +19,4 @@ nix flake init -t github:FacileStudio/Flux
 sudo nixos-generate-config --show-hardware-config > hardware-configuration.nix
 ```
 
-Then set `hostName`, `userName` and `hashedPassword` at the top of `configuration.nix`. Generate the hash with `mkpasswd`. The default `"!"` locks password login. On an aarch64 machine, change `system` in `flake.nix` to `"aarch64-linux"`.
+Then set `hostName`, `userName`, `fullName`, `hashedPassword`, `timeZone`, `keyMap` (an xkb layout such as `fr`, also used on the console) and `locale` at the top of `configuration.nix`. Generate the hash with `mkpasswd`. The default `"!"` locks password login. On an aarch64 machine, change `system` in `flake.nix` to `"aarch64-linux"`.
