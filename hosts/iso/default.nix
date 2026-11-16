@@ -1,7 +1,51 @@
-{ lib, pkgs, modulesPath, ... }:
+{ lib, pkgs, modulesPath, fluxFlake, ... }:
 
 let
   version = lib.fileContents ../../version;
+  system = pkgs.stdenv.hostPlatform.system;
+  nixpkgs = fluxFlake.inputs.nixpkgs;
+
+  fluxLocked =
+    if fluxFlake ? rev then {
+      type = "github";
+      owner = "FacileStudio";
+      repo = "Flux";
+      inherit (fluxFlake) rev narHash lastModified;
+    } else {
+      type = "path";
+      path = fluxFlake.outPath;
+      inherit (fluxFlake) narHash lastModified;
+    };
+
+  installLock = pkgs.writeText "flake.lock" (builtins.toJSON {
+    nodes = {
+      flux = {
+        inputs.nixpkgs = "nixpkgs";
+        locked = fluxLocked;
+        original = { type = "github"; owner = "FacileStudio"; repo = "Flux"; ref = "stable"; };
+      };
+      nixpkgs = (lib.importJSON ../../flake.lock).nodes.nixpkgs;
+      root.inputs.flux = "flux";
+    };
+    root = "root";
+    version = 7;
+  });
+
+  reference = nixpkgs.lib.nixosSystem {
+    inherit system;
+    modules = [
+      fluxFlake.nixosModules.flux
+      ../../template/configuration.nix
+      ./reference-hardware.nix
+    ];
+  };
+
+  referenceBuild = reference.config.system.build;
+
+  localBuildInputs =
+    map (drv: drv.inputDerivation) [ referenceBuild.toplevel referenceBuild.etc referenceBuild.initialRamdisk ]
+    ++ (with reference.pkgs; [ stdenvNoCC lndir nukeReferences ckbcomp makeShellWrapper jq ])
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isx86 (with reference.pkgs; [ microcode-intel microcode-amd ]);
 in
 {
   imports = [ "${modulesPath}/installer/cd-dvd/installation-cd-base.nix" ];
@@ -69,8 +113,16 @@ in
   networking.networkmanager.enable = true;
   networking.wireless.enable = lib.mkForce false;
 
+  isoImage.storeContents = [
+    fluxFlake.outPath
+    nixpkgs.outPath
+    referenceBuild.toplevel
+  ] ++ localBuildInputs;
+
+  system.build.fluxInstallLock = installLock;
+
   environment.systemPackages = [
-    pkgs.flux-install
+    (pkgs.flux-install.override { fluxLock = installLock; })
     (pkgs.makeDesktopItem {
       name = "flux-installer";
       desktopName = "Install Flux";
