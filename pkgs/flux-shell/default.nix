@@ -9,14 +9,14 @@
 
 let
   src = ../../shell;
-  manifest = lib.importTOML "${src}/Cargo.toml";
+  manifest = lib.importTOML (src + "/Cargo.toml");
 in
 rustPlatform.buildRustPackage {
   pname = "flux-shell";
   inherit (manifest.workspace.package) version;
   inherit src;
 
-  cargoLock.lockFile = "${src}/Cargo.lock";
+  cargoLock.lockFile = src + "/Cargo.lock";
 
   nativeBuildInputs = [ pkg-config wrapGAppsHook4 ];
   buildInputs = [ gtk4 gtk4-layer-shell ];
