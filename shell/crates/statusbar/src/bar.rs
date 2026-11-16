@@ -19,7 +19,7 @@ use shell_common::theme::{BAR_HEIGHT, MODULE_GAP};
 
 use crate::niri::{self, Chip, State};
 use crate::popup::Popup;
-use crate::{control, icons, stats, text};
+use crate::{control, icons, stats, text, volume};
 
 /// The longest window title the bar shows, in characters, before it ellipsizes.
 const TITLE_CHARS: i32 = 48;
@@ -49,25 +49,8 @@ impl Bar {
         let root = CenterBox::new();
         root.add_css_class("bar");
 
-        let workspaces = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
-        workspaces.add_css_class("workspaces");
-        workspaces.set_visible(niri::present());
-        let title = Label::new(None);
-        title.add_css_class("title");
-        title.set_ellipsize(gtk4::pango::EllipsizeMode::End);
-        title.set_max_width_chars(TITLE_CHARS);
-        let left = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP * 2);
-        left.set_halign(gtk4::Align::Start);
-        left.append(&workspaces);
-        left.append(&title);
-
-        let layout = Button::new();
-        layout.add_css_class("pill");
-        layout.add_css_class("layout");
-        layout.set_visible(false);
-        layout.set_tooltip_text(Some(text::get().layout_tooltip));
-        layout.connect_clicked(|_| niri::send(niri::NEXT_LAYOUT.to_string()));
-
+        let (left, workspaces, title) = left_module();
+        let layout = layout_pill();
         let right = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
         right.set_halign(gtk4::Align::End);
         right.append(&stats_row());
@@ -79,6 +62,12 @@ impl Bar {
         root.set_end_widget(Some(&right));
         layer.window.set_child(Some(&root));
         layer.window.present();
+        if preview() {
+            let sample = popup.clone();
+            glib::timeout_add_seconds_local_once(1, move || {
+                volume::draw(&sample, volume::Level { percent: 60, muted: false });
+            });
+        }
 
         Rc::new(Self {
             monitor: monitor.clone(),
@@ -140,6 +129,40 @@ impl Bar {
         self.popup.destroy();
         self.window.destroy();
     }
+}
+
+/// The left module: the workspace chips, then the window title.
+fn left_module() -> (Box, Box, Label) {
+    let workspaces = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
+    workspaces.add_css_class("workspaces");
+    workspaces.set_visible(niri::present());
+    let title = Label::new(None);
+    title.add_css_class("title");
+    title.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+    title.set_max_width_chars(TITLE_CHARS);
+    let left = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP * 2);
+    left.set_halign(gtk4::Align::Start);
+    left.append(&workspaces);
+    left.append(&title);
+    (left, workspaces, title)
+}
+
+/// The keyboard layout pill, hidden until niri reports several layouts. A
+/// click moves to the next one.
+fn layout_pill() -> Button {
+    let layout = Button::new();
+    layout.add_css_class("pill");
+    layout.add_css_class("layout");
+    layout.set_visible(false);
+    layout.set_tooltip_text(Some(text::get().layout_tooltip));
+    layout.connect_clicked(|_| niri::send(niri::NEXT_LAYOUT.to_string()));
+    layout
+}
+
+/// Whether the bar opens its volume card with a sample level, for a
+/// screenshot: `FLUX_SHELL_PREVIEW=popup`.
+fn preview() -> bool {
+    std::env::var("FLUX_SHELL_PREVIEW").is_ok_and(|value| value == "popup")
 }
 
 fn set_class(widget: &impl IsA<gtk4::Widget>, class: &str, on: bool) {

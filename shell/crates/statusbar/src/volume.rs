@@ -91,7 +91,7 @@ pub fn show(popup: &Popup) {
 }
 
 /// The popup: the level, a fill bar between the step buttons, and mute.
-fn draw(popup: &Popup, level: Level) {
+pub fn draw(popup: &Popup, level: Level) {
     let strings = text::get();
     popup.show(move |pop| {
         let value = popup::value(&pill_text(level, strings));
