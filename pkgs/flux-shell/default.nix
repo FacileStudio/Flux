@@ -23,6 +23,8 @@ rustPlatform.buildRustPackage {
   inherit src;
 
   cargoLock.lockFile = src + "/Cargo.lock";
+  cargoBuildFlags = [ "--workspace" "--exclude" "flux-config" ];
+  cargoTestFlags = [ "--workspace" "--exclude" "flux-config" ];
 
   nativeBuildInputs = [ pkg-config wrapGAppsHook4 ];
   buildInputs = [ gtk4 gtk4-layer-shell librsvg gsettings-desktop-schemas libpulseaudio pam ];
