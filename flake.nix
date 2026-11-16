@@ -42,6 +42,15 @@
         };
       });
 
+      devShells = forAllSystems (system:
+        let pkgs = import nixpkgs { inherit system; };
+        in {
+          default = pkgs.mkShell {
+            nativeBuildInputs = with pkgs; [ cargo rustc clippy rustfmt pkg-config wrapGAppsHook4 ];
+            buildInputs = with pkgs; [ gtk4 gtk4-layer-shell gtk4-session-lock pam librsvg ];
+          };
+        });
+
       templates.default = {
         path = ./template;
         description = "A machine flake that imports Flux";
