@@ -35,7 +35,7 @@ lib.mkIf (config.flux.profile == "desktop") {
     enable = true;
     theme.name = if dark then "Adwaita-dark" else "Adwaita";
     iconTheme = { package = pkgs.adwaita-icon-theme; name = "Adwaita"; };
-    cursorTheme = { package = pkgs.adwaita-icon-theme; name = "Adwaita"; };
+    cursorTheme = { package = pkgs.adwaita-icon-theme; name = config.flux.cursor.theme; };
     font = { package = pkgs.inter; name = cfg.font; size = 11; };
     extraCss = css;
     settings = {
@@ -60,8 +60,8 @@ lib.mkIf (config.flux.profile == "desktop") {
     settings.default_session.command = lib.concatStringsSep " " [
       "${pkgs.coreutils}/bin/env"
       "XDG_DATA_DIRS=${sessions}:/run/current-system/sw/share"
-      "XCURSOR_THEME=Adwaita"
-      "XCURSOR_SIZE=24"
+      "XCURSOR_THEME=${config.flux.cursor.theme}"
+      "XCURSOR_SIZE=${toString config.flux.cursor.size}"
       "XCURSOR_PATH=/run/current-system/sw/share/icons"
       "GTK_USE_PORTAL=0"
       "${pkgs.dbus}/bin/dbus-run-session"
