@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Settings
+Name[fr]=Réglages
+Comment=Change how Flux looks and works
+Comment[fr]=Modifier l'apparence et le fonctionnement de Flux
+Exec=flux-settings
+Icon=studio.facile.flux.Settings
+Terminal=false
+Categories=Settings;System;GTK;
+Keywords=settings;preferences;appearance;wallpaper;theme;about;réglages;préférences;
+StartupNotify=true
