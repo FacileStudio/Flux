@@ -34,6 +34,9 @@ environment {
 binds {
     Mod+Return { spawn "ghostty"; }
     Mod+D { spawn "fuzzel"; }
+    Mod+Space { spawn "launcher"; }
+    Mod+N { spawn "sidebar" "toggle"; }
+    Mod+Escape { spawn "exit"; }
     Mod+Q { close-window; }
     Mod+H { focus-column-left; }
     Mod+L { focus-column-right; }
