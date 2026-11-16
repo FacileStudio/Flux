@@ -17,7 +17,7 @@
 	import Command from '$lib/components/Command.svelte';
 	import DesktopDemo from '$lib/components/DesktopDemo.svelte';
 	import LandingShell from '$lib/components/LandingShell.svelte';
-	import BoîteTile from '$lib/components/tiles/BoîteTile.svelte';
+	import BoiteTile from '$lib/components/tiles/BoiteTile.svelte';
 	import RollbackTile from '$lib/components/tiles/RollbackTile.svelte';
 
 	const FEATURES = [
@@ -81,7 +81,7 @@
 			<h2 id="tiles-title" class="mb-10 text-center {LANDING_HEADING}">{t('tiles.title')}</h2>
 			<div class="grid gap-4 md:grid-cols-2 md:gap-6">
 				<div class="grid"><RollbackTile /></div>
-				<div class="grid"><BoîteTile /></div>
+				<div class="grid"><BoiteTile /></div>
 			</div>
 		</section>
 
