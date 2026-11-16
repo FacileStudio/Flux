@@ -25,5 +25,7 @@ in
       message = "flux.facile.exclude names unknown tools: ${lib.concatStringsSep ", " unknown}";
     }];
     environment.systemPackages = lib.attrValues (removeAttrs pkgs.facile-tools.tools cfg.exclude);
+    programs.nix-ld.enable = true;
+    environment.sessionVariables.PATH = [ "$HOME/.local/bin" ];
   };
 }

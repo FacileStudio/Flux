@@ -6,6 +6,7 @@ type Asset = { name: string; url: string; digest?: string };
 type Entry = { version: string; repo: string; bins: string[]; systems: Record<string, { url: string; hash: string }> };
 
 const skip = new Set(["widgets"]);
+const extra = [{ name: "facile", repo: "FacileStudio/facile", bin: "facile", asset: "facile" }];
 const arches: Record<string, string> = { "x86_64-linux": "amd64", "aarch64-linux": "arm64" };
 const out = new URL("../pkgs/facile-tools/tools.json", import.meta.url).pathname;
 
@@ -43,7 +44,7 @@ async function lock(tool: Tool): Promise<Entry | string> {
   return { version, repo: tool.repo, bins: tool.bins ?? [tool.bin], systems };
 }
 
-const tools = (await loadCatalog(Bun.argv[2])).filter((t) => !skip.has(t.name));
+const tools = [...(await loadCatalog(Bun.argv[2])).filter((t) => !skip.has(t.name)), ...extra];
 const results = await Promise.all(tools.map(async (t) => [t.name, await lock(t)] as const));
 const locked: Record<string, Entry> = {};
 for (const [name, result] of results.sort(([a], [b]) => a.localeCompare(b))) {

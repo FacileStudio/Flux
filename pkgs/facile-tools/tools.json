@@ -115,19 +115,19 @@
     }
   },
   "clap": {
-    "version": "0.1.0",
+    "version": "0.2.1",
     "repo": "FacileStudio/Clap",
     "bins": [
       "clap"
     ],
     "systems": {
       "x86_64-linux": {
-        "url": "https://github.com/FacileStudio/Clap/releases/download/v0.1.0/clap_0.1.0_linux_amd64.tar.gz",
-        "hash": "sha256-NYNcTDvBZhaAB8ShosC6Ndn+lp17NiPIcTSyXtrsxqc="
+        "url": "https://github.com/FacileStudio/Clap/releases/download/v0.2.1/clap_0.2.1_linux_amd64.tar.gz",
+        "hash": "sha256-3RQOMRceCBzlJXf0BXjej5KyhPe86UEjVSlp3Y4hISI="
       },
       "aarch64-linux": {
-        "url": "https://github.com/FacileStudio/Clap/releases/download/v0.1.0/clap_0.1.0_linux_arm64.tar.gz",
-        "hash": "sha256-bIACq21aBNukHDmV3gwXpP2gtCLOeiHCibjvh1pEe3k="
+        "url": "https://github.com/FacileStudio/Clap/releases/download/v0.2.1/clap_0.2.1_linux_arm64.tar.gz",
+        "hash": "sha256-67rNJzTv4ooHkzQnJDC1Kf79GUNwUKIkC5fujdyPA0Y="
       }
     }
   },
@@ -149,19 +149,19 @@
     }
   },
   "diapo": {
-    "version": "0.2.0",
+    "version": "0.2.1",
     "repo": "FacileStudio/Diapo",
     "bins": [
       "diapo"
     ],
     "systems": {
       "x86_64-linux": {
-        "url": "https://github.com/FacileStudio/Diapo/releases/download/v0.2.0/diapo_0.2.0_linux_amd64.tar.gz",
-        "hash": "sha256-Wj6YV43A8JukVxRODNwOZtWL4CvgHqig3L+xXng+So4="
+        "url": "https://github.com/FacileStudio/Diapo/releases/download/v0.2.1/diapo_0.2.1_linux_amd64.tar.gz",
+        "hash": "sha256-IZe7uy/8t7lE9WgdiFiTqJC1LF68U6bIiq63I9rmc38="
       },
       "aarch64-linux": {
-        "url": "https://github.com/FacileStudio/Diapo/releases/download/v0.2.0/diapo_0.2.0_linux_arm64.tar.gz",
-        "hash": "sha256-akWLcRIgRZSBfpLnKF17NtAtk5+L3J3J6N/XNOfhGd4="
+        "url": "https://github.com/FacileStudio/Diapo/releases/download/v0.2.1/diapo_0.2.1_linux_arm64.tar.gz",
+        "hash": "sha256-rm7SSH/WyNIrAmU/0BSTbVZyDFI/hrnizUOL3lSjP6k="
       }
     }
   },
@@ -196,6 +196,23 @@
       "aarch64-linux": {
         "url": "https://github.com/FacileStudio/encre/releases/download/v0.12.1/encre_0.12.1_linux_arm64.tar.gz",
         "hash": "sha256-X7ONZsFVkjLfb2ISpHFArn/5pF7827iv3AYbXDMPWVY="
+      }
+    }
+  },
+  "facile": {
+    "version": "0.23.0",
+    "repo": "FacileStudio/facile",
+    "bins": [
+      "facile"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/facile/releases/download/v0.23.0/facile_0.23.0_linux_amd64.tar.gz",
+        "hash": "sha256-B0EKKGkswbmfHLKOunI2qnuVx+Z8Y536XYglzW2l/c8="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/facile/releases/download/v0.23.0/facile_0.23.0_linux_arm64.tar.gz",
+        "hash": "sha256-6MEbXYjpWvRvS+1+eyTkXmpLpYJy2Owb7CdRz0pb00c="
       }
     }
   },
