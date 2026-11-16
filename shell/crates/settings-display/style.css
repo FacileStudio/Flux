@@ -1,263 +1,57 @@
-.fx-page {
-  padding: 32px 32px 48px 32px;
-}
-
-.fx-heading {
-  font-size: 16px;
-  font-weight: 600;
-  color: @fc_fg;
-}
-
-.fx-section > .fx-subtitle {
-  margin-top: -6px;
-}
-
-.fx-card {
-  background-color: @fc_component;
-  border-radius: 12px;
-  padding: 4px 20px;
-}
-
-.fx-row {
-  padding: 14px 0;
+.fx-display menubutton.fx-button > button {
   min-height: 36px;
-}
-
-.fx-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: @fc_fg;
-}
-
-.fx-subtitle {
-  font-size: 12px;
-  color: @fc_fg_muted;
-}
-
-.fx-error {
-  font-size: 12px;
-  color: @fc_danger;
-}
-
-.fx-empty {
-  padding: 48px 24px;
-}
-
-dropdown > button,
-menubutton.fx-button > button,
-button.fx-button {
-  min-height: 36px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  background-color: @fc_surface;
-  color: @fc_fg;
-  transition: background-color 160ms ease-out, color 160ms ease-out;
-}
-
-dropdown > button:hover,
-button.fx-button:hover {
-  background-color: mix(@fc_surface, @fc_fg, 0.08);
-}
-
-button.fx-button.primary {
-  background-color: @fc_accent;
-  color: @fc_accent_fg;
-}
-
-button.fx-button.primary:hover {
-  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
-}
-
-button.fx-button.ghost,
-menubutton.fx-button.ghost > button {
   background-color: transparent;
   color: @fc_fg_muted;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
-button.fx-button.ghost:hover,
-menubutton.fx-button.ghost > button:hover {
+.fx-display menubutton.fx-button > button:hover {
   background-color: @fc_surface;
   color: @fc_fg;
 }
 
-menubutton.fx-add {
-  margin: 8px 0 12px -14px;
+.fx-display menubutton.fx-add {
+  margin: 8px 0 0 -16px;
 }
 
-button.fx-icon {
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0;
-  border-radius: 8px;
-  background-color: transparent;
-  color: @fc_fg_muted;
-  transition: background-color 160ms ease-out, color 160ms ease-out;
-}
-
-button.fx-icon:hover {
-  background-color: @fc_surface;
-  color: @fc_fg;
-}
-
-button.fx-icon:disabled {
-  opacity: 0.4;
-}
-
-dropdown:disabled > button {
+.fx-display dropdown:disabled > button {
   opacity: 0.6;
 }
 
-popover > contents {
-  background-color: @fc_component;
-  color: @fc_fg;
-  border-radius: 12px;
-  padding: 6px;
-  box-shadow: 0 8px 24px alpha(black, 0.18);
+.fx-display .fx-chooser {
+  padding: 0;
 }
 
-popover > arrow {
+.fx-display .fx-chooser scrolledwindow {
   background-color: transparent;
 }
 
-popover listview,
-popover list,
-.fx-list {
-  background-color: transparent;
+.fx-display entry.fx-test {
+  margin: 8px 0 0 0;
 }
 
-popover listview row,
-.fx-list row {
-  min-height: 32px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  color: @fc_fg;
-  transition: background-color 120ms ease-out;
+.fx-display .fx-canvas-card {
+  padding: 8px;
 }
 
-popover listview row:hover,
-.fx-list row:hover {
-  background-color: @fc_surface;
-}
-
-popover listview row:selected,
-.fx-list row:selected {
-  background-color: @fc_accent;
-  color: @fc_accent_fg;
-}
-
-.fx-chooser {
-  padding: 6px;
-}
-
-switch {
-  min-width: 40px;
-  min-height: 22px;
-  border-radius: 999px;
-  background-color: @fc_surface;
-  transition: background-color 160ms ease-out;
-}
-
-switch:checked {
-  background-color: @fc_accent;
-}
-
-switch > slider {
-  min-width: 18px;
-  min-height: 18px;
-  margin: 2px;
-  border-radius: 999px;
-  background-image: none;
-  background-color: @fc_fg_muted;
-  transition: background-color 160ms ease-out;
-}
-
-switch:checked > slider {
-  background-color: @fc_accent_fg;
-}
-
-switch:focus-visible,
-scale:focus-visible > trough > slider,
-dropdown > button:focus-visible,
-button.fx-button:focus-visible,
-button.fx-icon:focus-visible {
-  outline: 2px solid @fc_ring;
-  outline-offset: 2px;
-}
-
-scale > trough {
-  min-height: 6px;
-  border-radius: 999px;
-  background-color: @fc_surface;
-}
-
-scale > trough > highlight {
-  margin: 0;
-  min-width: 6px;
-  min-height: 6px;
-  border-radius: 999px;
-  background-color: @fc_accent;
-}
-
-scale > trough > slider {
-  min-width: 18px;
-  min-height: 18px;
-  margin: -6px;
-  border-radius: 999px;
-  background-image: none;
-  background-color: @fc_accent;
-  transition: background-color 160ms ease-out;
-}
-
-entry,
-searchentry {
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
-  background-color: @fc_surface;
-  color: @fc_fg;
-  outline: 0 solid transparent;
-}
-
-entry:focus-within,
-searchentry:focus-within {
-  outline: 2px solid @fc_ring;
-  outline-offset: 2px;
-}
-
-entry.invalid {
-  color: @fc_danger;
-}
-
-entry.fx-test {
-  margin: 8px 0 16px 0;
-}
-
-.fx-canvas-card {
-  padding: 4px;
-}
-
-.fx-monitor {
+.fx-display .fx-monitor {
   background-color: @fc_surface;
   color: @fc_fg;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 500;
-  transition: background-color 160ms ease-out, color 160ms ease-out;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
-.fx-monitor:hover {
+.fx-display .fx-monitor:hover {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
 }
 
-.fx-monitor.dragging {
+.fx-display .fx-monitor.dragging {
   background-color: @fc_accent;
   color: @fc_accent_fg;
-}
-
-.fx-banner {
-  background-color: @fc_surface;
-  border-radius: 12px;
-  padding: 16px 20px;
 }

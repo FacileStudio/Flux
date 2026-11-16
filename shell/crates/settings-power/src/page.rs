@@ -41,21 +41,19 @@ struct Page {
 }
 
 fn battery_block(text: &'static Text, source: &Source) -> Battery {
-    let (block, card) = ui::section(text.battery, None);
+    let (block, card) = ui::section(text.battery);
     let rows = gtk4::Box::new(Orientation::Vertical, 0);
     let level = gtk4::LevelBar::for_interval(0.0, 100.0);
     level.set_width_request(160);
-    let (level_row, level_line) = ui::row("", Some(""), Some(level.upcast_ref()));
-    let level_title = first_label(&level_row);
-    rows.append(&level_row);
-    let (health, health_line) = ui::row(text.health, Some(""), None);
-    let health_title = first_label(&health);
+    let level_row = ui::row_with("", "", Some(level.upcast_ref()));
+    let (level_title, level_line) = (level_row.title, level_row.subtitle);
+    rows.append(&level_row.root);
+    let health_row = ui::row_with(text.health, "", None);
+    let (health, health_title, health_line) = (health_row.root, health_row.title, health_row.subtitle);
     rows.append(&health);
     let shown = if source.is_sample() { true } else { config::load_battery_percentage() };
-    let (switch_row, switch) = ui::switch_row(text.show_percentage, Some(text.show_percentage_body), shown);
     let sample = source.is_sample();
-    switch.connect_active_notify(move |switch| {
-        let on = switch.is_active();
+    let (switch_row, _) = ui::switch_row(text.show_percentage, text.show_percentage_body, shown, move |on| {
         if !sample {
             gio::spawn_blocking(move || {
                 if let Err(error) = config::save_battery_percentage(on) {
@@ -71,30 +69,23 @@ fn battery_block(text: &'static Text, source: &Source) -> Battery {
     Battery { block, rows, empty, level, level_title, level_line, health, health_line, health_title }
 }
 
-fn first_label(row: &gtk4::Box) -> gtk4::Label {
-    row.first_child()
-        .and_then(|text| text.first_child())
-        .and_then(|label| label.downcast::<gtk4::Label>().ok())
-        .unwrap_or_default()
-}
-
-fn choices(text: &Text, current: Option<u32>) -> (Vec<Option<u32>>, Vec<String>, u32) {
+fn choices(text: &Text, current: Option<u32>) -> (Vec<Option<u32>>, Vec<String>, usize) {
     let mut values: Vec<Option<u32>> = CHOICES.to_vec();
     if !values.contains(&current) {
         values.insert(values.len() - 1, current);
     }
     let names = values.iter().map(|value| format::duration(text, *value)).collect();
-    let selected = values.iter().position(|value| *value == current).unwrap_or(0) as u32;
+    let selected = values.iter().position(|value| *value == current).unwrap_or(0);
     (values, names, selected)
 }
 
 impl Page {
-    fn timeout_row(self: &Rc<Self>, title: &str, subtitle: Option<&str>, current: Option<u32>, apply: fn(&mut PowerConfig, Option<u32>)) -> gtk4::Box {
+    fn timeout_row(self: &Rc<Self>, title: &str, subtitle: &str, current: Option<u32>, apply: fn(&mut PowerConfig, Option<u32>)) -> gtk4::Box {
         let (values, names, selected) = choices(self.text, current);
-        let (row, dropdown) = ui::choice_row(title, subtitle, &names, selected);
+        let names: Vec<&str> = names.iter().map(String::as_str).collect();
         let page = Rc::downgrade(self);
-        dropdown.connect_selected_notify(move |dropdown| {
-            let (Some(page), Some(value)) = (page.upgrade(), values.get(dropdown.selected() as usize)) else {
+        let (row, _) = ui::choice_row(title, subtitle, &names, selected, move |index| {
+            let (Some(page), Some(value)) = (page.upgrade(), values.get(index)) else {
                 return;
             };
             apply(&mut page.config.borrow_mut(), *value);
@@ -104,13 +95,12 @@ impl Page {
     }
 
     fn lid_row(self: &Rc<Self>) -> gtk4::Box {
-        let names = [self.text.lid_suspend.to_string(), self.text.lid_nothing.to_string()];
-        let selected = u32::from(self.config.borrow().lid == Lid::Nothing);
-        let (row, dropdown) = ui::choice_row(self.text.lid, None, &names, selected);
+        let names = [self.text.lid_suspend, self.text.lid_nothing];
+        let selected = usize::from(self.config.borrow().lid == Lid::Nothing);
         let page = Rc::downgrade(self);
-        dropdown.connect_selected_notify(move |dropdown| {
+        let (row, _) = ui::choice_row(self.text.lid, "", &names, selected, move |index| {
             if let Some(page) = page.upgrade() {
-                page.config.borrow_mut().lid = if dropdown.selected() == 1 { Lid::Nothing } else { Lid::Suspend };
+                page.config.borrow_mut().lid = if index == 1 { Lid::Nothing } else { Lid::Suspend };
                 page.save();
             }
         });
@@ -148,21 +138,19 @@ impl Page {
         if let Some(level) = &snapshot.battery {
             battery.level.set_value(level.percentage.clamp(0.0, 100.0));
             battery.level_title.set_text(&format::percent(level.percentage));
-            battery.level_line.set_text(&format::battery_line(self.text, level));
+            ui::set_subtitle(&battery.level_line, &format::battery_line(self.text, level));
             battery.health.set_visible(true);
             match (level.health, level.cycles) {
                 (None, None) => {
                     battery.health_title.set_text(self.text.health);
-                    battery.health_line.set_text(self.text.health_unknown);
-                    battery.health_line.set_visible(true);
+                    ui::set_subtitle(&battery.health_line, self.text.health_unknown);
                 }
                 (health, cycles) => {
                     battery.health_title.set_text(&match health {
                         Some(health) => format!("{} · {}", self.text.health, format::percent(health)),
                         None => self.text.health.to_string(),
                     });
-                    battery.health_line.set_text(&cycles.map(|cycles| format!("{cycles} {}", self.text.cycles)).unwrap_or_default());
-                    battery.health_line.set_visible(cycles.is_some());
+                    ui::set_subtitle(&battery.health_line, &cycles.map(|cycles| format!("{cycles} {}", self.text.cycles)).unwrap_or_default());
                 }
             }
         }
@@ -172,36 +160,29 @@ impl Page {
 }
 
 fn mode_block(text: &Text, modes: &Modes) -> (gtk4::Box, gtk4::Box) {
-    let (block, card) = ui::section(text.mode, Some(text.mode_body));
+    let parts = ui::section_with(text.mode, text.mode_body);
+    let (block, card) = (parts.root, parts.card);
     let holder = gtk4::Box::new(Orientation::Vertical, 0);
     holder.add_css_class("fx-row");
     holder.append(&modes.root);
     card.append(&holder);
-    let (missing, _) = ui::row(text.mode_missing, None, None);
+    let missing = ui::row_with(text.mode_missing, "", None).root;
     card.append(&missing);
     (block, missing)
 }
 
 /// Build the page from `source`.
 pub fn build(text: &'static Text, source: Source) -> gtk4::Widget {
-    ui::style();
-    let column = gtk4::Box::new(Orientation::Vertical, 40);
-    column.add_css_class("fx-page");
-    column.set_width_request(560);
-    column.set_halign(gtk4::Align::Center);
-    let title = gtk4::Label::new(Some(text.title));
-    title.add_css_class("fx-page-title");
-    title.set_xalign(0.0);
-    column.append(&title);
+    let (scroller, column) = ui::page(text.title, text.description);
+    column.add_css_class("fx-power");
     let battery = battery_block(text, &source);
     column.append(&battery.block);
     let modes = Modes::new(text, &source);
     let (modes_block, mode_missing) = mode_block(text, &modes);
     column.append(&modes_block);
-    let (idle_block, idle_card) = ui::section(text.idle, Some(text.idle_body));
-    let error = gtk4::Label::new(Some(text.save_failed));
-    error.add_css_class("fx-danger");
-    error.set_xalign(0.0);
+    let idle = ui::section_with(text.idle, text.idle_body);
+    let (idle_block, idle_card) = (idle.root, idle.card);
+    let error = ui::label(text.save_failed, "fx-error");
     error.set_visible(false);
     let config = if source.is_sample() { PowerConfig::default() } else { config::load() };
     let page = Rc::new(Page {
@@ -215,11 +196,11 @@ pub fn build(text: &'static Text, source: Source) -> gtk4::Widget {
         lid: gtk4::Box::new(Orientation::Vertical, 0),
         error: error.clone(),
     });
-    idle_card.append(&page.timeout_row(text.screen_off, None, config.screen_off, |config, value| config.screen_off = value));
-    idle_card.append(&page.timeout_row(text.lock, Some(text.lock_body), config.lock, |config, value| config.lock = value));
-    page.suspend_battery.append(&page.timeout_row(text.suspend_battery, None, config.suspend_battery, |config, value| config.suspend_battery = value));
+    idle_card.append(&page.timeout_row(text.screen_off, "", config.screen_off, |config, value| config.screen_off = value));
+    idle_card.append(&page.timeout_row(text.lock, text.lock_body, config.lock, |config, value| config.lock = value));
+    page.suspend_battery.append(&page.timeout_row(text.suspend_battery, "", config.suspend_battery, |config, value| config.suspend_battery = value));
     idle_card.append(&page.suspend_battery);
-    idle_card.append(&page.timeout_row(text.suspend_ac, None, config.suspend_ac, |config, value| config.suspend_ac = value));
+    idle_card.append(&page.timeout_row(text.suspend_ac, "", config.suspend_ac, |config, value| config.suspend_ac = value));
     page.lid.append(&page.lid_row());
     idle_card.append(&page.lid);
     idle_block.append(&error);
@@ -231,10 +212,6 @@ pub fn build(text: &'static Text, source: Source) -> gtk4::Widget {
             page.sync(&source.snapshot());
         }
     });
-    let scroller = gtk4::ScrolledWindow::new();
-    scroller.set_hscrollbar_policy(gtk4::PolicyType::Never);
-    scroller.set_child(Some(&column));
-    scroller.set_vexpand(true);
     let keep = page.clone();
     scroller.connect_destroy(move |_| {
         let _ = &keep;

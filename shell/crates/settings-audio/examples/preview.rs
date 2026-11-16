@@ -16,7 +16,7 @@ fn main() {
         .build();
     application.connect_activate(move |application| {
         shell_common::theme::init(
-            "window.preview { background-color: @fc_page; }",
+            Box::leak(format!("{}\nwindow.preview {{ background-color: @fc_page; }}", shell_common::ui::CSS).into_boxed_str()),
             "flux-settings",
         );
         let window = ApplicationWindow::builder()

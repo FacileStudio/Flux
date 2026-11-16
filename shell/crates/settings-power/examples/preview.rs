@@ -15,7 +15,8 @@ fn main() {
         .application_id("studio.facile.FluxPowerPreview")
         .build();
     application.connect_activate(move |app| {
-        shell_common::theme::init("window.preview { background-color: @fc_page; }", "settings-power-preview");
+        let css: &'static str = Box::leak(format!("{}\nwindow.preview {{ background-color: @fc_page; }}", shell_common::ui::CSS).into_boxed_str());
+        shell_common::theme::init(css, "settings-power-preview");
         settings_power::use_sample_data(&language, laptop);
         let window = gtk4::ApplicationWindow::new(app);
         window.add_css_class("preview");

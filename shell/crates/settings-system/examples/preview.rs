@@ -43,7 +43,7 @@ fn nav_row(entry: &Entry) -> gtk4::ListBoxRow {
 }
 
 fn activate(application: &Application) {
-    let css: &'static str = std::boxed::Box::leak(format!("{}\n{}\n{NAV_CSS}", include_str!("shared.css"), settings_system::CSS).into_boxed_str());
+    let css: &'static str = std::boxed::Box::leak(format!("{}\n{}\n{NAV_CSS}", shell_common::ui::CSS, settings_system::CSS).into_boxed_str());
     shell_common::theme::init(css, "settings-preview");
     let window = ApplicationWindow::builder().application(application).title("Settings").default_width(1000).default_height(760).build();
     window.add_css_class("fx-window");

@@ -219,8 +219,7 @@ impl Page {
     }
 
     fn arrangement(self: &Rc<Self>, enabled: &[&Output]) -> GtkBox {
-        let section = ui::section(self.text.arrangement);
-        section.root.insert_child_after(&subtitle(self.text.arrangement_hint), section.root.first_child().as_ref());
+        let section = ui::section_with(self.text.arrangement, self.text.arrangement_hint);
         let plates: Vec<arrange::Plate> = enabled
             .iter()
             .filter_map(|output| {
@@ -246,14 +245,13 @@ impl Page {
                 .collect();
             this.save(configs);
         });
-        section.rows.append(&canvas);
-        section.rows.add_css_class("fx-canvas-card");
+        section.card.append(&canvas);
+        section.card.add_css_class("fx-canvas-card");
         section.root
     }
 
     fn card(self: &Rc<Self>, output: &Output, enabled_count: usize) -> GtkBox {
         let text = self.text;
-        let section = ui::section(&output.display_name());
         let mut about = vec![if output.internal() { text.built_in.to_string() } else { output.name.clone() }];
         if let Some(inches) = output.diagonal_inches() {
             let size = if i18n::french() { inches.to_string().replace('.', ",") } else { inches.to_string() };
@@ -262,26 +260,26 @@ impl Page {
         if !output.enabled() {
             about.push(text.off.to_string());
         }
-        section.root.insert_child_after(&subtitle(&about.join(" · ")), section.root.first_child().as_ref());
+        let section = ui::section_with(&output.display_name(), &about.join(" · "));
 
         if self.outputs.borrow().len() > 1 {
-            section.rows.append(&self.enable_row(output, enabled_count));
+            section.card.append(&self.enable_row(output, enabled_count));
         }
         if let (Some(mode), Some(logical)) = (output.mode(), output.logical) {
-            section.rows.append(&self.resolution_row(output, mode.width, mode.height));
-            section.rows.append(&self.refresh_row(output, mode.width, mode.height, mode.refresh_rate));
+            section.card.append(&self.resolution_row(output, mode.width, mode.height));
+            section.card.append(&self.refresh_row(output, mode.width, mode.height, mode.refresh_rate));
             let horizontal = if logical.transform.sideways() { mode.height } else { mode.width };
-            section.rows.append(&self.scale_row(output, logical.scale, horizontal));
-            section.rows.append(&self.rotation_row(output, logical.transform));
+            section.card.append(&self.scale_row(output, logical.scale, horizontal));
+            section.card.append(&self.rotation_row(output, logical.transform));
             if output.vrr_supported {
-                section.rows.append(&self.vrr_row(output));
+                section.card.append(&self.vrr_row(output));
             }
         }
         section.root
     }
 
     fn enable_row(self: &Rc<Self>, output: &Output, enabled_count: usize) -> GtkBox {
-        let (row, switch) = ui::switch_row(self.text.use_display, Some(self.text.use_display_hint), output.enabled());
+        let (row, switch) = ui::switch_row(self.text.use_display, self.text.use_display_hint, output.enabled(), |_| {});
         switch.set_sensitive(!(output.enabled() && enabled_count <= 1));
         let this = self.clone();
         let output = output.clone();
@@ -312,7 +310,7 @@ impl Page {
             })
             .collect();
         let selected = list.iter().position(|r| r.width == width && r.height == height).unwrap_or(0);
-        let (row, dropdown) = ui::choice_row(self.text.resolution, None, &names, selected);
+        let (row, dropdown) = ui::choice_row(self.text.resolution, "", &names, selected, |_| {});
         if let Some(mode) = output.mode() {
             dropdown.set_tooltip_text(Some(&format_mode(&mode, at)));
         }
@@ -338,7 +336,7 @@ impl Page {
         let rates = refresh_rates(&output.modes, width, height);
         let names: Vec<String> = rates.iter().map(|m| format!("{} Hz", format_refresh(m.refresh_rate))).collect();
         let selected = rates.iter().position(|m| m.refresh_rate == current).unwrap_or(0);
-        let (row, dropdown) = ui::choice_row(self.text.refresh, None, &names, selected);
+        let (row, dropdown) = ui::choice_row(self.text.refresh, "", &names, selected, |_| {});
         dropdown.set_sensitive(rates.len() > 1);
         let this = self.clone();
         let output = output.clone();
@@ -357,7 +355,7 @@ impl Page {
         let choices = scale_choices(Some(current), horizontal);
         let names: Vec<String> = choices.iter().map(|scale| percent(*scale)).collect();
         let selected = choices.iter().position(|s| (s - current).abs() < 0.005).unwrap_or(0);
-        let (row, dropdown) = ui::choice_row(self.text.scale, Some(self.text.scale_hint), &names, selected);
+        let (row, dropdown) = ui::choice_row(self.text.scale, self.text.scale_hint, &names, selected, |_| {});
         let this = self.clone();
         let output = output.clone();
         dropdown.connect_selected_notify(move |dropdown| {
@@ -374,7 +372,7 @@ impl Page {
     fn rotation_row(self: &Rc<Self>, output: &Output, current: Transform) -> GtkBox {
         let names: Vec<String> = self.text.rotations.iter().map(|name| name.to_string()).collect();
         let selected = Transform::ALL.iter().position(|t| *t == current).unwrap_or(0);
-        let (row, dropdown) = ui::choice_row(self.text.rotation, None, &names, selected);
+        let (row, dropdown) = ui::choice_row(self.text.rotation, "", &names, selected, |_| {});
         let this = self.clone();
         let output = output.clone();
         dropdown.connect_selected_notify(move |dropdown| {
@@ -389,7 +387,7 @@ impl Page {
     }
 
     fn vrr_row(self: &Rc<Self>, output: &Output) -> GtkBox {
-        let (row, switch) = ui::switch_row(self.text.vrr, Some(self.text.vrr_hint), output.vrr_enabled);
+        let (row, switch) = ui::switch_row(self.text.vrr, self.text.vrr_hint, output.vrr_enabled, |_| {});
         let this = self.clone();
         let output = output.clone();
         switch.connect_active_notify(move |switch| {
@@ -401,18 +399,14 @@ impl Page {
     }
 }
 
-fn subtitle(text: &str) -> Label {
-    Label::builder().label(text).xalign(0.0).wrap(true).css_classes(["fx-subtitle"]).build()
-}
-
 fn banner(text: &'static Text) -> (Revealer, Label, gtk4::Button, gtk4::Button) {
     let body = Label::builder().xalign(0.0).css_classes(["fx-subtitle"]).build();
     let words = GtkBox::new(Orientation::Vertical, 2);
     words.set_hexpand(true);
     words.append(&Label::builder().label(text.keep_title).xalign(0.0).css_classes(["fx-title"]).build());
     words.append(&body);
-    let revert = ui::button(text.revert, "ghost");
-    let keep = ui::button(text.keep, "primary");
+    let revert = ui::ghost_button(text.revert);
+    let keep = ui::primary_button(text.keep);
     let bar = GtkBox::new(Orientation::Horizontal, 8);
     bar.add_css_class("fx-banner");
     bar.append(&words);
@@ -434,7 +428,7 @@ fn banner(text: &'static Text) -> (Revealer, Label, gtk4::Button, gtk4::Button) 
 
 fn empty(text: &'static Text, page: &Rc<Page>) -> GtkBox {
     let state = ui::empty_state(ICON, text.no_niri_title, text.no_niri_body);
-    let retry = ui::button(text.retry, "ghost");
+    let retry = ui::ghost_button(text.retry);
     retry.set_halign(gtk4::Align::Center);
     let this = page.clone();
     retry.connect_clicked(move |_| {
@@ -448,7 +442,7 @@ fn empty(text: &'static Text, page: &Rc<Page>) -> GtkBox {
 /// The whole Displays page.
 pub fn page() -> gtk4::Widget {
     let text = i18n::text();
-    let (scroller, column) = ui::page();
+    let (scroller, column) = ui::display_page(text.display_title, text.display_description);
     let (banner, banner_body, revert, keep) = banner(text);
     let error = Label::builder().xalign(0.0).wrap(true).visible(false).css_classes(["fx-error"]).build();
     let content = GtkBox::new(Orientation::Vertical, 32);
@@ -457,9 +451,7 @@ pub fn page() -> gtk4::Widget {
         .transition_duration(160)
         .vhomogeneous(false)
         .build();
-    let loading = ui::section(text.display_title);
-    loading.rows.append(&ui::spinner_row(text.loading));
-    stack.add_named(&loading.root, Some("loading"));
+    stack.add_named(&ui::spinner_row(text.loading), Some("loading"));
     stack.add_named(&content, Some("content"));
     let page = Rc::new(Page {
         text,

@@ -128,7 +128,7 @@ pub struct Choice {
 
 impl Choice {
     pub fn new(title: &str, on_pick: impl Fn(String) + 'static) -> Rc<Self> {
-        let (row, dropdown) = ui::choice_row(title, None);
+        let (row, dropdown) = ui::choice_row::<&str>(title, "", &[], 0, |_| {});
         dropdown.set_hexpand(false);
         let choice = Rc::new(Choice {
             root: motion::revealer(&row),

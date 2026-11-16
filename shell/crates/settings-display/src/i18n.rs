@@ -3,6 +3,8 @@
 pub struct Text {
     pub display_title: &'static str,
     pub input_title: &'static str,
+    pub display_description: &'static str,
+    pub input_description: &'static str,
     pub loading: &'static str,
     pub loading_input: &'static str,
     pub no_niri_title: &'static str,
@@ -77,6 +79,8 @@ pub struct Text {
 const EN: Text = Text {
     display_title: "Displays",
     input_title: "Keyboard and mouse",
+    display_description: "Resolution, scale, arrangement and night light.",
+    input_description: "Keyboard layouts, typing, touchpad and mouse.",
     loading: "Looking for displays",
     loading_input: "Reading your devices",
     no_niri_title: "No displays found",
@@ -160,6 +164,8 @@ const EN: Text = Text {
 const FR: Text = Text {
     display_title: "Écrans",
     input_title: "Clavier et souris",
+    display_description: "Définition, échelle, disposition et éclairage nocturne.",
+    input_description: "Dispositions du clavier, frappe, pavé tactile et souris.",
     loading: "Recherche des écrans",
     loading_input: "Lecture de vos appareils",
     no_niri_title: "Aucun écran trouvé",

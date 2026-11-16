@@ -15,7 +15,8 @@ fn main() {
     let which = std::env::args().nth(1).unwrap_or_else(|| display::ID.to_string());
     let application = Application::builder().application_id("studio.facile.FluxSettingsPreview").build();
     application.connect_activate(move |application| {
-        shell_common::theme::init(WINDOW_CSS, "flux-settings-preview");
+        let css: &'static str = Box::leak(format!("{}\n{WINDOW_CSS}", shell_common::ui::CSS).into_boxed_str());
+        shell_common::theme::init(css, "flux-settings-preview");
         let (title, page) = if which == input::ID {
             (input::title(), input::page())
         } else {

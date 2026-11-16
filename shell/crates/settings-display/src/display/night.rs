@@ -73,18 +73,18 @@ fn manual_rows(night: &Rc<Night>, text: &'static Text) -> gtk4::Box {
                 value.schedule = Schedule::Manual { from, to };
             });
         });
-        rows.append(&ui::row(label, None, &entry));
+        rows.append(&ui::row(label, "", &entry));
     }
     rows
 }
 
 /// The night light section, loaded from `initial`.
 pub fn section(text: &'static Text, initial: NightLight, located: bool) -> gtk4::Box {
-    let section = ui::section(text.night);
+    let section = ui::section_with(text.night, "");
     let error = Label::builder().xalign(0.0).wrap(true).visible(false).css_classes(["fx-error"]).build();
     let night = Rc::new(Night { value: Cell::new(initial), debounce: Debounce::default(), error: error.clone() });
 
-    let (switch_row, switch) = ui::switch_row(text.night_switch, Some(text.night_hint), initial.enabled);
+    let (switch_row, switch) = ui::switch_row(text.night_switch, text.night_hint, initial.enabled, |_| {});
     let details = Revealer::builder()
         .transition_type(RevealerTransitionType::SlideDown)
         .transition_duration(160)
@@ -94,14 +94,14 @@ pub fn section(text: &'static Text, initial: NightLight, located: bool) -> gtk4:
     details.set_child(Some(&body));
 
     let (warm_row, warmth) =
-        ui::slider_row(text.warmth, None, (f64::from(WARMEST), f64::from(COOLEST), 100.0), f64::from(initial.temperature));
+        ui::slider_row(text.warmth, "", (f64::from(WARMEST), f64::from(COOLEST), 100.0), f64::from(initial.temperature), |_| {});
     warmth.set_inverted(true);
     body.append(&warm_row);
 
     let sun = if located { text.sun } else { text.sun_unknown };
     let manual_now = matches!(initial.schedule, Schedule::Manual { .. });
     let (schedule_row, schedule) =
-        ui::choice_row(text.schedule, None, &[sun.to_string(), text.manual.to_string()], usize::from(manual_now));
+        ui::choice_row(text.schedule, "", &[sun.to_string(), text.manual.to_string()], usize::from(manual_now), |_| {});
     body.append(&schedule_row);
     let manual = Revealer::builder()
         .transition_type(RevealerTransitionType::SlideDown)
@@ -136,8 +136,8 @@ pub fn section(text: &'static Text, initial: NightLight, located: bool) -> gtk4:
         });
     });
 
-    section.rows.append(&switch_row);
-    section.rows.append(&details);
+    section.card.append(&switch_row);
+    section.card.append(&details);
     section.root.append(&error);
     section.root
 }

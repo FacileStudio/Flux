@@ -66,7 +66,7 @@ pub fn build(text: &'static Text) -> Widget {
     let devices = DeviceList::new(text, Direction::Output, |name| {
         hub::get().send(Command::SetDefault(Direction::Output, name));
     });
-    let (mic_row, mic) = ui::switch_row(text.microphone, None);
+    let (mic_row, mic) = ui::switch_row(text.microphone, "", false, |_| {});
     let input: Rc<Cell<Option<u32>>> = Rc::new(Cell::new(None));
     let guard = Rc::new(Cell::new(false));
     {

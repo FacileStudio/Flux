@@ -4,6 +4,7 @@ use crate::model::Kind;
 
 pub struct Text {
     pub title: &'static str,
+    pub description: &'static str,
     pub output: &'static str,
     pub input: &'static str,
     pub applications: &'static str,
@@ -39,6 +40,7 @@ pub struct Text {
 
 pub const EN: Text = Text {
     title: "Sound",
+    description: "Speakers, microphones and the volume of each app.",
     output: "Output",
     input: "Input",
     applications: "Applications",
@@ -74,6 +76,7 @@ pub const EN: Text = Text {
 
 pub const FR: Text = Text {
     title: "Son",
+    description: "Haut-parleurs, micros et volume de chaque application.",
     output: "Sortie",
     input: "Entrée",
     applications: "Applications",

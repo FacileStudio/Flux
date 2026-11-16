@@ -4,7 +4,7 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Button, Label, Orientation};
+use gtk4::{Box as GtkBox, Label, Orientation};
 
 use super::controls::{Change, VolumeControl};
 use super::lists::{Choice, DeviceList};
@@ -91,8 +91,7 @@ impl DeviceSection {
             sink: RefCell::new(None),
         });
         if direction == Direction::Output {
-            let button = Button::with_label(text.test);
-            button.add_css_class("fx-button");
+            let button = ui::secondary_button(text.test);
             let weak = Rc::downgrade(&section);
             button.connect_clicked(move |_| {
                 let sink = weak
@@ -102,11 +101,7 @@ impl DeviceSection {
                     hub::get().send(Command::Test(sink));
                 }
             });
-            let row = ui::row(
-                text.test_title,
-                Some(text.test_body),
-                Some(button.upcast_ref()),
-            );
+            let row = ui::row(text.test_title, text.test_body, &button);
             section.controls.append(&row);
         }
         section

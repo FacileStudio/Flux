@@ -11,36 +11,17 @@ use std::rc::Rc;
 
 use gtk4::prelude::*;
 use gtk4::{
-    gdk, Box as GtkBox, CssProvider, Orientation, PolicyType, ScrolledWindow, Stack,
+    Box as GtkBox, Orientation, ScrolledWindow, Stack,
     StackTransitionType, Switch, Widget,
 };
 
 use crate::backend::{Command, Event, Target};
 use crate::i18n::{self, Text};
 use crate::model::{self, Direction, Options, Snapshot};
-use crate::{hub, motion, ui};
-
-const STYLE: &str = include_str!("../style.css");
-
-thread_local! {
-    static STYLED: Cell<bool> = const { Cell::new(false) };
-}
+use crate::{hub, ui};
 
 fn style() {
-    if STYLED.with(|styled| styled.replace(true)) {
-        return;
-    }
-    let Some(display) = gdk::Display::default() else {
-        return;
-    };
-    let provider = CssProvider::new();
-    #[allow(deprecated)]
-    provider.load_from_data(STYLE);
-    gtk4::style_context_add_provider_for_display(
-        &display,
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
+    ui::page_style(include_str!("../style.css"));
 }
 
 struct Page {
@@ -93,19 +74,19 @@ pub fn page() -> Widget {
     style();
     let text = i18n::text();
     let content = GtkBox::new(Orientation::Vertical, 32);
-    content.add_css_class("fx-page");
     let output = device::DeviceSection::new(text, Direction::Output);
     let input = device::DeviceSection::new(text, Direction::Input);
     let apps = apps::AppsSection::new(text);
     let (options_section, options_card) = ui::section(text.options);
-    let (boost_row, boost) = ui::switch_row(text.boost_title, Some(text.boost_body));
+    let (boost_row, boost) = ui::switch_row(text.boost_title, text.boost_body, false, |_| {});
     options_card.append(&boost_row);
     content.append(&output.root);
     content.append(&input.root);
     content.append(&apps.root);
     content.append(&options_section);
+    let (root, stack) = frame(text, &content);
     let page = Rc::new(Page {
-        stack: frame(text, &content),
+        stack,
         output,
         input,
         apps,
@@ -133,25 +114,17 @@ pub fn page() -> Widget {
         let _ = &page;
         hub::get().forget(id);
     });
-    stack.upcast()
+    root.upcast()
 }
 
-fn frame(text: &Text, content: &GtkBox) -> Stack {
-    let scroller = ScrolledWindow::builder()
-        .hscrollbar_policy(PolicyType::Never)
-        .child(content)
-        .vexpand(true)
-        .build();
+fn frame(text: &Text, content: &GtkBox) -> (ScrolledWindow, Stack) {
+    let (root, column) = ui::page(text.title, text.description);
+    column.add_css_class("fx-sound");
     let stack = Stack::new();
-    stack.add_css_class("fx-audio");
-    stack.add_css_class("fx-sound");
+    stack.set_vhomogeneous(false);
     stack.set_transition_type(StackTransitionType::Crossfade);
-    stack.set_transition_duration(if motion::enabled() {
-        motion::DURATION
-    } else {
-        0
-    });
-    stack.add_named(&loading(text), Some("loading"));
+    stack.set_transition_duration(ui::MOTION_MS);
+    stack.add_named(&ui::spinner_row(text.connecting), Some("loading"));
     stack.add_named(
         &ui::empty_state(
             "audio-volume-muted-symbolic",
@@ -160,9 +133,10 @@ fn frame(text: &Text, content: &GtkBox) -> Stack {
         ),
         Some("unavailable"),
     );
-    stack.add_named(&scroller, Some("ready"));
+    stack.add_named(content, Some("ready"));
     stack.set_visible_child_name("loading");
-    stack
+    column.append(&stack);
+    (root, stack)
 }
 
 fn set_boost(allow_boost: bool) {
@@ -184,13 +158,6 @@ fn set_boost(allow_boost: bool) {
             None,
         ));
     }
-}
-
-fn loading(text: &Text) -> Widget {
-    let root = GtkBox::new(Orientation::Vertical, 0);
-    root.add_css_class("fx-page");
-    root.append(&ui::spinner_row(text.connecting));
-    root.upcast()
 }
 
 /// The statusbar popover content.

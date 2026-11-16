@@ -4,11 +4,11 @@ use gtk4::prelude::*;
 use gtk4::{Revealer, RevealerTransitionType, Widget};
 
 /// Reveal and slide duration, in milliseconds.
-pub const DURATION: u32 = 160;
+pub const DURATION: u32 = shell_common::ui::MOTION_MS;
 
 /// Whether the session wants animations.
 pub fn enabled() -> bool {
-    gtk4::Settings::default().is_none_or(|settings| settings.is_gtk_enable_animations())
+    shell_common::ui::animations()
 }
 
 /// A revealer that slides its child down over [`DURATION`] and starts hidden.

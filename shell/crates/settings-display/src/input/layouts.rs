@@ -14,7 +14,7 @@ use super::Input;
 
 fn icon_button(icon: &str, label: &str) -> Button {
     let button = Button::from_icon_name(icon);
-    button.add_css_class("fx-icon");
+    button.add_css_class("fx-icon-button");
     button.set_tooltip_text(Some(label));
     button.update_property(&[gtk4::accessible::Property::Label(label)]);
     button
@@ -68,7 +68,7 @@ fn layout_row(input: &Rc<Input>, index: usize, count: usize, layout: &Layout) ->
     });
     suffix.append(&up);
     suffix.append(&remove);
-    ui::row(&title, None, &suffix)
+    ui::row(&title, "", &suffix)
 }
 
 fn chooser(input: &Rc<Input>, registry: &Registry, popover: &Popover) -> GtkBox {
@@ -126,10 +126,10 @@ pub fn fill(input: &Rc<Input>, rows: &GtkBox) {
         rows.append(&layout_row(input, index, layouts.len(), layout));
     }
     let Some(registry) = input.registry.as_ref() else {
-        rows.append(&ui::row(input.text.no_registry, None, &GtkBox::new(Orientation::Horizontal, 0)));
+        rows.append(&ui::row(input.text.no_registry, "", &GtkBox::new(Orientation::Horizontal, 0)));
         return;
     };
-    let add = gtk4::MenuButton::builder().label(input.text.add_layout).css_classes(["fx-button", "ghost"]).build();
+    let add = gtk4::MenuButton::builder().label(input.text.add_layout).css_classes(["fx-button", "fx-ghost"]).build();
     let popover = Popover::new();
     popover.set_child(Some(&chooser(input, registry, &popover)));
     add.set_popover(Some(&popover));

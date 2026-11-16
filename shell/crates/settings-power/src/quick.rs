@@ -7,7 +7,6 @@ use crate::format;
 use crate::i18n::Text;
 use crate::modes::Modes;
 use crate::source::Source;
-use crate::ui;
 
 fn icon_for(percentage: f64, charging: bool) -> String {
     let step = ((percentage.clamp(0.0, 100.0) / 10.0).round() as u32) * 10;
@@ -20,7 +19,6 @@ fn icon_for(percentage: f64, charging: bool) -> String {
 
 /// Build the quick menu from `source`.
 pub fn build(text: &'static Text, source: Source) -> gtk4::Widget {
-    ui::style();
     let column = gtk4::Box::new(Orientation::Vertical, 12);
     column.add_css_class("fx-quick");
     column.set_margin_top(12);
