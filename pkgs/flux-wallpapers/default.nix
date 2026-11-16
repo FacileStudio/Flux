@@ -8,8 +8,8 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/share/backgrounds/flux
-    cp $src/*.jpg $out/share/backgrounds/flux/
-    ln -s sunny-grass-hills-alt.jpg $out/share/backgrounds/flux/default.jpg
+    cp $src/*.jpg $src/CREDITS.md $out/share/backgrounds/flux/
+    ln -s monstera.jpg $out/share/backgrounds/flux/default.jpg
     runHook postInstall
   '';
   meta = {
