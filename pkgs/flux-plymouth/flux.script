@@ -1,0 +1,132 @@
+Window.SetBackgroundTopColor(@page@);
+Window.SetBackgroundBottomColor(@page@);
+
+global.font = "Inter Variable,Inter 14";
+global.cx = Window.GetX() + Window.GetWidth() / 2;
+global.cy = Window.GetY() + Window.GetHeight() / 2;
+
+if (Window.GetWidth() >= 2560) {
+  global.scale = 2;
+  mark_image = Image("mark@2x.png");
+  dot_image = Image("dot@2x.png");
+  field_image = Image("field@2x.png");
+  bullet_image = Image("bullet@2x.png");
+} else {
+  global.scale = 1;
+  mark_image = Image("mark.png");
+  dot_image = Image("dot.png");
+  field_image = Image("field.png");
+  bullet_image = Image("bullet.png");
+}
+
+global.mark = Sprite(mark_image);
+global.mark.SetX(global.cx - mark_image.GetWidth() / 2);
+global.mark.SetY(global.cy - mark_image.GetHeight() / 2 - 24 * global.scale);
+
+global.dot_y = global.cy + mark_image.GetHeight() / 2 + 32 * global.scale;
+for (i = 0; i < 3; i++) {
+  global.dots[i] = Sprite(dot_image);
+  global.dots[i].SetX(global.cx + (i - 1) * 20 * global.scale - dot_image.GetWidth() / 2);
+  global.dots[i].SetY(global.dot_y);
+}
+
+global.field = Sprite(field_image);
+global.field.SetX(global.cx - field_image.GetWidth() / 2);
+global.field.SetY(global.dot_y + 24 * global.scale);
+global.field.SetOpacity(0);
+global.field_h = field_image.GetHeight();
+
+global.prompt = Sprite();
+global.message = Sprite();
+global.answer = Sprite();
+global.bullet_image = bullet_image;
+global.bullet_count = 0;
+global.asking = 0;
+global.tick = 0;
+
+fun refresh() {
+  global.tick++;
+  for (i = 0; i < 3; i++) {
+    if (global.asking) {
+      global.dots[i].SetOpacity(0);
+    } else {
+      wave = Math.Sin(global.tick / 10 - i * 0.9);
+      global.dots[i].SetOpacity(0.25 + 0.75 * (0.5 + 0.5 * wave));
+    }
+  }
+}
+Plymouth.SetRefreshFunction(refresh);
+
+fun clear_bullets() {
+  for (i = 0; i < global.bullet_count; i++) {
+    global.bullets[i].SetOpacity(0);
+  }
+}
+
+fun show_entry(label, count) {
+  global.asking = 1;
+  global.field.SetOpacity(1);
+  text = Image.Text(label, @muted@, 1, global.font);
+  global.prompt.SetImage(text);
+  global.prompt.SetX(global.cx - text.GetWidth() / 2);
+  global.prompt.SetY(global.field.GetY() - text.GetHeight() - 12 * global.scale);
+  global.prompt.SetOpacity(1);
+  clear_bullets();
+  shown = Math.Min(count, 16);
+  step = 16 * global.scale;
+  left = global.cx - (shown - 1) * step / 2 - global.bullet_image.GetWidth() / 2;
+  top = global.field.GetY() + global.field_h / 2 - global.bullet_image.GetHeight() / 2;
+  for (i = 0; i < shown; i++) {
+    if (!global.bullets[i]) {
+      global.bullets[i] = Sprite(global.bullet_image);
+    }
+    global.bullets[i].SetX(left + i * step);
+    global.bullets[i].SetY(top);
+    global.bullets[i].SetZ(10);
+    global.bullets[i].SetOpacity(1);
+  }
+  if (shown > global.bullet_count) {
+    global.bullet_count = shown;
+  }
+}
+
+fun display_password(label, bullets) {
+  if (!label) {
+    label = "Password";
+  }
+  show_entry(label, bullets);
+}
+Plymouth.SetDisplayPasswordFunction(display_password);
+
+fun display_question(label, entry) {
+  show_entry(label, 0);
+  text = Image.Text(entry, @fg@, 1, global.font);
+  global.answer.SetImage(text);
+  global.answer.SetX(global.cx - text.GetWidth() / 2);
+  global.answer.SetY(global.field.GetY() + (global.field_h - text.GetHeight()) / 2);
+  global.answer.SetZ(10);
+  global.answer.SetOpacity(1);
+}
+Plymouth.SetDisplayQuestionFunction(display_question);
+
+fun display_normal() {
+  global.asking = 0;
+  global.field.SetOpacity(0);
+  global.prompt.SetOpacity(0);
+  global.answer.SetOpacity(0);
+  clear_bullets();
+}
+Plymouth.SetDisplayNormalFunction(display_normal);
+
+fun show_message(text) {
+  image = Image.Text(text, @muted@, 1, global.font);
+  global.message.SetImage(image);
+  global.message.SetX(global.cx - image.GetWidth() / 2);
+  global.message.SetY(Window.GetY() + Window.GetHeight() - image.GetHeight() - 48 * global.scale);
+}
+Plymouth.SetMessageFunction(show_message);
+
+fun hide_message(text) {
+  global.message.SetImage(Image.Text("", @muted@, 1, global.font));
+}
+Plymouth.SetHideMessageFunction(hide_message);
