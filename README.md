@@ -94,7 +94,13 @@ template/     the machine flake the installer writes
 
 Adding a file to `modules/` or a directory to `hosts/` or `pkgs/` is enough to wire it in.
 
+## Releasing
+
+1. Move the `[Unreleased]` changelog entries under the new version and bump `version` and `site/src/lib/release.ts`.
+2. Push a `v<version>` tag. The release workflow builds both ISOs and the Boite image, then creates a GitHub prerelease with the notes and `SHA256SUMS`.
+3. On ruche, run `scripts/publish-assets.sh v<version>`. It downloads the images from that run, checks them against `SHA256SUMS`, and publishes them at `https://flux.facile.studio/releases/v<version>/`. The images exceed GitHub's 2 GiB asset limit, so the site serves them.
+
 ## Status
 
-Early work. The VM boots niri, zsh, Ghostty and the editors. The tools, shell, theme, ISO and Boite
-image are in progress; see [docs/plan.md](docs/plan.md).
+Open beta since 0.1.0. The stable release is planned for around March 2027. Expect rough edges and
+breaking changes until then, and report bugs at https://github.com/FacileStudio/Flux/issues.

@@ -8,7 +8,7 @@ Download the ISO for your processor from the [downloads page](/downloads):
 Then check the file is intact. In the folder that holds the ISO:
 
 ```sh
-curl -LO https://github.com/FacileStudio/Flux/releases/download/v0.1.0/SHA256SUMS
+curl -LO https://flux.facile.studio/releases/v0.1.0/SHA256SUMS
 sha256sum --check --ignore-missing SHA256SUMS
 ```
 

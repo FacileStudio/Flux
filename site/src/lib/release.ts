@@ -9,7 +9,7 @@ export const REPO = 'https://github.com/FacileStudio/Flux';
 /** Every release, with its notes and assets. */
 export const RELEASES = `${REPO}/releases`;
 
-const base = `${RELEASES}/download/v${VERSION}`;
+const base = `https://flux.facile.studio/releases/v${VERSION}`;
 
 /** The notes of the offered release. */
 export const RELEASE_NOTES = `${RELEASES}/tag/v${VERSION}`;

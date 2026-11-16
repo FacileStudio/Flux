@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     expose:
       - "80"
+    volumes:
+      - /etc/dokploy/flux-assets:/srv/releases:ro
     environment:
       - TZ=Europe/Paris
     healthcheck:
