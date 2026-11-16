@@ -10,6 +10,6 @@ writeShellApplication {
   runtimeEnv = { FLUX_TEMPLATE = ../../template; } // lib.optionalAttrs (fluxLock != null) { FLUX_LOCK = fluxLock; };
   text = builtins.readFile ./flux-install.sh;
   derivationArgs.postCheck = ''
-    TZDIR=${tzdata}/share/zoneinfo bash ${./test.sh} "$target"
+    PATH=${lib.getBin jq}/bin:$PATH TZDIR=${tzdata}/share/zoneinfo bash ${./test.sh} "$target"
   '';
 }

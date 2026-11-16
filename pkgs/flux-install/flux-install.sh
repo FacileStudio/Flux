@@ -26,6 +26,8 @@ mounted=0
 online=1
 root_uuid=""
 boot_uuid=""
+logging=0
+tail_lines=30
 nix_flags=(--extra-experimental-features "nix-command flakes")
 
 usage() {
@@ -57,12 +59,48 @@ emit() {
   fi
 }
 
+json_text() {
+  local s=$1
+  s=${s//\\/\\\\}
+  s=${s//\"/\\\"}
+  s=${s//$'\t'/ }
+  s=${s//$'\r'/}
+  s=${s//$'\n'/\\n}
+  printf '%s' "$s"
+}
+
+log_tail() {
+  [ "$logging" -eq 1 ] && [ -s "$log" ] || return 0
+  tail -n "$tail_lines" "$log" | tr -d '\000-\010\013\014\016-\037\177'
+}
+
+to_console() {
+  local dev
+  for dev in /dev/ttyS0 /dev/console; do
+    if [ -c "$dev" ] && [ -w "$dev" ]; then
+      printf '%s\n' "$1" | timeout 2 tee "$dev" >/dev/null 2>&1 || true
+      return 0
+    fi
+  done
+}
+
+report_error() {
+  local message=$1 tail
+  tail=$(log_tail)
+  if [ "$progress" = json ]; then
+    if [ -n "$tail" ]; then
+      printf '{"step":"error","message":"%s","log_tail":"%s"}\n' "$(json_escape "$message")" "$(json_text "$tail")"
+    else
+      printf '{"step":"error","message":"%s"}\n' "$(json_escape "$message")"
+    fi
+  fi
+  printf 'flux-install: %s\n' "$message" >&2
+  [ -z "$tail" ] || to_console "flux-install failed: $message"$'\n'"$tail"
+}
+
 fail() {
   step=failed
-  if [ "$progress" = json ]; then
-    printf '{"step":"error","message":"%s"}\n' "$(json_escape "$*")"
-  fi
-  printf 'flux-install: %s\n' "$*" >&2
+  report_error "$*"
   exit 1
 }
 
@@ -76,13 +114,10 @@ cleanup() {
 
 on_exit() {
   local code=$?
-  cleanup
   if [ "$code" -ne 0 ] && [ "$step" != failed ] && [ "$step" != start ]; then
-    if [ "$progress" = json ]; then
-      printf '{"step":"error","message":"%s"}\n' "$(json_escape "the $step step failed, see $log")"
-    fi
-    printf 'flux-install: the %s step failed, see %s\n' "$step" "$log" >&2
+    report_error "the $step step failed, see $log"
   fi
+  cleanup
 }
 
 ask() {
@@ -401,6 +436,9 @@ place() {
   emit config 22 "Copying the system configuration to /etc/flux"
   mkdir -p /mnt/etc/flux
   cp -r "$stage"/. /mnt/etc/flux/
+  emit config 26 "Copying the Flux and nixpkgs sources to $disk"
+  nix "${nix_flags[@]}" flake archive --to /mnt "path:/mnt/etc/flux" >>"$log" 2>&1 \
+    || fail "could not copy the Flux sources to $disk; see $log"
   emit config 30 "Configuration written to /etc/flux"
 }
 
@@ -428,7 +466,7 @@ track() {
 
 install_system() {
   local args=(--flake /mnt/etc/flux#flux --no-root-passwd)
-  [ "$online" -eq 1 ] || args+=(--option substituters "")
+  [ "$online" -eq 1 ] || args+=(--option substituters "auto?trusted=1")
   step=install
   emit install 30 "Installing Flux"
   if [ "$progress" = json ]; then
@@ -459,6 +497,7 @@ main() {
   [ -d /sys/firmware/efi ] || fail "this machine booted in legacy BIOS mode; Flux installs on UEFI only"
   [ "$interactive" -eq 0 ] || confirm
   : >"$log"
+  logging=1
   configure
   preflight
   partition

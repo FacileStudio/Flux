@@ -117,5 +117,34 @@ accepts "valid plan" "user=ada"
 accepts "yescrypt hash" "user=ada" --password-hash "$yescrypt"
 accepts "hostname with an inner dash" "hostname=my-flux" --hostname my-flux
 
+tail_test() {
+  local output
+  output=$(
+    log="$scratch/install.log"
+    for i in $(seq 40); do printf 'line %s "quoted" \\ tab\there \033[1mbold\033[0m\n' "$i"; done >"$log"
+    logging=1
+    progress=json
+    fail "nixos-install exited 1"
+  ) || true
+  if printf '%s' "$output" | jq -e '
+      .step == "error" and .message == "nixos-install exited 1"
+      and (.log_tail | split("\n") | length) == 30
+      and (.log_tail | startswith("line 11 \"quoted\" \\ tab here [1mbold[0m"))
+      and (.log_tail | endswith("line 40 \"quoted\" \\ tab here [1mbold[0m"))' >/dev/null; then
+    printf 'ok   error line carries the last 30 log lines\n'
+  else
+    printf 'FAIL error line log_tail: %s\n' "$output"
+    failures=$((failures + 1))
+  fi
+  output=$(progress=json; fail "before the log") || true
+  if printf '%s' "$output" | jq -e 'has("log_tail") | not' >/dev/null; then
+    printf 'ok   no log_tail before the log starts\n'
+  else
+    printf 'FAIL log_tail before the log: %s\n' "$output"
+    failures=$((failures + 1))
+  fi
+}
+tail_test
+
 rm -rf "$scratch"
 [ "$failures" -eq 0 ]
