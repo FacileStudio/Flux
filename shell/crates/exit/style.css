@@ -1,0 +1,68 @@
+window.exit-overlay {
+  background-color: @fc_scrim;
+}
+
+.exit-dialog {
+  min-width: 440px;
+  padding: 24px;
+  background-color: @fc_component;
+  border-radius: 12px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: @fc_fg;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: @fc_fg_muted;
+  margin-bottom: 24px;
+}
+
+button.action {
+  min-height: 36px;
+  min-width: 88px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+  background-color: @fc_surface;
+  border-radius: 8px;
+}
+
+button.action:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+button.action.cancel {
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+button.action.cancel:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+button.action.exit,
+button.action.reboot {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+button.action.exit:hover,
+button.action.reboot:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.15);
+}
+
+button.action.poweroff {
+  background-color: @fc_danger;
+  color: @fc_danger_fg;
+}
+
+button.action.poweroff:hover {
+  background-color: mix(@fc_danger, @fc_fg, 0.15);
+}

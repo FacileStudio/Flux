@@ -1,0 +1,120 @@
+.bar {
+  min-height: 32px;
+  margin: 10px 10px 0 10px;
+  padding: 0 4px;
+  background-color: @fc_component;
+  color: @fc_fg;
+  border-radius: 12px;
+}
+
+button.ws {
+  background-color: transparent;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: @fc_fg_muted;
+  border-radius: 8px;
+}
+
+button.ws:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+button.ws.focused,
+button.ws.focused:hover {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+button.ws.urgent,
+button.ws.urgent:hover {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+.clock {
+  font-size: 14px;
+  font-weight: 600;
+  color: @fc_fg;
+}
+
+.pill,
+.stat {
+  min-height: 24px;
+  padding: 0 8px;
+  background-color: @fc_surface;
+  font-size: 12px;
+  font-weight: 500;
+  color: @fc_fg_muted;
+  border-radius: 8px;
+}
+
+.pill:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+  color: @fc_fg;
+}
+
+.pill.logout {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+.pill.logout:hover {
+  background-color: @fc_danger;
+  color: @fc_danger_fg;
+}
+
+.popup {
+  min-width: 180px;
+  padding: 12px 16px;
+  background-color: @fc_component;
+  color: @fc_fg;
+  border-radius: 12px;
+}
+
+.popup .label {
+  font-size: 12px;
+  font-weight: 600;
+  color: @fc_fg;
+  margin-bottom: 4px;
+}
+
+.popup .value {
+  font-size: 14px;
+  font-weight: 600;
+  color: @fc_fg;
+  margin-bottom: 8px;
+}
+
+.popup .row {
+  padding: 4px 0;
+}
+
+.popup .step {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: @fc_fg;
+  background-color: @fc_surface;
+  border-radius: 8px;
+}
+
+.popup .step:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+.popup .fill {
+  min-height: 8px;
+  background-color: @fc_surface;
+  border-radius: 999px;
+}
+
+.popup .fill > .thumb {
+  background-color: @fc_accent;
+  border-radius: 999px;
+}
