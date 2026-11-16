@@ -1,0 +1,114 @@
+@import '@facile/muse/styles';
+@source '../node_modules/@facile/muse/src';
+
+:root {
+	--flux-wallpaper: radial-gradient(120% 90% at 15% 0%, color-mix(in oklab, var(--color-fc-info) 22%, var(--color-fc-surface)), transparent 60%),
+		radial-gradient(100% 80% at 100% 100%, color-mix(in oklab, var(--color-fc-success) 18%, var(--color-fc-surface)), transparent 65%),
+		var(--color-fc-surface);
+}
+
+.doc {
+	color: var(--color-fc-fg);
+	font-size: var(--text-fc-md);
+	line-height: 1.7;
+}
+
+.doc h1 {
+	margin: 0 0 1rem;
+	font-family: var(--font-fc-title);
+	font-size: var(--text-fc-3xl);
+	line-height: var(--text-fc-3xl--line-height);
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.doc h2 {
+	margin: 2.25rem 0 0.75rem;
+	font-family: var(--font-fc-title);
+	font-size: var(--text-fc-xl);
+	line-height: var(--text-fc-xl--line-height);
+	font-weight: 600;
+}
+
+.doc p,
+.doc ul,
+.doc ol {
+	margin: 0 0 1rem;
+}
+
+.doc ul,
+.doc ol {
+	padding-left: 1.25rem;
+}
+
+.doc ul {
+	list-style: disc;
+}
+
+.doc ol {
+	list-style: decimal;
+}
+
+.doc li {
+	margin: 0.25rem 0;
+}
+
+.doc a {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.doc strong {
+	font-weight: 600;
+}
+
+.doc code {
+	padding: 0.1em 0.35em;
+	border-radius: var(--radius-fc-xs);
+	background: var(--color-fc-surface);
+	font-family: var(--font-fc-mono);
+	font-size: 0.9em;
+	overflow-wrap: anywhere;
+}
+
+.doc pre {
+	margin: 0 0 1.25rem;
+	padding: 1rem 1.25rem;
+	overflow-x: auto;
+	border-radius: var(--radius-fc-lg);
+	background: var(--color-fc-inverse);
+	color: var(--color-fc-on-inverse);
+	font-size: var(--text-fc-sm);
+	line-height: 1.6;
+}
+
+.doc pre code {
+	padding: 0;
+	background: none;
+	color: inherit;
+	font-size: inherit;
+	overflow-wrap: normal;
+}
+
+.doc table {
+	width: 100%;
+	margin: 0 0 1.25rem;
+	border-collapse: collapse;
+	font-size: var(--text-fc-sm);
+}
+
+.doc th,
+.doc td {
+	padding: 0.6rem 0.75rem;
+	text-align: left;
+	vertical-align: top;
+}
+
+.doc thead th {
+	background: var(--color-fc-surface);
+	font-weight: 600;
+}
+
+.doc tbody tr:nth-child(even) td {
+	background: color-mix(in oklab, var(--color-fc-surface) 50%, transparent);
+}

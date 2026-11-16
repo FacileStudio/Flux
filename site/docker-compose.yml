@@ -1,0 +1,20 @@
+services:
+  flux-site:
+    build: .
+    image: flux-site
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      - TZ=Europe/Paris
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+networks:
+  default:
+    name: dokploy-network
+    external: true
