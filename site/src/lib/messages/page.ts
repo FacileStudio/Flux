@@ -69,14 +69,14 @@ export const page = {
 	'tile.rollback.today': ['today', 'aujourd’hui', 'hoy', 'heute'],
 	'tile.rollback.yesterday': ['yesterday', 'hier', 'ayer', 'gestern'],
 	'tile.rollback.week': ['last week', 'la semaine dernière', 'la semana pasada', 'letzte Woche'],
-	'tile.boite.title': ['Boîte runs Flux', 'Boîte tourne sur Flux', 'Boîte funciona con Flux', 'Boîte läuft mit Flux'],
+	'tile.boite.title': ['Boite runs Flux', 'Boite tourne sur Flux', 'Boite funciona con Flux', 'Boite läuft mit Flux'],
 	'tile.boite.body': [
-		'Every Boîte dev VM runs Flux headless: the same shell, the same tools, in seconds.',
-		'Chaque VM de dev Boîte tourne sur Flux sans bureau : le même shell, les mêmes outils, en quelques secondes.',
-		'Cada VM de desarrollo de Boîte ejecuta Flux sin escritorio: el mismo shell, las mismas herramientas, en segundos.',
-		'Jede Boîte-Entwicklungs-VM läuft mit Flux ohne Desktop: dieselbe Shell, dieselben Werkzeuge, in Sekunden.'
+		'Every Boite dev VM runs Flux headless: the same shell, the same tools, in seconds.',
+		'Chaque VM de dev Boite tourne sur Flux sans bureau : le même shell, les mêmes outils, en quelques secondes.',
+		'Cada VM de desarrollo de Boite ejecuta Flux sin escritorio: el mismo shell, las mismas herramientas, en segundos.',
+		'Jede Boite-Entwicklungs-VM läuft mit Flux ohne Desktop: dieselbe Shell, dieselben Werkzeuge, in Sekunden.'
 	],
-	'tile.boite.link': ['Open Boîte', 'Ouvrir Boîte', 'Abrir Boîte', 'Boîte öffnen'],
+	'tile.boite.link': ['Open Boite', 'Ouvrir Boite', 'Abrir Boite', 'Boite öffnen'],
 	'tile.boite.ready': ['ready', 'prête', 'lista', 'bereit'],
 	'features.title': ['What comes in the box', 'Ce qu’il y a dedans', 'Lo que trae', 'Was drin ist'],
 	'features.line': [

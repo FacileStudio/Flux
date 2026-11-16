@@ -1,6 +1,6 @@
-# Flux in Boîte
+# Flux in Boite
 
-Every [Boîte](https://boite.facile.studio) dev VM runs Flux headless: the same shell, the same tools, in seconds.
+Every [Boite](https://boite.facile.studio) dev VM runs Flux headless: the same shell, the same tools, in seconds.
 
 ```sh
 boite new api

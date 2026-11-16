@@ -1,6 +1,6 @@
-# Flux in Boîte
+# Flux in Boite
 
-Jede [Boîte](https://boite.facile.studio)-Entwicklungs-VM läuft mit Flux ohne Desktop: dieselbe Shell, dieselben Werkzeuge, in Sekunden.
+Jede [Boite](https://boite.facile.studio)-Entwicklungs-VM läuft mit Flux ohne Desktop: dieselbe Shell, dieselben Werkzeuge, in Sekunden.
 
 ```sh
 boite new api

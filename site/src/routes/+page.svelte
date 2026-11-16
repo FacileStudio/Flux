@@ -41,7 +41,7 @@
 		{ name: 'Nuage', icon: marks.nuage, line: t('with.nuage'), href: 'https://nuage.facile.studio' },
 		{ name: 'Casier', icon: marks.casier, line: t('with.casier'), href: 'https://casier.facile.studio' },
 		{ name: 'Bulle', icon: marks.bulle, line: t('with.bulle'), href: 'https://bulle.facile.studio' },
-		{ name: 'Boîte', icon: marks.boite, line: t('with.boite'), href: 'https://boite.facile.studio' }
+		{ name: 'Boite', icon: marks.boite, line: t('with.boite'), href: 'https://boite.facile.studio' }
 	]);
 
 	$effect(() => {

@@ -3,40 +3,63 @@ import type { Row } from '@facile/muse';
 /** The downloads and docs pages, in the order en, fr, es, de. */
 export const pages = {
 	'downloads.title': ['Download Flux', 'Télécharger Flux', 'Descargar Flux', 'Flux herunterladen'],
-	'downloads.heading': ['Download the beta', 'Télécharger la bêta', 'Descargar la beta', 'Beta herunterladen'],
+	'downloads.heading': ['Download Flux', 'Télécharger Flux', 'Descargar Flux', 'Flux herunterladen'],
 	'downloads.line': [
-		'One live ISO per architecture. Boot it from a USB stick, try Flux, then install it if you like it.',
-		'Une ISO live par architecture. Démarrez-la depuis une clé USB, essayez Flux, puis installez-le s’il vous plaît.',
-		'Una ISO live por arquitectura. Arránquela desde una memoria USB, pruebe Flux y luego instálelo si le gusta.',
-		'Ein Live-ISO pro Architektur. Starten Sie es vom USB-Stick, testen Sie Flux und installieren Sie es, wenn es Ihnen gefällt.'
+		'A live system on a USB stick. Try Flux without touching your disk, then install it if it suits you.',
+		'Un système live sur clé USB. Essayez Flux sans toucher à votre disque, puis installez-le s’il vous convient.',
+		'Un sistema live en una memoria USB. Pruebe Flux sin tocar su disco y luego instálelo si le convence.',
+		'Ein Live-System auf dem USB-Stick. Testen Sie Flux, ohne Ihre Festplatte anzurühren, und installieren Sie es, wenn es passt.'
 	],
-	'downloads.beta': [
-		'Flux is in open beta. The stable version comes around March 2027.',
-		'Flux est en bêta ouverte. La version stable arrive vers mars 2027.',
-		'Flux está en beta abierta. La versión estable llega hacia marzo de 2027.',
-		'Flux ist in der offenen Beta. Die stabile Version kommt um März 2027.'
+	'downloads.version': ['Version', 'Version', 'Versión', 'Version'],
+	'downloads.notes': ['Release notes', 'Notes de version', 'Notas de la versión', 'Versionshinweise'],
+	'downloads.all': ['All versions', 'Toutes les versions', 'Todas las versiones', 'Alle Versionen'],
+	'downloads.x86.name': ['PC', 'PC', 'PC', 'PC'],
+	'downloads.x86.line': [
+		'Most laptops and desktops, Intel or AMD.',
+		'La plupart des portables et des fixes, Intel ou AMD.',
+		'La mayoría de portátiles y sobremesas, Intel o AMD.',
+		'Die meisten Laptops und Desktops, Intel oder AMD.'
 	],
-	'downloads.verify.title': ['Check the download', 'Vérifier le téléchargement', 'Comprobar la descarga', 'Download prüfen'],
+	'downloads.arm.name': ['ARM', 'ARM', 'ARM', 'ARM'],
+	'downloads.arm.line': [
+		'ARM64 laptops and boards, and VMs on Apple Silicon Macs.',
+		'Portables et cartes ARM64, et VM sur Mac Apple Silicon.',
+		'Portátiles y placas ARM64, y VM en Mac con Apple Silicon.',
+		'ARM64-Laptops und -Boards sowie VMs auf Macs mit Apple Silicon.'
+	],
+	'downloads.recommended': ['For this device', 'Pour cet appareil', 'Para este dispositivo', 'Für dieses Gerät'],
+	'downloads.button': ['Download the ISO', 'Télécharger l’ISO', 'Descargar la ISO', 'ISO herunterladen'],
+	'downloads.checksum': ['Checksum', 'Somme de contrôle', 'Suma de verificación', 'Prüfsumme'],
+	'downloads.steps': ['Then, in three steps', 'Ensuite, en trois étapes', 'Después, en tres pasos', 'Danach in drei Schritten'],
+	'downloads.verify.title': ['Check the file', 'Vérifier le fichier', 'Comprobar el archivo', 'Datei prüfen'],
 	'downloads.verify.line': [
-		'Run this in the folder that holds the ISO. It should print OK.',
-		'Lancez ceci dans le dossier qui contient l’ISO. La commande doit afficher OK.',
-		'Ejecute esto en la carpeta que contiene la ISO. Debe mostrar OK.',
-		'Führen Sie das im Ordner mit dem ISO aus. Es sollte OK ausgeben.'
+		'Download the checksums next to the ISO, then run this. It prints OK when the file is intact.',
+		'Téléchargez les sommes de contrôle à côté de l’ISO, puis lancez ceci. La commande affiche OK si le fichier est intact.',
+		'Descargue las sumas junto a la ISO y ejecute esto. Muestra OK si el archivo está intacto.',
+		'Laden Sie die Prüfsummen neben das ISO und führen Sie das aus. Es zeigt OK, wenn die Datei intakt ist.'
 	],
 	'downloads.usb.title': ['Write it to a USB stick', 'L’écrire sur une clé USB', 'Grabarla en una memoria USB', 'Auf einen USB-Stick schreiben'],
 	'downloads.usb.line': [
-		'Replace /dev/sdX with your stick. Everything on it is erased.',
-		'Remplacez /dev/sdX par votre clé. Tout ce qu’elle contient est effacé.',
-		'Sustituya /dev/sdX por su memoria. Todo su contenido se borra.',
-		'Ersetzen Sie /dev/sdX durch Ihren Stick. Alles darauf wird gelöscht.'
+		'Use Impression on Linux or balenaEtcher on macOS and Windows. In a terminal, replace /dev/sdX with your stick: everything on it is erased.',
+		'Utilisez Impression sur Linux ou balenaEtcher sur macOS et Windows. Dans un terminal, remplacez /dev/sdX par votre clé : tout ce qu’elle contient est effacé.',
+		'Use Impression en Linux o balenaEtcher en macOS y Windows. En una terminal, sustituya /dev/sdX por su memoria: todo su contenido se borra.',
+		'Nutzen Sie Impression unter Linux oder balenaEtcher unter macOS und Windows. Im Terminal ersetzen Sie /dev/sdX durch Ihren Stick: alles darauf wird gelöscht.'
 	],
-	'downloads.usb.gui': [
-		'Prefer an app? Impression on Linux or balenaEtcher on macOS and Windows does the same in three clicks.',
-		'Vous préférez une app ? Impression sur Linux ou balenaEtcher sur macOS et Windows fait la même chose en trois clics.',
-		'¿Prefiere una app? Impression en Linux o balenaEtcher en macOS y Windows hace lo mismo en tres clics.',
-		'Lieber eine App? Impression unter Linux oder balenaEtcher unter macOS und Windows erledigt das in drei Klicks.'
+	'downloads.boot.title': ['Boot and install', 'Démarrer et installer', 'Arrancar e instalar', 'Starten und installieren'],
+	'downloads.boot.line': [
+		'Start your computer from the stick. Flux opens on its desktop; run sudo flux-install when you want to keep it.',
+		'Démarrez l’ordinateur sur la clé. Flux s’ouvre sur son bureau ; lancez sudo flux-install quand vous voulez le garder.',
+		'Arranque el ordenador desde la memoria. Flux se abre en su escritorio; ejecute sudo flux-install cuando quiera quedárselo.',
+		'Starten Sie den Computer vom Stick. Flux öffnet seinen Desktop; führen Sie sudo flux-install aus, wenn Sie es behalten wollen.'
 	],
 	'downloads.next': ['Installation guide', 'Guide d’installation', 'Guía de instalación', 'Installationsanleitung'],
+	'downloads.other': ['Other ways to run Flux', 'D’autres façons d’utiliser Flux', 'Otras formas de usar Flux', 'Weitere Wege zu Flux'],
+	'downloads.vm.title': ['Try it in a VM', 'L’essayer dans une VM', 'Probarlo en una VM', 'In einer VM testen'],
+	'downloads.vm.line': ['With Nix installed, one command boots the desktop.', 'Avec Nix installé, une commande démarre le bureau.', 'Con Nix instalado, un comando arranca el escritorio.', 'Mit Nix startet ein Befehl den Desktop.'],
+	'downloads.nixos.title': ['Already on NixOS', 'Déjà sous NixOS', 'Ya en NixOS', 'Schon auf NixOS'],
+	'downloads.nixos.line': ['Start a machine config that imports Flux.', 'Créez une config machine qui importe Flux.', 'Cree una configuración que importa Flux.', 'Legen Sie eine Maschinenkonfiguration an, die Flux importiert.'],
+	'downloads.boite.title': ['In Boite', 'Dans Boite', 'En Boite', 'In Boite'],
+	'downloads.boite.line': ['Every Boite dev VM runs Flux headless.', 'Chaque VM de dev Boite tourne sous Flux, sans bureau.', 'Cada VM de desarrollo de Boite ejecuta Flux sin escritorio.', 'Jede Boite-Dev-VM läuft mit Flux ohne Desktop.'],
 	'docs.title': ['Flux docs', 'Documentation Flux', 'Documentación de Flux', 'Flux-Doku'],
 	'docs.heading': ['Install and use Flux', 'Installer et utiliser Flux', 'Instalar y usar Flux', 'Flux installieren und nutzen'],
 	'docs.line': [
