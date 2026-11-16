@@ -1,124 +1,157 @@
-//! Brightness pill and its popup slider, driven by the ACPI backlight class.
+//! Brightness pill and its popup, driven by the backlight class.
+//!
+//! The level is read from `/sys/class/backlight`. Changes go through
+//! `brightnessctl`, which works through its udev rule or logind, and fall back
+//! to writing the attribute directly when the user may.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use gtk4::prelude::*;
-use gtk4::{Box, Button, Label, Orientation};
+use gtk4::{Box, Button, Orientation};
 
-use crate::popup::Popup;
-use crate::sysfs;
+use crate::popup::{self, FillBar, Popup};
+use crate::{sysfs, text, work};
 
-const STEP_PERCENT: u8 = 5;
+const STEP_PERCENT: u64 = 5;
 
-/// The first available backlight device, or `None` when there is no
-/// `/sys/class/backlight` on this machine.
-pub fn device() -> Option<PathBuf> {
-    let dir = PathBuf::from("/sys/class/backlight");
-    let rd = std::fs::read_dir(&dir).ok()?;
-    let mut best: Option<PathBuf> = None;
-    let mut best_max: u64 = 0;
-    for entry in rd.flatten() {
-        let os_name = entry.file_name();
-        let name = os_name.to_str()?;
-        // Prefer a real backlight interface (native, intel_backlight, amdgpu_bl,
-        // nv_panel, panfrost, etc.) over the generic `virtual` one.
-        if name.starts_with("virtual") {
-            continue;
-        }
-        let max = sysfs::read_u64(&dir.join(name), "max_brightness").filter(|max| *max > 0);
-        if let Some(max) = max {
-            if max > best_max {
-                best_max = max;
-                best = Some(dir.join(name));
-            }
-        }
+/// Where the kernel publishes the backlights.
+const BACKLIGHT_DIR: &str = "/sys/class/backlight";
+
+/// The backlight to drive under `root`: the one with the finest range, never
+/// the generic `virtual` one.
+pub fn device_in(root: &Path) -> Option<PathBuf> {
+    std::fs::read_dir(root)
+        .ok()?
+        .flatten()
+        .filter(|entry| !entry.file_name().to_string_lossy().starts_with("virtual"))
+        .filter_map(|entry| {
+            let path = root.join(entry.file_name());
+            let max = sysfs::read_u64(&path, "max_brightness").filter(|max| *max > 0)?;
+            Some((max, path))
+        })
+        .max_by_key(|(max, _)| *max)
+        .map(|(_, path)| path)
+}
+
+/// The level as a percent of the device's range.
+pub fn percent() -> Option<u16> {
+    let device = device_in(Path::new(BACKLIGHT_DIR))?;
+    let max = sysfs::read_u64(&device, "max_brightness").filter(|max| *max > 0)?;
+    let current = sysfs::read_u64(&device, "brightness")?;
+    Some((current * 100 / max).min(100) as u16)
+}
+
+/// The pill's label, or `None` to hide the pill.
+pub fn label() -> Option<String> {
+    percent().map(|percent| format!("{percent}%"))
+}
+
+/// Move the backlight one step up or down.
+fn step(up: bool) {
+    let change = format!("{STEP_PERCENT}%{}", if up { "+" } else { "-" });
+    let ran = Command::new("brightnessctl")
+        .args(["--quiet", "set", &change])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success());
+    if !ran {
+        write_step(up);
     }
-    best
 }
 
-/// Current brightness as a percent of `max_brightness`, or `None` when no
-/// backlight device is reachable.
-pub fn percent() -> Option<u8> {
-    let dev = device()?;
-    let max = sysfs::read_u64(&dev, "max_brightness")?;
-    let cur = sysfs::read_u64(&dev, "brightness")?;
-    if max == 0 {
-        return None;
-    }
-    Some((cur * 100 / max).min(100) as u8)
-}
-
-/// Whether a writable backlight device exists. When it does not, the pill is
-/// hidden rather than showing a read-only control.
-pub fn available() -> bool {
-    device().is_some_and(|dev| sysfs::writable(&dev, "brightness"))
-}
-
-/// Move the backlight by one fixed percentage step.
-pub fn step(up: bool) {
-    let Some(dev) = device() else {
+/// The same step, written to sysfs directly.
+fn write_step(up: bool) {
+    let Some(device) = device_in(Path::new(BACKLIGHT_DIR)) else {
         return;
     };
-    let Some(max) = sysfs::read_u64(&dev, "max_brightness").filter(|max| *max > 0) else {
+    let Some(max) = sysfs::read_u64(&device, "max_brightness").filter(|max| *max > 0) else {
         return;
     };
-    let cur = sysfs::read_u64(&dev, "brightness").unwrap_or(0);
-    let increment = max / 100 * STEP_PERCENT as u64;
-    let target = if up {
-        cur.saturating_add(increment)
+    let current = sysfs::read_u64(&device, "brightness").unwrap_or(0);
+    let _ = sysfs::write_u64(&device, "brightness", stepped(current, max, up));
+}
+
+/// The raw level one step from `current` on a `max` range.
+pub fn stepped(current: u64, max: u64, up: bool) -> u64 {
+    let increment = (max * STEP_PERCENT).div_ceil(100).max(1);
+    if up {
+        current.saturating_add(increment).min(max)
     } else {
-        cur.saturating_sub(increment)
-    };
-    let _ = sysfs::write_u64(&dev, "brightness", target.min(max));
+        current.saturating_sub(increment)
+    }
 }
 
-/// Set a brightness pill label to the current level. Called once at build time
-/// and again whenever the pill is clicked.
-pub fn refresh(label: &Label) {
-    label.set_text(&match percent() {
-        Some(pct) => format!("Brightness {pct}"),
-        None => "Brightness ?".to_string(),
+/// Open the brightness popup once the level is read.
+pub fn show(popup: &Popup) {
+    let popup = popup.clone();
+    work::off_main(percent, move |level| match level {
+        Some(level) => draw(&popup, level),
+        None => popup::message(&popup, text::get().brightness, text::get().unavailable),
     });
 }
 
-/// Render the brightness popup contents into a shared `Popup`.
-pub fn show(popup: &Popup) {
-    let Some(active) = percent() else {
-        crate::popup::message(popup, "Brightness", "unavailable");
-        return;
-    };
-
-    popup.show(|pop| {
-        let header = Label::new(Some("Brightness"));
-        header.add_css_class("label");
-
-        let value = Label::new(Some(&active.to_string()));
-        value.add_css_class("value");
-
-        let row = Box::new(Orientation::Vertical, 6);
-        row.append(&crate::popup::fill_bar(active.into()));
-
-        let controls = Box::new(Orientation::Horizontal, 6);
-        controls.append(&step_button(&value, false));
-        controls.append(&step_button(&value, true));
-
-        pop.append(&header);
+fn draw(popup: &Popup, level: u16) {
+    popup.show(move |pop| {
+        let value = popup::value(&format!("{level}%"));
+        let fill = FillBar::new(level);
+        let row = Box::new(Orientation::Horizontal, 8);
+        row.append(&step_button(&value, &fill, false));
+        row.append(&fill.root);
+        row.append(&step_button(&value, &fill, true));
+        pop.append(&popup::header(text::get().brightness));
         pop.append(&value);
         pop.append(&row);
-        pop.append(&controls);
     });
 }
 
-/// A `+5%`/`-5%` button that nudges the backlight and re-reads the popup's own
-/// number. The popup shows the percent alone, where the pill's label is the
-/// longer sentence, so the two cannot share one refresh.
-fn step_button(value: &Label, up: bool) -> Button {
-    let button = Button::with_label(if up { "+5%" } else { "-5%" });
+/// A `-` or `+` button that steps the backlight and redraws the popup.
+fn step_button(value: &gtk4::Label, fill: &FillBar, up: bool) -> Button {
+    let button = Button::with_label(if up { "+" } else { "-" });
     button.add_css_class("step");
-    let value = value.clone();
+    let (value, fill) = (value.clone(), fill.clone());
     button.connect_clicked(move |_| {
-        step(up);
-        value.set_text(&percent().unwrap_or(0).to_string());
+        let (value, fill) = (value.clone(), fill.clone());
+        work::off_main(
+            move || {
+                step(up);
+                percent()
+            },
+            move |level| {
+                if let Some(level) = level {
+                    value.set_text(&format!("{level}%"));
+                    fill.set(level);
+                }
+            },
+        );
     });
     button
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_step_is_five_percent_and_stays_in_range() {
+        assert_eq!(stepped(50, 100, true), 55);
+        assert_eq!(stepped(98, 100, true), 100);
+        assert_eq!(stepped(3, 100, false), 0);
+        assert_eq!(stepped(0, 7, true), 1);
+        assert_eq!(stepped(0, 255, true), 13);
+    }
+
+    #[test]
+    fn the_finest_real_backlight_wins() {
+        let root = std::env::temp_dir().join(format!("flux-backlight-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        for (name, max) in [("virtual0", "1000"), ("acpi_video0", "15"), ("intel_backlight", "96000")] {
+            std::fs::create_dir_all(root.join(name)).expect("device dir");
+            std::fs::write(root.join(name).join("max_brightness"), max).expect("max");
+        }
+        assert_eq!(device_in(&root), Some(root.join("intel_backlight")));
+        let _ = std::fs::remove_dir_all(&root);
+        assert_eq!(device_in(&root), None);
+    }
 }

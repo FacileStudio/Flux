@@ -1,70 +1,36 @@
-//! Network pill for the statusbar: shows the connection state and, when on Wi-Fi,
-//! the SSID, and opens a detail popup on click. The probing and the wording live
-//! in [`status`] and [`text`].
+//! Network pill for the statusbar: the SSID or the connection state on the bar,
+//! and a detail popup on click. The probing and the wording live in [`status`]
+//! and [`text`]; the probes run subprocesses, so they only run off the main loop.
 
 mod link;
 mod status;
 mod text;
 
 use gtk4::prelude::*;
-use gtk4::{Box, Label, Orientation};
 
-use crate::popup::Popup;
+use crate::popup::{self, Popup};
+use crate::work;
 
-/// Whether a network state can be read at all: from NetworkManager, from
-/// systemd-networkd, or from the kernel's own interfaces when neither daemon is
-/// running. When none of them answers, the pill is hidden rather than showing a
-/// dead control.
-pub fn available() -> bool {
-    status::state().is_some()
+/// The pill's label, or `None` when no manager and no interface can answer.
+pub fn label() -> Option<String> {
+    status::state().map(|state| text::label(&state, crate::text::get()))
 }
 
-/// A short label for the pill: state + optional SSID/iface name.
-pub fn label_text() -> Option<String> {
-    let state = status::state()?;
-    Some(text::label(&state.kind, &state.name))
-}
-
-/// Set a network pill label to the current state. Called once at build time and
-/// again on every tick. Leaves the label alone when the state cannot be read,
-/// rather than blanking a value that was correct a moment ago.
-pub fn refresh(label: &Label) {
-    if let Some(current) = label_text() {
-        label.set_text(&current);
-    }
-}
-
-/// Render the network detail popup.
+/// Open the network popup once the state is read.
 pub fn show(popup: &Popup) {
-    let Some(state) = status::state() else {
-        crate::popup::message(popup, "Network", "no manager");
-        return;
-    };
-
-    let summary = text::label(&state.kind, &state.name);
-    let detail = text::detail(&state);
-
-    popup.show(|pop| {
-        let header = Label::new(Some("Network"));
-        header.add_css_class("label");
-        header.set_halign(gtk4::Align::Start);
-        header.set_xalign(0.0);
-
-        let value = Label::new(Some(&summary));
-        value.add_css_class("value");
-        value.set_halign(gtk4::Align::Start);
-        value.set_xalign(0.0);
-
-        let row = Box::new(Orientation::Vertical, 6);
-        row.set_halign(gtk4::Align::Start);
-        let info = Label::new(Some(&detail));
-        info.add_css_class("dim");
-        info.set_halign(gtk4::Align::Start);
-        info.set_xalign(0.0);
-        row.append(&info);
-
-        pop.append(&header);
-        pop.append(&value);
-        pop.append(&row);
+    let popup = popup.clone();
+    work::off_main(status::state, move |state| {
+        let strings = crate::text::get();
+        let Some(state) = state else {
+            popup::message(&popup, strings.network, strings.unavailable);
+            return;
+        };
+        let summary = text::label(&state, strings);
+        let detail = text::detail(&state, strings);
+        popup.show(move |pop| {
+            pop.append(&popup::header(strings.network));
+            pop.append(&popup::value(&summary));
+            pop.append(&popup::detail(&detail));
+        });
     });
 }

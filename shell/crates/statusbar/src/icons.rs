@@ -10,7 +10,7 @@
 //! follow the stylesheet cascade the way the label next to it does, so the icons
 //! are painted once and painted again by [`follow_palette`] whenever the
 //! stylesheet is rebuilt — which is what moves the glyphs and the text together
-//! after a `palette sync`.
+//! after the palette changes.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -63,14 +63,17 @@ impl Icon {
 /// A pill asks for its image once, when the bar is built; the images it gets back
 /// stay in here, which is what lets [`retint`](Painted::retint) find them again
 /// after the palette has moved.
+/// The images are held weakly: a bar that leaves with its monitor takes its
+/// glyphs with it, and the next repaint forgets them.
 #[derive(Default)]
-pub struct Painted(Vec<(Icon, gtk4::Image)>);
+pub struct Painted(Vec<(Icon, glib::WeakRef<gtk4::Image>)>);
 
 impl Painted {
     /// Paint `icon` in the palette's current foreground, and remember it.
     pub fn image(&mut self, icon: Icon) -> gtk4::Image {
         let image = gtk4::Image::from_paintable(Some(&texture(icon, &tint())));
-        self.0.push((icon, image.clone()));
+        self.0.retain(|(_, image)| image.upgrade().is_some());
+        self.0.push((icon, image.downgrade()));
         image
     }
 
@@ -78,7 +81,9 @@ impl Painted {
     pub fn retint(&self) {
         let tint = tint();
         for (icon, image) in &self.0 {
-            image.set_paintable(Some(&texture(*icon, &tint)));
+            if let Some(image) = image.upgrade() {
+                image.set_paintable(Some(&texture(*icon, &tint)));
+            }
         }
     }
 }
@@ -86,7 +91,7 @@ impl Painted {
 /// Repaint `icons` every time the stylesheet is rebuilt.
 ///
 /// The labels follow the cascade on their own; a texture cannot, so this is what
-/// brings the glyphs along when `palette sync` rewrites `palette.css` — and what
+/// brings the glyphs along when the palette or the scheme changes, and what
 /// keeps them from being a restart behind the bar they sit on.
 pub fn follow_palette(icons: Rc<RefCell<Painted>>) {
     shell_common::theme::on_reload(move || icons.borrow().retint());

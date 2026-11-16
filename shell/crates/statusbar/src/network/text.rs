@@ -1,36 +1,35 @@
 //! How the network state reads: the pill's one-liner and the popup's detail.
 
 use super::status::{NetState, StateKind};
+use crate::text::Text;
 
-/// The pill's label: the state, and the SSID or interface when there is one.
-pub(super) fn label(kind: &StateKind, name: &str) -> String {
-    let code = match kind {
-        StateKind::Connected => "On",
-        StateKind::Connecting => "Up",
-        StateKind::Disconnecting => "Dn",
-        StateKind::Disconnected => "Off",
-        StateKind::Unknown => "?",
-    };
-    if name.is_empty() {
-        format!("Net {code}")
-    } else {
-        format!("Net {code} {}", short_name(name))
+/// The pill's label: the SSID or connection name when connected, the state
+/// otherwise.
+pub(super) fn label(state: &NetState, strings: &Text) -> String {
+    match state.kind {
+        StateKind::Connected if !state.name.trim().is_empty() => short_name(&state.name),
+        kind => words(kind, strings).to_string(),
     }
 }
 
-/// The popup's second line: the state in full, plus the interface.
-pub(super) fn detail(state: &NetState) -> String {
-    let code = match state.kind {
-        StateKind::Connected => "connected",
-        StateKind::Connecting => "connecting",
-        StateKind::Disconnecting => "disconnecting",
-        StateKind::Disconnected => "disconnected",
-        StateKind::Unknown => "unknown",
-    };
-    if state.name.is_empty() {
-        format!("state: {code}")
+/// The state in words.
+pub(super) fn words(kind: StateKind, strings: &Text) -> &'static str {
+    match kind {
+        StateKind::Connected => strings.online,
+        StateKind::Connecting => strings.connecting,
+        StateKind::Disconnecting => strings.disconnecting,
+        StateKind::Disconnected => strings.offline,
+        StateKind::Unknown => strings.unknown,
+    }
+}
+
+/// The popup's detail line: the state in words, plus the name when there is one.
+pub(super) fn detail(state: &NetState, strings: &Text) -> String {
+    let state_words = words(state.kind, strings);
+    if state.name.trim().is_empty() {
+        state_words.to_string()
     } else {
-        format!("state: {code}\niface: {}", short_name(&state.name))
+        format!("{state_words}\n{}: {}", strings.interface, short_name(&state.name))
     }
 }
 

@@ -6,7 +6,6 @@ license.workspace = true
 
 [dependencies]
 async-channel = "2"
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
 gtk4.workspace = true
 gtk4-layer-shell.workspace = true
 serde = { version = "1", features = ["derive"] }
