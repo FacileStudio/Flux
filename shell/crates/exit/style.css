@@ -1,9 +1,12 @@
 window.exit-overlay {
+  background-color: transparent;
+}
+
+.scrim {
   background-color: @fc_scrim;
 }
 
 .exit-dialog {
-  min-width: 440px;
   padding: 24px;
   background-color: @fc_component;
   border-radius: 12px;
@@ -22,10 +25,14 @@ window.exit-overlay {
   margin-bottom: 24px;
 }
 
-button.action {
-  min-height: 36px;
-  min-width: 88px;
-  padding: 0 16px;
+.choices {
+  margin-bottom: 16px;
+}
+
+button.choice {
+  min-width: 96px;
+  min-height: 88px;
+  padding: 12px 8px;
   font-size: 14px;
   font-weight: 500;
   color: @fc_fg;
@@ -33,36 +40,57 @@ button.action {
   border-radius: 8px;
 }
 
-button.action:hover {
+button.choice image {
+  color: @fc_fg;
+}
+
+button.choice:hover,
+button.choice:focus-visible,
+button.choice:focus {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
 }
 
-button.action.cancel {
+button.choice:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+button.choice:focus {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+button.choice.poweroff image,
+button.choice.poweroff label {
+  color: @fc_danger;
+}
+
+button.choice.poweroff:hover,
+button.choice.poweroff:focus {
+  background-color: @fc_danger;
+}
+
+button.choice.poweroff:hover image,
+button.choice.poweroff:hover label,
+button.choice.poweroff:focus image,
+button.choice.poweroff:focus label {
+  color: @fc_danger_fg;
+}
+
+button.cancel {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
   background-color: transparent;
   color: @fc_fg_muted;
 }
 
-button.action.cancel:hover {
+button.cancel:hover,
+button.cancel:focus {
   background-color: @fc_surface;
   color: @fc_fg;
 }
 
-button.action.exit,
-button.action.reboot {
-  background-color: @fc_accent;
-  color: @fc_accent_fg;
-}
-
-button.action.exit:hover,
-button.action.reboot:hover {
-  background-color: mix(@fc_accent, @fc_accent_fg, 0.15);
-}
-
-button.action.poweroff {
-  background-color: @fc_danger;
-  color: @fc_danger_fg;
-}
-
-button.action.poweroff:hover {
-  background-color: mix(@fc_danger, @fc_fg, 0.15);
+button.cancel:focus {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
 }

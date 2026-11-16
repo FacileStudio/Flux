@@ -109,6 +109,7 @@ button:active {
   background-color: mix(@fc_surface, @fc_fg, 0.14);
 }
 
+.fx-fade,
 .fx-reveal,
 .fx-reveal-side {
   opacity: 0;
@@ -123,6 +124,7 @@ button:active {
   transform: translateX(16px);
 }
 
+.fx-fade.fx-shown,
 .fx-reveal.fx-shown,
 .fx-reveal-side.fx-shown {
   opacity: 1;
