@@ -6,6 +6,7 @@ let
     partOf = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
+    path = [ "/run/current-system/sw" ];
     serviceConfig = {
       ExecStart = command;
       Restart = "on-failure";
@@ -28,7 +29,14 @@ let
   '';
 in
 lib.mkIf (config.flux.profile == "desktop") {
-  environment.systemPackages = [ pkgs.flux-shell pkgs.flux-wallpapers pkgs.adwaita-icon-theme ];
+  environment.systemPackages = [
+    pkgs.flux-shell
+    pkgs.flux-wallpapers
+    pkgs.adwaita-icon-theme
+    pkgs.brightnessctl
+    pkgs.playerctl
+  ];
+  services.udev.packages = [ pkgs.brightnessctl ];
   environment.pathsToLink = [ "/share/backgrounds" ];
 
   systemd.user.services.flux-statusbar =

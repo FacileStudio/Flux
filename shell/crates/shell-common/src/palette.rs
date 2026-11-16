@@ -4,11 +4,11 @@
 //! `palette.css` for the starting scheme, generated from the muse design tokens:
 //! one `@define-color fc_<token>` line per token (`--color-fc-page` becomes
 //! `fc_page`). [`crate::scheme`] picks the light or dark file from the portal.
-//! Every widgets stylesheet references only those `@fc_*` names. A
+//! Every widget stylesheet references only those `@fc_*` names. A
 //! built-in copy of the muse light palette stands in when the system file is
 //! missing, so a widget never starts unstyled.
 //!
-//! `~/.config/widgets/palette.css` is read after the system palette. GTK keeps
+//! `~/.config/flux/palette.css` is read after the system palette. GTK keeps
 //! the last `@define-color` for a name, so any `fc_*` line in the user file
 //! overrides the system one.
 //!
@@ -27,7 +27,7 @@ use crate::scheme::{self, Scheme};
 const SYSTEM_DIR: &str = "/etc/flux";
 
 /// Where the user's palette override and widget sheets live, under `$HOME`.
-const CONFIG_DIR: &str = ".config/widgets";
+const CONFIG_DIR: &str = ".config/flux";
 
 /// The user's palette override inside that directory.
 const PALETTE_FILE: &str = "palette.css";
@@ -54,19 +54,19 @@ pub(crate) const FALLBACK: &str = r#"
 @define-color fc_scrim rgba(0, 0, 0, 0.5);
 "#;
 
-/// `$HOME/.config/widgets`, where the user's override and sheets live.
+/// `$HOME/.config/flux`, where the user's override and sheets live.
 pub(crate) fn config_dir() -> Option<PathBuf> {
     let mut path = PathBuf::from(std::env::var_os("HOME")?);
     path.push(CONFIG_DIR);
     Some(path)
 }
 
-/// The user's palette override, `$HOME/.config/widgets/palette.css`.
+/// The user's palette override, `$HOME/.config/flux/palette.css`.
 pub(crate) fn palette_file() -> Option<PathBuf> {
     Some(config_dir()?.join(PALETTE_FILE))
 }
 
-/// A widget's own sheet, `$HOME/.config/widgets/<name>.css`. When the user places
+/// A widget's own sheet, `$HOME/.config/flux/<name>.css`. When the user places
 /// one it replaces the sheet the widget ships and is watched for hot-reload,
 /// mirroring the palette hot-reload that already exists for `palette.css`.
 pub(crate) fn sheet_file(name: &str) -> Option<PathBuf> {

@@ -30,7 +30,7 @@ fn a_control_reads_for_the_side_it_landed_on() {
 #[test]
 fn every_control_gets_a_line() {
     let text = pills();
-    for control in ["volume", "brightness", "battery", "network", "logout"] {
+    for control in ["volume", "brightness", "battery", "network"] {
         assert!(text.contains(control), "the report is missing {control}");
     }
 }

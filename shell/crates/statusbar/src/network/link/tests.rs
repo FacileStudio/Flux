@@ -34,7 +34,7 @@ fn hardware(name: &'static str, operstate: &'static str) -> Interface<'static> {
 
 /// Read one test's interfaces and clean them up, whatever the check made of them.
 fn report(links: &[Interface], tag: &str) -> Option<NetState> {
-    let root = std::env::temp_dir().join(format!("widgets-net-{}-{tag}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("flux-net-{}-{tag}", std::process::id()));
     let _ = std::fs::remove_dir_all(&root);
     for link in links {
         let dir = root.join(link.name);
@@ -112,7 +112,7 @@ fn a_directory_with_no_link_is_no_state() {
     );
     assert!(report(&[], "empty").is_none(), "no interface is no link");
     assert!(
-        state_at(Path::new("/nonexistent/widgets-net")).is_none(),
+        state_at(Path::new("/nonexistent/flux-net")).is_none(),
         "a directory that is not there is no link"
     );
 }

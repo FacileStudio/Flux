@@ -23,8 +23,9 @@ const DEFAULT_NAME: &str = "default.jpg";
 /// The systemd user unit that draws the wallpaper.
 const SERVICE: &str = "flux-wallpaper.service";
 
-/// The file extensions the picker offers, compared case-insensitively.
-const EXTENSIONS: [&str; 5] = ["jpg", "jpeg", "png", "webp", "avif"];
+/// The file extensions the picker offers, compared case-insensitively: the
+/// formats the shell's pixbuf loaders and swaybg both decode.
+pub const EXTENSIONS: [&str; 3] = ["jpg", "jpeg", "png"];
 
 fn home() -> Option<PathBuf> {
     std::env::var_os("HOME").map(PathBuf::from)
@@ -117,13 +118,22 @@ fn write_choice(file: &Path, image: &Path) -> std::io::Result<()> {
     std::fs::rename(&staged, file)
 }
 
-/// Make `image` the wallpaper: record it and restart the service.
-pub fn set(image: &Path) -> Result<(), String> {
-    let image = std::fs::canonicalize(image)
-        .map_err(|error| format!("{}: {error}", image.display()))?;
+/// The path `set` records for `image`: absolute, but with its symlinks kept.
+///
+/// A shipped wallpaper is listed as `/run/current-system/sw/share/...`, a link
+/// into the Nix store. Recording the store path would break after an update
+/// and a garbage collection; the profile path keeps pointing at the image.
+pub fn recorded(image: &Path) -> Result<PathBuf, String> {
+    let image = std::path::absolute(image).map_err(|error| format!("{}: {error}", image.display()))?;
     if !image.is_file() || !is_image(&image) {
         return Err(format!("{}: not an image file", image.display()));
     }
+    Ok(image)
+}
+
+/// Make `image` the wallpaper: record it and restart the service.
+pub fn set(image: &Path) -> Result<(), String> {
+    let image = recorded(image)?;
     let file = choice_file().ok_or("HOME is not set")?;
     write_choice(&file, &image).map_err(|error| format!("{}: {error}", file.display()))?;
     let status = Command::new("systemctl")

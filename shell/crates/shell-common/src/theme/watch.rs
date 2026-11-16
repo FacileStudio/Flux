@@ -30,7 +30,7 @@ pub(super) fn watch(provider: gtk4::CssProvider, name: &str, default: &'static s
 }
 
 /// Watch the palette. A file that does not exist yet is watched too: the monitor
-/// reports its creation, so a widget started before its first `palette sync`
+/// reports its creation, so a widget started before its palette file exists
 /// picks the colours up when the file appears.
 fn watch_palette(
     provider: &gtk4::CssProvider,
@@ -42,7 +42,7 @@ fn watch_palette(
     Some(monitor)
 }
 
-/// Watch the user's own sheet at `$HOME/.config/widgets/<name>.css`. A file
+/// Watch the user's own sheet at `$HOME/.config/flux/<name>.css`. A file
 /// that does not exist yet is watched too, exactly like the palette: the
 /// monitor reports its creation, so a widget started before the user wrote
 /// their sheet picks it up the moment it lands — a sheet placed after start-up

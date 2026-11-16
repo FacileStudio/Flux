@@ -16,17 +16,17 @@ fn list_keeps_images_sorted_per_folder_in_folder_order() {
     let user = root.join("user");
     std::fs::create_dir_all(system.join("nested.jpg")).expect("a folder named like an image");
     std::fs::create_dir_all(&user).expect("the user folder");
-    for name in ["b.png", "a.JPG", "notes.txt", "c.webp"] {
+    for name in ["b.png", "a.JPG", "notes.txt", "c.jpeg", "d.webp"] {
         std::fs::write(system.join(name), b"x").expect("a system file");
     }
     std::fs::write(user.join("0.jpeg"), b"x").expect("a user file");
-    std::os::unix::fs::symlink("c.webp", system.join("default.jpg")).expect("a default link");
+    std::os::unix::fs::symlink("c.jpeg", system.join("default.jpg")).expect("a default link");
 
     let listed = list(&[system.clone(), root.join("missing"), user.clone()]);
 
     assert_eq!(
         listed,
-        vec![system.join("a.JPG"), system.join("b.png"), system.join("c.webp"), user.join("0.jpeg")]
+        vec![system.join("a.JPG"), system.join("b.png"), system.join("c.jpeg"), user.join("0.jpeg")]
     );
     let _ = std::fs::remove_dir_all(&root);
 }
@@ -50,5 +50,20 @@ fn a_choice_reads_back_from_a_line_or_a_symlink() {
     assert_eq!(read_choice(&link), Some(root.join("other.png")));
 
     assert_eq!(read_choice(&root.join("absent")), None);
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn a_shipped_wallpaper_is_recorded_through_its_link() {
+    let root = scratch("recorded");
+    let store = root.join("store-hills.jpg");
+    std::fs::write(&store, b"x").expect("the store image");
+    let profile = root.join("profile-hills.jpg");
+    std::os::unix::fs::symlink(&store, &profile).expect("the profile link");
+
+    assert_eq!(recorded(&profile), Ok(profile.clone()));
+    assert!(recorded(&root.join("missing.jpg")).is_err());
+    std::fs::write(root.join("anim.webp"), b"x").expect("a webp");
+    assert!(recorded(&root.join("anim.webp")).is_err());
     let _ = std::fs::remove_dir_all(&root);
 }

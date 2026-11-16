@@ -5,8 +5,10 @@
 //! a texture, so a folder of multi-megabyte photos never stalls the panel.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
+use std::time::SystemTime;
 
 use gtk4::gdk_pixbuf::Pixbuf;
 use gtk4::prelude::*;
@@ -15,6 +17,8 @@ use gtk4::{
     ApplicationWindow, Box, Button, ContentFit, FileDialog, FileFilter, FlowBox, Label, Picture,
     PolicyType, ScrolledWindow, SelectionMode,
 };
+
+use crate::text;
 
 /// A thumbnail's size on screen; three fit across the 360px panel.
 const THUMB_WIDTH: i32 = 96;
@@ -27,6 +31,7 @@ pub struct Picker {
     status: Label,
     window: ApplicationWindow,
     tiles: RefCell<Vec<(PathBuf, Button)>>,
+    thumbs: RefCell<HashMap<PathBuf, (Option<SystemTime>, gdk::Texture)>>,
 }
 
 impl Picker {
@@ -52,6 +57,7 @@ impl Picker {
             status,
             window: window.clone(),
             tiles: RefCell::new(Vec::new()),
+            thumbs: RefCell::new(HashMap::new()),
         });
         let add_picker = picker.clone();
         add.connect_clicked(move |_| Picker::add_from_file(&add_picker));
@@ -117,12 +123,14 @@ impl Picker {
     /// dialog, so it steps aside while the dialog is open.
     fn add_from_file(picker: &Rc<Picker>) {
         let filter = FileFilter::new();
-        filter.set_name(Some("Images"));
-        filter.add_pixbuf_formats();
+        filter.set_name(Some(text::get().images));
+        for extension in super::EXTENSIONS {
+            filter.add_suffix(extension);
+        }
         let filters = gio::ListStore::new::<FileFilter>();
         filters.append(&filter);
         let dialog = FileDialog::builder()
-            .title("Add a wallpaper")
+            .title(text::get().add_title)
             .modal(true)
             .filters(&filters)
             .build();
@@ -148,11 +156,11 @@ impl Picker {
 /// The title row: the heading and the "Add from file" button.
 fn header() -> (Box, Button) {
     let header = Box::new(gtk4::Orientation::Horizontal, 8);
-    let title = Label::new(Some("Wallpaper"));
+    let title = Label::new(Some(text::get().wallpaper));
     title.add_css_class("title");
     title.set_halign(gtk4::Align::Start);
     title.set_hexpand(true);
-    let add = Button::with_label("Add from file");
+    let add = Button::with_label(text::get().add_from_file);
     add.add_css_class("clear");
     header.append(&title);
     header.append(&add);
@@ -183,7 +191,7 @@ fn tile(picker: &Rc<Picker>, path: &Path) -> Button {
     picture.set_content_fit(ContentFit::Cover);
     picture.set_can_shrink(true);
     picture.set_size_request(THUMB_WIDTH, THUMB_HEIGHT);
-    load_thumbnail(&picture, path.to_path_buf());
+    load_thumbnail(picker, &picture, path.to_path_buf());
 
     let button = Button::new();
     button.set_child(Some(&picture));
@@ -195,15 +203,25 @@ fn tile(picker: &Rc<Picker>, path: &Path) -> Button {
     button
 }
 
-/// Decode `path` at twice the tile size on the blocking pool, then hand the
-/// texture to `picture`. A pixbuf cannot cross threads, so the worker returns
+/// Give `picture` the thumbnail of `path`: from the cache when the file has
+/// not changed since it was decoded, otherwise decoded at twice the tile size
+/// on the blocking pool. A pixbuf cannot cross threads, so the worker returns
 /// its raw pixels. A file that does not decode keeps an empty tile.
-fn load_thumbnail(picture: &Picture, path: PathBuf) {
+fn load_thumbnail(picker: &Rc<Picker>, picture: &Picture, path: PathBuf) {
+    let modified = std::fs::metadata(&path).and_then(|meta| meta.modified()).ok();
+    if let Some((stamp, texture)) = picker.thumbs.borrow().get(&path) {
+        if *stamp == modified {
+            picture.set_paintable(Some(texture));
+            return;
+        }
+    }
     let picture = picture.clone();
+    let picker = Rc::downgrade(picker);
     glib::spawn_future_local(async move {
+        let source = path.clone();
         let decoded = gio::spawn_blocking(move || {
             let pixbuf =
-                Pixbuf::from_file_at_scale(&path, THUMB_WIDTH * 2, THUMB_HEIGHT * 2, true).ok()?;
+                Pixbuf::from_file_at_scale(&source, THUMB_WIDTH * 2, THUMB_HEIGHT * 2, true).ok()?;
             let format = if pixbuf.has_alpha() {
                 gdk::MemoryFormat::R8g8b8a8
             } else {
@@ -214,8 +232,11 @@ fn load_thumbnail(picture: &Picture, path: PathBuf) {
         })
         .await;
         if let Ok(Some((bytes, width, height, stride, format))) = decoded {
-            let texture = gdk::MemoryTexture::new(width, height, format, &bytes, stride);
+            let texture = gdk::MemoryTexture::new(width, height, format, &bytes, stride).upcast::<gdk::Texture>();
             picture.set_paintable(Some(&texture));
+            if let Some(picker) = picker.upgrade() {
+                picker.thumbs.borrow_mut().insert(path, (modified, texture));
+            }
         }
     });
 }

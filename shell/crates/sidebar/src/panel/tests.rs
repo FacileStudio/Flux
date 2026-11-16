@@ -42,21 +42,22 @@ fn panel(notifications: Vec<model::Notification>) -> Option<(Rc<App>, tokio::run
         eprintln!("sidebar: no display, skipping the panel test");
         return None;
     }
+    if let Some(settings) = gtk4::Settings::default() {
+        settings.set_gtk_enable_animations(false);
+    }
     let application = Application::builder()
-        .application_id("dev.saravenpi.SidebarTest")
+        .application_id("studio.facile.flux.SidebarTest")
         .build();
     application
         .register(None::<&gtk4::gio::Cancellable>)
         .expect("register the test application");
-    // `Widget::is_visible` walks the parent chain in GTK4, so the window has to
-    // be visible for the panel's own visibility to mean anything.
     let window = ApplicationWindow::new(&application);
     window.set_visible(true);
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .expect("tokio runtime");
-    let app = App::build(window, notifications, runtime.handle().clone());
+    let app = App::build(&application, window, notifications, Some(runtime.handle().clone()));
     Some((app, runtime))
 }
 
@@ -108,7 +109,7 @@ fn assert_toasts(panel: &Rc<App>) {
 /// they assert on deliberately flows from one into the next.
 #[test]
 fn panel_tracks_items() {
-    let state = std::env::temp_dir().join("widgets-sidebar-test-state");
+    let state = std::env::temp_dir().join("flux-sidebar-test-state");
     std::env::set_var("XDG_STATE_HOME", &state);
 
     let Some((panel, _runtime)) = panel(vec![notification(1, false), notification(2, true)]) else {

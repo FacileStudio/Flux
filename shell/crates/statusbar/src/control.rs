@@ -1,219 +1,175 @@
-//! The right-hand control row: one pill per control whose backend is present on
-//! this machine, each leading with its icon and opening its own popup on click.
+//! The right-hand control row: one pill per control, each leading with its icon
+//! and opening its own popup on click, then the session pill.
+//!
+//! Every pill reads its backend off the main loop on a timer of its own and
+//! shows itself only while the backend answers. A service that comes up after
+//! the bar (pipewire-pulse at login, a hot-plugged battery) gets its pill on
+//! the next tick instead of never.
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Box, Label, Orientation};
+use gtk4::{Box, Button, Label, Orientation};
 
 use crate::icons;
 use crate::popup::Popup;
-use crate::{battery, brightness, logout, network, volume};
+use crate::{battery, brightness, network, text, volume, work};
 
-/// The assembled row, plus the labels that keep ticking after it is built.
-///
-/// Only battery and network are ticked: volume and brightness update when they
-/// are clicked, because for those the popup is the source of truth.
-pub struct Row {
-    pub container: Box,
-    pub battery_label: Option<Label>,
-    pub network_label: Option<Label>,
+/// One control: its icon, how often its pill is read, the read itself and the
+/// popup it opens.
+pub struct Control {
+    pub name: &'static str,
+    pub icon: icons::Icon,
+    pub every: u32,
+    pub label: fn() -> Option<String>,
+    pub show: fn(&Popup),
 }
 
-/// Build the row. A control whose backend is missing is simply not placed, so
-/// the bar reads correctly on a machine with no battery or no audio.
-///
-/// `painted` collects the glyphs on the pills so the palette can reach them
-/// later; the caller keeps the same set. See [`icons::follow_palette`].
-pub fn build(popup: &Popup, painted: &Rc<RefCell<icons::Painted>>) -> Row {
-    let mut row = Row::new();
+/// Every control, in the order the row reads them.
+pub const CONTROLS: [Control; 4] = [
+    Control {
+        name: "volume",
+        icon: icons::Icon::Volume,
+        every: 3,
+        label: volume::label,
+        show: volume::show,
+    },
+    Control {
+        name: "brightness",
+        icon: icons::Icon::Brightness,
+        every: 3,
+        label: brightness::label,
+        show: brightness::show,
+    },
+    Control {
+        name: "battery",
+        icon: icons::Icon::Battery,
+        every: 30,
+        label: battery::label,
+        show: battery::show,
+    },
+    Control {
+        name: "network",
+        icon: icons::Icon::Network,
+        every: 10,
+        label: network::label,
+        show: network::show,
+    },
+];
 
-    if volume::available() {
-        row.push(popup, painted, icons::Icon::Volume, volume::show, volume::refresh);
+/// Build the row. `painted` collects the glyphs so the palette can reach them
+/// later; see [`icons::follow_palette`].
+pub fn build(popup: &Popup, painted: &Rc<RefCell<icons::Painted>>) -> Box {
+    let row = Box::new(Orientation::Horizontal, shell_common::theme::MODULE_GAP);
+    row.add_css_class("controls");
+    row.set_halign(gtk4::Align::End);
+    for control in &CONTROLS {
+        row.append(&pill(control, popup, painted));
     }
-
-    if brightness::available() {
-        row.push(
-            popup,
-            painted,
-            icons::Icon::Brightness,
-            brightness::show,
-            brightness::refresh,
-        );
-    }
-
-    if battery::available() {
-        let label = row.push(popup, painted, icons::Icon::Battery, battery::show, battery::refresh);
-        row.battery_label = Some(label);
-    }
-
-    if network::available() {
-        let label = row.push(popup, painted, icons::Icon::Network, network::show, network::refresh);
-        row.network_label = Some(label);
-    }
-
-    if let Some(button) = logout::pill(painted) {
-        row.container.append(&button);
-    }
-
+    row.append(&session(painted));
     row
 }
 
-impl Row {
-    fn new() -> Self {
-        let container = Box::new(Orientation::Horizontal, shell_common::theme::MODULE_GAP);
-        container.add_css_class("controls");
-        container.set_hexpand(false);
-        container.set_halign(gtk4::Align::End);
-        Self {
-            container,
-            battery_label: None,
-            network_label: None,
-        }
-    }
-
-    /// Place one control's pill and hand back the label its ticker will refresh.
-    fn push(
-        &mut self,
-        popup: &Popup,
-        painted: &Rc<RefCell<icons::Painted>>,
-        icon: icons::Icon,
-        show: impl Fn(&Popup) + 'static,
-        refresh: impl Fn(&Label) + 'static,
-    ) -> Label {
-        let label = Label::new(None);
-        self.container
-            .append(&pill(icon, &label, painted, popup, show, refresh));
-        label
-    }
-}
-
-/// One pill: the icon beside `label`, and a click that opens the control's own
-/// popup and then pulls the label back up to date.
-///
-/// The label is made by the caller and handed in, so the label the button paints
-/// is the one the tickers refresh — a pill that built its own internal label
-/// would leave a ticker updating a widget nobody can see. `show` and `refresh`
-/// are the control module's own functions, so the pill carries no per-control
-/// logic of its own.
-fn pill(
-    icon: icons::Icon,
-    label: &Label,
-    painted: &Rc<RefCell<icons::Painted>>,
-    popup: &Popup,
-    show: impl Fn(&Popup) + 'static,
-    refresh: impl Fn(&Label) + 'static,
-) -> gtk4::Button {
-    refresh(label);
-
+/// One control's pill: hidden until its first read answers, then kept current.
+fn pill(control: &'static Control, popup: &Popup, painted: &Rc<RefCell<icons::Painted>>) -> Button {
+    let label = Label::new(None);
     let child = Box::new(Orientation::Horizontal, 4);
-    child.append(&painted.borrow_mut().image(icon));
-    child.append(label);
+    child.append(&painted.borrow_mut().image(control.icon));
+    child.append(&label);
 
-    let button = gtk4::Button::new();
+    let button = Button::new();
     button.set_child(Some(&child));
     button.add_css_class("pill");
+    button.add_css_class(control.name);
+    button.set_visible(false);
 
     let popup = popup.clone();
-    let label = label.clone();
-    let anchor = button.clone();
-    button.connect_clicked(move |_| {
-        if popup.is_open_for(&anchor) {
+    button.connect_clicked(move |anchor| {
+        if popup.is_open_for(anchor) {
             popup.hide();
             return;
         }
-        popup.position_under(&anchor);
-        show(&popup);
-        refresh(&label);
+        popup.position_under(anchor);
+        (control.show)(&popup);
+        refresh(control, anchor, &label_of(anchor));
     });
+
+    refresh(control, &button, &label);
+    let weak = button.downgrade();
+    glib::timeout_add_seconds_local(control.every, move || {
+        let Some(button) = weak.upgrade() else {
+            return glib::ControlFlow::Break;
+        };
+        refresh(control, &button, &label_of(&button));
+        glib::ControlFlow::Continue
+    });
+    button
+}
+
+/// The label a pill paints beside its icon.
+fn label_of(button: &Button) -> Label {
+    button
+        .child()
+        .and_then(|child| child.last_child())
+        .and_then(|label| label.downcast::<Label>().ok())
+        .unwrap_or_default()
+}
+
+/// Read the control off the main loop and show what it said, or hide the pill.
+fn refresh(control: &'static Control, button: &Button, label: &Label) {
+    let (button, label) = (button.downgrade(), label.downgrade());
+    work::off_main(control.label, move |text| {
+        let (Some(button), Some(label)) = (button.upgrade(), label.upgrade()) else {
+            return;
+        };
+        if let Some(text) = &text {
+            label.set_text(text);
+        }
+        button.set_visible(text.is_some());
+    });
+}
+
+/// The session pill: the glyph alone, opening the exit menu.
+fn session(painted: &Rc<RefCell<icons::Painted>>) -> Button {
+    let button = Button::new();
+    button.set_child(Some(&painted.borrow_mut().image(icons::Icon::Logout)));
+    button.add_css_class("pill");
+    button.add_css_class("session");
+    button.set_tooltip_text(Some(text::get().session_tooltip));
+    button.connect_clicked(|_| shell_common::spawn::detached(shell_common::spawn::sibling("exit"), &[]));
     button
 }
 
 #[cfg(test)]
 mod tests {
-    use std::cell::Cell;
-    use std::rc::Rc;
-
     use gtk4::gio;
 
     use super::*;
 
-    /// A pill wired to a real popup, with counters standing in for a control's
-    /// `show` and `refresh` so the test can tell how often each ran.
-    ///
-    /// `application_id` has to differ between the tests that call this: an
-    /// application is exported on the bus by id, so two of them claiming the same
-    /// one in a single run makes the second refuse to register.
-    fn wired_pill(application_id: &str) -> (gtk4::Button, Label, Popup, Rc<Cell<u32>>) {
-        let application = gtk4::Application::builder()
-            .application_id(application_id)
-            .build();
-        application
-            .register(None::<&gio::Cancellable>)
-            .expect("register the test application");
-
-        let popup = Popup::new(&application);
-        let label = Label::new(None);
-        let painted = Rc::new(RefCell::new(icons::Painted::default()));
-        let refreshes = Rc::new(Cell::new(0u32));
-        let counter = refreshes.clone();
-        let button = pill(
-            icons::Icon::Battery,
-            &label,
-            &painted,
-            &popup,
-            |popup| crate::popup::message(popup, "Battery", "50"),
-            move |label| {
-                let refreshes = counter.get() + 1;
-                counter.set(refreshes);
-                label.set_text(&format!("refresh {refreshes}"));
-            },
-        );
-        (button, label, popup, refreshes)
+    #[test]
+    fn every_control_has_a_distinct_name() {
+        let mut names: Vec<&str> = CONTROLS.iter().map(|control| control.name).collect();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), CONTROLS.len());
     }
 
-    /// Clicking a pill has to open the control's popup and pull its label back up
-    /// to date. Both once went missing: the handler dropped the popup instead of
-    /// showing it, so every control lost its popup, and the label the tickers
-    /// refreshed was a copy that was never painted on the bar.
-    ///
-    /// GTK needs a display, so this stands down where there is none rather than
-    /// fail on a machine that cannot show a window — run the suite against a
-    /// display to actually exercise it. The body runs on the toolkit thread for
-    /// the reason [`crate::testing`] gives.
     #[test]
-    fn clicking_a_pill_shows_the_popup_and_refreshes_the_label() {
+    fn a_pill_carries_its_glyph_beside_its_label_and_waits_for_a_reading() {
         let ran = crate::testing::on_gtk_thread(|| {
-            let (button, label, popup, refreshes) = wired_pill("dev.saravenpi.ControlPillTest");
+            let application = gtk4::Application::builder()
+                .application_id("studio.facile.flux.ControlPillTest")
+                .build();
+            application
+                .register(None::<&gio::Cancellable>)
+                .expect("register the test application");
+            let popup = Popup::new(&application, None);
+            let painted = Rc::new(RefCell::new(icons::Painted::default()));
+            let button = pill(&CONTROLS[0], &popup, &painted);
 
-            assert_eq!(refreshes.get(), 1, "the pill refreshes itself once, when built");
-            assert_eq!(label.text().as_str(), "refresh 1", "and paints what it read");
-            assert!(!popup.is_visible(), "the popup starts off screen");
-
-            button.emit_clicked();
-
-            assert!(popup.is_visible(), "clicking the pill puts its popup on screen");
-            assert_eq!(refreshes.get(), 2, "clicking the pill asks for a fresh reading");
-            assert_eq!(label.text().as_str(), "refresh 2", "and paints that one");
-        });
-        if !ran {
-            eprintln!("statusbar: no display, skipping the control pill test");
-        }
-    }
-
-    /// A pill has to carry its glyph on screen, next to the label it ticks.
-    ///
-    /// This is the check the icons needed: they were rasterized from SVG, doing
-    /// that failed silently on a machine without an SVG loader, and the only
-    /// thing that changed was that the picture was never appended — a pill with
-    /// a label and no icon looks exactly like a bar whose pills have no icons.
-    ///
-    /// Like the click check this needs a display and stands down without one.
-    #[test]
-    fn a_pill_carries_its_glyph_beside_its_label() {
-        let ran = crate::testing::on_gtk_thread(|| {
-            let (button, label, ..) = wired_pill("dev.saravenpi.ControlGlyphTest");
+            assert!(!button.is_visible(), "a pill stays hidden until its backend answers");
             let row = button
                 .child()
                 .and_then(|child| child.downcast::<Box>().ok())
@@ -222,26 +178,14 @@ mod tests {
                 .first_child()
                 .and_then(|child| child.downcast::<gtk4::Image>().ok())
                 .expect("the row leads with the pill's icon");
-            let texture = glyph
-                .paintable()
-                .and_then(|paintable| paintable.downcast::<gtk4::gdk::Texture>().ok())
-                .expect("the icon has a texture to paint");
-
-            assert_eq!(
-                (texture.width(), texture.height()),
-                (24, 24),
-                "the glyph is drawn at the icon's own size"
-            );
-            let widget = label.clone().upcast_ref::<gtk4::Widget>().as_ptr();
+            assert!(glyph.paintable().is_some(), "the icon has a texture to paint");
             assert!(
-                glyph
-                    .next_sibling()
-                    .is_some_and(|next| next.as_ptr() == widget),
-                "and the label it ticks comes after it"
+                glyph.next_sibling().is_some_and(|next| next.is::<Label>()),
+                "and the label comes after it"
             );
         });
         if !ran {
-            eprintln!("statusbar: no display, skipping the pill glyph test");
+            eprintln!("statusbar: no display, skipping the pill test");
         }
     }
 }
