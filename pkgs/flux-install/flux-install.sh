@@ -437,7 +437,7 @@ place() {
   mkdir -p /mnt/etc/flux
   cp -r "$stage"/. /mnt/etc/flux/
   emit config 26 "Copying the Flux and nixpkgs sources to $disk"
-  nix "${nix_flags[@]}" flake archive --to /mnt "path:/mnt/etc/flux" >>"$log" 2>&1 \
+  nix "${nix_flags[@]}" flake archive --to "/mnt?require-sigs=false" "path:/mnt/etc/flux" >>"$log" 2>&1 \
     || fail "could not copy the Flux sources to $disk; see $log"
   emit config 30 "Configuration written to /etc/flux"
 }
