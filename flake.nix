@@ -47,7 +47,7 @@
         in {
           default = pkgs.mkShell {
             nativeBuildInputs = with pkgs; [ cargo rustc clippy rustfmt pkg-config wrapGAppsHook4 ];
-            buildInputs = with pkgs; [ gtk4 gtk4-layer-shell gtk4-session-lock pam librsvg ];
+            buildInputs = with pkgs; [ gtk4 gtk4-layer-shell pam librsvg ];
           };
         });
 
