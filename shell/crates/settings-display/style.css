@@ -39,7 +39,7 @@
 }
 
 .fx-display .fx-monitor {
-  background-color: alpha(@fc_fg, 0.1);
+  background-color: alpha(@fc_fg, 0.14);
   color: @fc_fg;
   border-radius: 8px;
   font-size: 12px;
@@ -48,7 +48,7 @@
 }
 
 .fx-display .fx-monitor:hover {
-  background-color: alpha(@fc_fg, 0.16);
+  background-color: alpha(@fc_fg, 0.2);
 }
 
 .fx-display .fx-monitor.dragging {
