@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use gtk4::prelude::*;
 
+use crate::wallpaper::picker::Picker;
 use crate::{dbus, model};
 
 use super::App;
@@ -42,6 +43,7 @@ impl App {
         if self.window.is_visible() {
             self.window.set_visible(false);
         } else {
+            Picker::reload(&self.picker);
             self.window.present();
         }
     }

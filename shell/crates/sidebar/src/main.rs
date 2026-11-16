@@ -7,6 +7,7 @@ mod dbus;
 mod model;
 mod panel;
 mod popup;
+mod wallpaper;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -28,7 +29,8 @@ thread_local! {
 }
 
 fn main() {
-    match std::env::args().nth(1).as_deref() {
+    let args: Vec<String> = std::env::args().collect();
+    match args.get(1).map(String::as_str) {
         Some("--version") => println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")),
         // The compositor binding. With no daemon running yet, starting one *is*
         // the toggle, so the panel must come up visible: a hidden daemon would
@@ -37,8 +39,9 @@ fn main() {
         // `sidebar` on its own primes the daemon without covering the screen,
         // which is what a compositor's `exec` line wants.
         None => toggle_or_start(false),
+        Some("wallpaper") => std::process::exit(wallpaper::cli(&args[2..])),
         Some(_) => {
-            eprintln!("usage: sidebar [--version|toggle]");
+            eprintln!("usage: sidebar [--version|toggle|wallpaper ...]");
             std::process::exit(2);
         }
     }

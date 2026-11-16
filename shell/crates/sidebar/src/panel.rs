@@ -6,6 +6,7 @@
 //! over the files that each have one job.
 
 mod actions;
+mod controls;
 mod list;
 
 #[cfg(test)]
@@ -21,6 +22,7 @@ use gtk4::{
 use gtk4::{gdk, glib};
 
 use crate::dbus::{self, Event};
+use crate::wallpaper::picker::Picker;
 use crate::{model, popup};
 
 /// The panel and everything on it. The fields are the children of this module
@@ -35,6 +37,7 @@ pub(super) struct App {
     items: RefCell<Vec<model::Notification>>,
     time_labels: RefCell<Vec<(Label, i64)>>,
     toasts: Rc<popup::Popups>,
+    picker: Rc<Picker>,
     handle: tokio::runtime::Handle,
 }
 
@@ -67,7 +70,8 @@ impl App {
         let empty = Label::new(Some("No notifications"));
         empty.add_css_class("dim");
 
-        window.set_child(Some(&surface(&header, &scroll, &empty)));
+        let picker = Picker::build(&window);
+        window.set_child(Some(&surface(&header, &scroll, &empty, picker.widget())));
 
         let application = window
             .application()
@@ -78,7 +82,7 @@ impl App {
         });
 
         let app = Rc::new(App {
-            window, list, scroll, count, empty, clear, toasts, handle,
+            window, list, scroll, count, empty, clear, toasts, picker, handle,
             items: RefCell::new(items),
             time_labels: RefCell::new(Vec::new()),
         });
@@ -147,13 +151,16 @@ fn list() -> (ScrolledWindow, Box) {
     (scroll, list)
 }
 
-/// The panel surface: the header, the scrolling list and the empty-state line.
-fn surface(header: &Box, scroll: &ScrolledWindow, empty: &Label) -> Box {
+/// The panel surface: the quick controls, the header, the scrolling list, the
+/// empty-state line and the wallpaper picker at the foot.
+fn surface(header: &Box, scroll: &ScrolledWindow, empty: &Label, picker: &Box) -> Box {
     let root = Box::new(gtk4::Orientation::Vertical, 10);
     root.add_css_class("surface");
     root.add_css_class("panel");
+    root.append(&controls::controls());
     root.append(header);
     root.append(scroll);
     root.append(empty);
+    root.append(picker);
     root
 }
