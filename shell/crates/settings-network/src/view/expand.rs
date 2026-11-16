@@ -59,6 +59,7 @@ pub fn join_for(network: &Network, password: Option<String>) -> Join {
 /// A primary or quiet button.
 pub fn button(label: &str, class: &str) -> Button {
     let button = Button::with_label(label);
+    button.add_css_class("fx-button");
     button.add_css_class(class);
     button
 }
@@ -214,7 +215,7 @@ pub fn details(page: &Rc<Page>, network: &Network) -> Widget {
     let connected = device.is_some();
     drop(snapshot);
     if let Some(active) = autoconnect {
-        let (row, switch) = ui::switch_row(text.autoconnect, None, active);
+        let (row, switch) = ui::switch_row(text.autoconnect, "", active, |_| {});
         row.add_css_class("fx-inline");
         let weak = Rc::downgrade(page);
         let ssid = network.ssid.clone();
@@ -239,7 +240,7 @@ fn detail_actions(page: &Rc<Page>, network: &Network, connected: bool, known: bo
     let actions = Box::new(Orientation::Horizontal, 8);
     actions.set_halign(Align::End);
     if known {
-        let forget = button(page.text.forget, "fx-ghost-danger");
+        let forget = button(page.text.forget, "fx-danger");
         let weak = Rc::downgrade(page);
         let ssid = network.ssid.clone();
         forget.connect_clicked(move |_| {

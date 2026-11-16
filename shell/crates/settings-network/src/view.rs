@@ -54,6 +54,7 @@ pub struct Page {
     pub open: RefCell<Option<(String, Expand)>>,
     updating: Cell<bool>,
     root: Box,
+    outer: Widget,
     state: Stack,
     message: Box,
     wifi_switch: Switch,
@@ -95,45 +96,46 @@ impl Page {
     }
 
     fn build(mode: Mode, text: &'static Text, backend: Backend) -> Page {
-        let root = Box::new(
-            Orientation::Vertical,
-            if mode == Mode::Full { 24 } else { 8 },
-        );
-        root.add_css_class("fx-page");
+        let (root, outer): (Box, Widget) = if mode == Mode::Full {
+            let (scroll, column) = ui::page(text.title, text.description);
+            (column, scroll.upcast())
+        } else {
+            let column = Box::new(Orientation::Vertical, 8);
+            column.add_css_class("fx-quick");
+            (column.clone(), column.upcast())
+        };
         root.add_css_class("fx-network");
-        if mode == Mode::Quick {
-            root.add_css_class("fx-quick");
-        }
         let (banner, banner_label) = banner();
         root.append(&banner);
         let state = Stack::new();
         state.set_transition_type(gtk4::StackTransitionType::Crossfade);
-        state.set_transition_duration(ui::motion_ms());
+        state.set_transition_duration(ui::MOTION_MS);
         state.set_vhomogeneous(false);
         let message = Box::new(Orientation::Vertical, 0);
         state.add_named(&message, Some("message"));
         let content = Box::new(
             Orientation::Vertical,
-            if mode == Mode::Full { 24 } else { 4 },
+            if mode == Mode::Full { 32 } else { 4 },
         );
         state.add_named(&content, Some("content"));
         root.append(&state);
-        let radios = ui::section("");
-        let (wifi_row, wifi_switch) = ui::switch_row(text.wifi, None, false);
+        let (radios_root, radios) = ui::section("");
+        let (wifi_row, wifi_switch) = ui::switch_row(text.wifi, "", false, |_| {});
         radios.append(&wifi_row);
         let airplane = (mode == Mode::Full).then(|| {
-            let (row, switch) = ui::switch_row(text.airplane, Some(text.airplane_body), false);
+            let (row, switch) = ui::switch_row(text.airplane, text.airplane_body, false, |_| {});
             radios.append(&row);
             switch
         });
-        content.append(&radios);
-        let section = ui::section("");
-        let (header, scan_spinner, scan_button, scan_label) = scan_header(text, mode);
-        section.append(&header);
+        content.append(&radios_root);
+        let parts = ui::section_with(if mode == Mode::Full { text.networks } else { "" }, "");
+        let section = parts.card.clone();
+        let (scan_spinner, scan_button, scan_label) = scan_header(text, &parts.header);
+        parts.header.set_visible(true);
         let networks = Stack::new();
         networks.set_vhomogeneous(false);
         networks.set_transition_type(gtk4::StackTransitionType::Crossfade);
-        networks.set_transition_duration(ui::motion_ms());
+        networks.set_transition_duration(ui::MOTION_MS);
         let list = list::List::new();
         networks.add_named(&list.container, Some("list"));
         let empty = Box::new(Orientation::Vertical, 0);
@@ -143,8 +145,8 @@ impl Page {
         if let Some(other) = &other {
             section.append(&other.root);
         }
-        content.append(&section);
-        let extra = Box::new(Orientation::Vertical, 24);
+        content.append(&parts.root);
+        let extra = Box::new(Orientation::Vertical, 32);
         content.append(&extra);
         Page {
             backend,
@@ -156,6 +158,7 @@ impl Page {
             open: RefCell::new(None),
             updating: Cell::new(false),
             root,
+            outer,
             state,
             message,
             wifi_switch,
@@ -176,7 +179,7 @@ impl Page {
 
     /// The widget to put in a window or a popover.
     pub fn widget(&self) -> Widget {
-        self.root.clone().upcast()
+        self.outer.clone()
     }
 
     fn connect(self: &Rc<Self>) {
@@ -300,7 +303,7 @@ impl Page {
     fn warn(self: &Rc<Self>, message: &str) {
         self.banner_label
             .set_text(&format!("{}: {message}", self.text.action_failed));
-        self.banner.set_transition_duration(ui::motion_ms());
+        self.banner.set_transition_duration(ui::MOTION_MS);
         self.banner.set_reveal_child(true);
         let banner = self.banner.clone();
         glib::timeout_add_local_once(Duration::from_secs(6), move || {
@@ -332,13 +335,13 @@ impl Page {
         let text = self.text;
         let widget: Widget = match status {
             Status::Loading => ui::spinner_row(text.loading).upcast(),
-            Status::NotRunning => ui::empty_state(text.missing_title, text.missing_body).upcast(),
-            Status::Error(error) => ui::empty_state(text.error_title, error).upcast(),
+            Status::NotRunning => ui::empty_state(EMPTY_ICON, text.missing_title, text.missing_body).upcast(),
+            Status::Error(error) => ui::empty_state(EMPTY_ICON, text.error_title, error).upcast(),
             Status::Ready => return,
         };
-        let card = ui::section("");
+        let (section, card) = ui::section("");
         card.append(&widget);
-        self.message.append(&card);
+        self.message.append(&section);
     }
 
     fn render_radios(&self, snapshot: &Snapshot) {
@@ -379,7 +382,7 @@ impl Page {
         match empty {
             Some((title, body)) => {
                 clear(&self.empty);
-                self.empty.append(&ui::empty_state(title, body));
+                self.empty.append(&ui::empty_state(EMPTY_ICON, title, body));
                 self.networks.set_visible_child_name("empty");
             }
             None => self.networks.set_visible_child_name("list"),
@@ -387,43 +390,29 @@ impl Page {
     }
 }
 
+const EMPTY_ICON: &str = "network-wireless-offline-symbolic";
+
 fn banner() -> (Revealer, Label) {
     let revealer = Revealer::new();
     revealer.set_transition_type(gtk4::RevealerTransitionType::SlideDown);
     let label = ui::label("", "fx-banner");
+    label.add_css_class("fx-danger");
     revealer.set_child(Some(&label));
     (revealer, label)
 }
 
-fn scan_header(text: &Text, mode: Mode) -> (Box, Spinner, Button, Label) {
-    let header = Box::new(Orientation::Horizontal, 8);
-    header.add_css_class("fx-list-header");
-    let title = ui::label(
-        if mode == Mode::Full {
-            text.networks
-        } else {
-            ""
-        },
-        "fx-section-title",
-    );
-    title.set_hexpand(true);
-    header.append(&title);
+fn scan_header(text: &Text, header: &Box) -> (Spinner, Button, Label) {
     let spinner = Spinner::new();
     spinner.set_valign(Align::Center);
     header.append(&spinner);
     let scanning = ui::label(text.scanning, "fx-subtitle");
     scanning.set_valign(Align::Center);
-    scanning.set_margin_end(12);
+    scanning.set_hexpand(false);
     header.append(&scanning);
-    let button = Button::with_label(text.scan);
-    button.add_css_class("fx-ghost");
+    let button = ui::ghost_button(text.scan);
+    button.set_valign(Align::Center);
     header.append(&button);
-    (header, spinner, button, scanning)
+    (spinner, button, scanning)
 }
 
-/// Remove every child of `container`.
-pub fn clear(container: &Box) {
-    while let Some(child) = container.first_child() {
-        container.remove(&child);
-    }
-}
+pub use ui::clear;

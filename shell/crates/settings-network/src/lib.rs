@@ -9,7 +9,7 @@ pub mod model;
 mod ui;
 mod view;
 
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 
 use gtk4::prelude::*;
 
@@ -20,10 +20,6 @@ pub const ICON: &str = "network-wireless-symbolic";
 /// The page's stylesheet, loaded once per display by [`page`] and [`quick_menu`].
 pub const STYLE: &str = include_str!("../style.css");
 
-thread_local! {
-    static STYLED: Cell<bool> = const { Cell::new(false) };
-}
-
 /// The page's name in the user's language.
 pub fn title() -> String {
     i18n::text().title.to_string()
@@ -31,12 +27,7 @@ pub fn title() -> String {
 
 /// The whole Network page, in a scrolled window.
 pub fn page() -> gtk4::Widget {
-    let content = mount(view::Mode::Full);
-    let scroll = gtk4::ScrolledWindow::new();
-    scroll.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
-    scroll.set_vexpand(true);
-    scroll.set_child(Some(&content));
-    scroll.upcast()
+    mount(view::Mode::Full)
 }
 
 /// The Wi-Fi switch, the top networks and a "Network settings" link, for a
@@ -58,17 +49,5 @@ fn mount(mode: view::Mode) -> gtk4::Widget {
 }
 
 fn style() {
-    if STYLED.with(|styled| styled.replace(true)) {
-        return;
-    }
-    let Some(display) = gtk4::gdk::Display::default() else {
-        return;
-    };
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data(STYLE);
-    gtk4::style_context_add_provider_for_display(
-        &display,
-        &provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
-    );
+    shell_common::ui::page_style(STYLE);
 }

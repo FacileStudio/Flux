@@ -62,18 +62,18 @@ impl List {
             row.update(page, network);
             self.container
                 .reorder_child_after(&row.outer, previous.as_ref());
-            row.outer.set_transition_duration(ui::motion_ms());
+            row.outer.set_transition_duration(ui::motion(ui::MOTION_MS));
             row.outer.set_reveal_child(true);
             previous = Some(row.outer.clone().upcast());
         }
     }
 
     fn retire(&self, row: &NetRow) {
-        row.outer.set_transition_duration(ui::motion_ms());
+        row.outer.set_transition_duration(ui::motion(ui::MOTION_MS));
         row.outer.set_reveal_child(false);
         let outer = row.outer.clone();
         let container = self.container.clone();
-        let delay = u64::from(ui::motion_ms()) + 40;
+        let delay = u64::from(ui::motion(ui::MOTION_MS)) + 40;
         glib::timeout_add_local_once(Duration::from_millis(delay), move || {
             if outer.parent().is_some_and(|parent| parent == container) {
                 container.remove(&outer);

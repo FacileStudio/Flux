@@ -38,18 +38,13 @@ pub fn wifi_subtitle(text: &Text, snapshot: &Snapshot) -> Option<String> {
 
 /// Set or clear the muted line of a `ui::row`.
 pub fn set_subtitle(row: &Box, subtitle: Option<&str>) {
-    let Some(column) = row.first_child().and_downcast::<Box>() else {
-        return;
-    };
-    let existing = column
+    let label = row
         .first_child()
+        .and_then(|column| column.first_child())
         .and_then(|title| title.next_sibling())
         .and_downcast::<Label>();
-    match (existing, subtitle) {
-        (Some(label), Some(text)) => label.set_text(text),
-        (Some(label), None) => column.remove(&label),
-        (None, Some(text)) => column.append(&ui::label(text, "fx-subtitle")),
-        (None, None) => {}
+    if let Some(label) = label {
+        ui::set_subtitle(&label, subtitle.unwrap_or(""));
     }
 }
 
@@ -127,11 +122,7 @@ impl Other {
         root.add_css_class("fx-net");
         let open = Rc::new(Cell::new(false));
         let chevron = draw::chevron(open.clone());
-        let header = ui::row(
-            text.other,
-            Some(text.other_body),
-            Some(chevron.upcast_ref()),
-        );
+        let header = ui::row(text.other, text.other_body, &chevron);
         header.add_css_class("fx-net-header");
         let indent = Box::new(Orientation::Horizontal, 0);
         indent.set_size_request(18, -1);
@@ -149,6 +140,7 @@ impl Other {
             .map(|kind| super::expand::security_label(text, *kind))
             .collect();
         let kind = DropDown::from_strings(&labels);
+        kind.add_css_class("fx-choice");
         form.append(&kind);
         let password = PasswordEntry::new();
         password.set_show_peek_icon(true);
@@ -184,7 +176,7 @@ impl Other {
     pub fn set_open(&self, open: bool) {
         self.open.set(open);
         self.chevron.queue_draw();
-        self.body.set_transition_duration(ui::motion_ms());
+        self.body.set_transition_duration(ui::motion(ui::MOTION_MS));
         self.body.set_reveal_child(open);
         if open {
             self.ssid.grab_focus();
@@ -202,7 +194,7 @@ impl Other {
         click.connect_released(move |_, _, _, _| {
             open.set(!open.get());
             chevron.queue_draw();
-            body.set_transition_duration(ui::motion_ms());
+            body.set_transition_duration(ui::motion(ui::MOTION_MS));
             body.set_reveal_child(open.get());
             if open.get() {
                 ssid.grab_focus();
@@ -294,26 +286,26 @@ pub fn render_extra(page: &Rc<Page>, extra: &Box, snapshot: &Snapshot) {
     clear(extra);
     let text = page.text;
     if !snapshot.wired.is_empty() {
-        let section = ui::section("");
+        let (root, section) = ui::section("");
         for port in &snapshot.wired {
             let title = if snapshot.wired.len() > 1 {
                 port.iface.as_str()
             } else {
                 text.wired
             };
-            section.append(&ui::row(title, Some(&wired_line(text, port)), None));
+            section.append(&ui::row_with(title, &wired_line(text, port), None).root);
         }
-        extra.append(&section);
+        extra.append(&root);
     }
     if !snapshot.vpns.is_empty() {
-        let section = ui::section(text.vpn);
+        let (root, section) = ui::section(text.vpn);
         for vpn in &snapshot.vpns {
             let subtitle = match vpn.link {
-                Link::Connected => Some(text.connected),
-                Link::Connecting => Some(text.connecting),
-                _ => None,
+                Link::Connected => text.connected,
+                Link::Connecting => text.connecting,
+                _ => "",
             };
-            let (row, switch) = ui::switch_row(&vpn.name, subtitle, vpn.active.is_some());
+            let (row, switch) = ui::switch_row(&vpn.name, subtitle, vpn.active.is_some(), |_| {});
             let weak = Rc::downgrade(page);
             let path = vpn.path.clone();
             switch.connect_state_set(move |_, on| {
@@ -324,7 +316,7 @@ pub fn render_extra(page: &Rc<Page>, extra: &Box, snapshot: &Snapshot) {
             });
             section.append(&row);
         }
-        extra.append(&section);
+        extra.append(&root);
     }
 }
 

@@ -5,6 +5,7 @@ use crate::model::{Failure, Kind, Service, Signal};
 
 pub struct Text {
     pub title: &'static str,
+    pub description: &'static str,
     pub visible_as: &'static str,
     pub my_devices: &'static str,
     pub nearby: &'static str,
@@ -67,6 +68,7 @@ pub struct Text {
 
 pub const EN: Text = Text {
     title: "Bluetooth",
+    description: "Headphones, keyboards, mice and other wireless devices.",
     visible_as: "Visible to other devices as \u{201c}{name}\u{201d}",
     my_devices: "My devices",
     nearby: "Nearby devices",
@@ -155,6 +157,7 @@ pub const EN: Text = Text {
 
 pub const FR: Text = Text {
     title: "Bluetooth",
+    description: "Casques, claviers, souris et autres appareils sans fil.",
     visible_as: "Visible des autres appareils sous le nom \u{ab}\u{a0}{name}\u{a0}\u{bb}",
     my_devices: "Mes appareils",
     nearby: "Appareils \u{e0} proximit\u{e9}",

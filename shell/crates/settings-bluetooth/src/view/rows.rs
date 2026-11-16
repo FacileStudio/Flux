@@ -57,9 +57,9 @@ fn details(page: &Weak<Page>, path: &str, text: &Text, syncing: &Rc<Cell<bool>>)
     column.add_css_class("bt-details");
     let address = value_label();
     let kind = value_label();
-    column.append(&ui::row(text.address, "", Some(address.upcast_ref())).0);
-    column.append(&ui::row(text.kind, "", Some(kind.upcast_ref())).0);
-    let (trust_row, trusted, _) = ui::switch_row(text.trusted, text.trusted_hint, false);
+    column.append(&ui::row(text.address, "", &address));
+    column.append(&ui::row(text.kind, "", &kind));
+    let (trust_row, trusted) = ui::switch_row(text.trusted, text.trusted_hint, false, |_| {});
     column.append(&trust_row);
     let forget = Button::with_label(text.forget);
     forget.add_css_class("fx-button");
@@ -71,7 +71,7 @@ fn details(page: &Weak<Page>, path: &str, text: &Text, syncing: &Rc<Cell<bool>>)
     column.append(&actions);
     let revealer = Revealer::new();
     revealer.set_transition_type(gtk4::RevealerTransitionType::SlideDown);
-    revealer.set_transition_duration(ui::motion(180));
+    revealer.set_transition_duration(ui::MOTION_MS);
     revealer.set_child(Some(&column));
     let expand = Button::from_icon_name("pan-down-symbolic");
     expand.add_css_class("bt-expand");

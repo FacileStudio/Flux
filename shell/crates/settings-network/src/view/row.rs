@@ -145,7 +145,7 @@ impl NetRow {
     }
 
     fn show(&self, page: &Rc<Page>, network: &Network, open: Option<Expand>, connecting: bool) {
-        self.body.set_transition_duration(ui::motion_ms());
+        self.body.set_transition_duration(ui::motion(ui::MOTION_MS));
         let Some(expand) = open else {
             self.body.set_reveal_child(false);
             self.shown.borrow_mut().take();

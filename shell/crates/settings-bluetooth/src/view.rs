@@ -11,7 +11,7 @@ use std::rc::{Rc, Weak};
 use std::time::Duration;
 
 use gtk4::prelude::*;
-use gtk4::{glib, Align, Box, Button, Image, Label, Orientation, Overlay, Revealer, ScrolledWindow, Spinner, Stack, Switch};
+use gtk4::{glib, Align, Box, Button, Image, Label, Orientation, Overlay, Revealer, Spinner, Stack, Switch};
 
 use crate::backend::{Answer, Command, Event, Op, Request};
 use crate::client::{self, Client};
@@ -19,22 +19,9 @@ use crate::i18n::{self, Text};
 use crate::model::{self, Availability, Failure, Pairing, Prompt, Snapshot, Stage, Step};
 use crate::ui;
 
-const STYLE: &str = include_str!("../style.css");
-
-thread_local! {
-    static STYLED: Cell<bool> = const { Cell::new(false) };
-}
-
-/// Put the page's stylesheet on the display once.
+/// Put the page's own stylesheet on the display once.
 pub fn install_style() {
-    if STYLED.with(|styled| styled.replace(true)) {
-        return;
-    }
-    let provider = gtk4::CssProvider::new();
-    provider.load_from_data(STYLE);
-    if let Some(display) = gtk4::gdk::Display::default() {
-        gtk4::style_context_add_provider_for_display(&display, &provider, gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION);
-    }
+    ui::page_style(include_str!("../style.css"));
 }
 
 struct Empty {
@@ -79,10 +66,8 @@ pub struct Page {
 }
 
 fn empty_state() -> Empty {
-    let (root, image, title, body) = ui::empty_state("bluetooth-disabled-symbolic", "", "");
-    let action = Button::new();
-    action.add_css_class("fx-button");
-    action.add_css_class("fx-primary");
+    let (root, image, title, body) = ui::empty_state_with("bluetooth-disabled-symbolic", "", "");
+    let action = ui::primary_button("");
     action.set_halign(Align::Center);
     action.set_margin_top(8);
     root.append(&action);
@@ -96,20 +81,24 @@ fn empty_state() -> Empty {
 }
 
 fn lists(text: &Text, column: &Box) -> Lists {
-    let (paired_section, _, paired_card) = ui::section(text.my_devices);
+    let (paired_section, paired_card) = ui::section(text.my_devices);
     let paired = Box::new(Orientation::Vertical, 0);
     let paired_empty = ui::label(text.no_paired, "fx-subtitle");
     paired_empty.add_css_class("fx-row");
     paired_card.append(&paired);
     paired_card.append(&paired_empty);
-    let (nearby_section, nearby_header, nearby_card) = ui::section(text.nearby);
+    let nearby_parts = ui::section_with(text.nearby, "");
+    let (nearby_section, nearby_header, nearby_card) = (nearby_parts.root, nearby_parts.header, nearby_parts.card);
     let searching = Spinner::new();
     searching.set_tooltip_text(Some(text.searching));
     nearby_header.append(&searching);
     let nearby = Box::new(Orientation::Vertical, 0);
     let nearby_empty = ui::label(text.no_nearby, "fx-subtitle");
     nearby_empty.add_css_class("fx-row");
-    let (unnamed_row, unnamed, unnamed_count) = ui::switch_row(text.show_unnamed, "", false);
+    let unnamed = Switch::new();
+    unnamed.update_property(&[gtk4::accessible::Property::Label(text.show_unnamed)]);
+    let unnamed_parts = ui::row_with(text.show_unnamed, "", Some(unnamed.upcast_ref()));
+    let (unnamed_row, unnamed_count) = (unnamed_parts.root, unnamed_parts.subtitle);
     nearby_card.append(&nearby);
     nearby_card.append(&nearby_empty);
     nearby_card.append(&unnamed_row);
@@ -140,40 +129,30 @@ pub fn page() -> gtk4::Widget {
 
 impl Page {
     fn new(client: Rc<Client>, text: &'static Text) -> (Rc<Page>, Overlay) {
-        let column = Box::new(Orientation::Vertical, 24);
-        column.add_css_class("fx-page");
-        column.set_valign(Align::Start);
-        let heading = ui::label(text.title, "fx-page-title");
-        column.append(&heading);
-        let power_card = Box::new(Orientation::Vertical, 0);
-        power_card.add_css_class("fx-card");
-        let (power_row, power, _) = ui::switch_row(text.title, "", false);
+        let (scroll, column) = ui::page(text.title, text.description);
+        column.add_css_class("bt-page");
+        let (power_card, power_rows) = ui::section("");
+        let (power_row, power) = ui::switch_row(text.title, "", false, |_| {});
         let visible_label = ui::label("", "fx-subtitle");
         visible_label.add_css_class("bt-visible");
         let visible = Revealer::new();
         visible.set_transition_type(gtk4::RevealerTransitionType::SlideDown);
-        visible.set_transition_duration(ui::motion(180));
+        visible.set_transition_duration(ui::MOTION_MS);
         visible.set_child(Some(&visible_label));
-        power_card.append(&power_row);
-        power_card.append(&visible);
+        power_rows.append(&power_row);
+        power_rows.append(&visible);
         column.append(&power_card);
         let empty = empty_state();
-        let devices = Box::new(Orientation::Vertical, 24);
+        let devices = Box::new(Orientation::Vertical, 32);
         let lists = lists(text, &devices);
         let stack = Stack::new();
         stack.set_transition_type(gtk4::StackTransitionType::Crossfade);
-        stack.set_transition_duration(ui::motion(160));
+        stack.set_transition_duration(ui::MOTION_MS);
         stack.set_vhomogeneous(false);
         stack.set_interpolate_size(true);
         stack.add_named(&empty.root, Some("empty"));
         stack.add_named(&devices, Some("devices"));
         column.append(&stack);
-        let scroll = ScrolledWindow::new();
-        scroll.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
-        scroll.set_vexpand(true);
-        scroll.set_hexpand(true);
-        scroll.set_child(Some(&column));
-        scroll.add_css_class("bt-scroll");
         let root = Overlay::new();
         root.add_css_class("bt-page");
         root.set_child(Some(&scroll));
@@ -364,7 +343,7 @@ impl Page {
         };
         self.empty.image.set_icon_name(Some(icon));
         self.empty.title.set_text(title);
-        self.empty.body.set_text(body);
+        ui::set_subtitle(&self.empty.body, body);
         self.empty.action.set_label(text.turn_on);
         self.empty.action.set_visible(action);
         self.stack.set_visible_child_name("empty");

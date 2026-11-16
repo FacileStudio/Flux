@@ -4,6 +4,7 @@ use std::sync::OnceLock;
 
 pub struct Text {
     pub title: &'static str,
+    pub description: &'static str,
     pub wifi: &'static str,
     pub airplane: &'static str,
     pub airplane_body: &'static str,
@@ -69,6 +70,7 @@ pub struct Text {
 
 pub const EN: Text = Text {
     title: "Network",
+    description: "Wi-Fi, wired connections and VPNs.",
     wifi: "Wi-Fi",
     airplane: "Airplane mode",
     airplane_body: "Turns off Wi-Fi and mobile broadband",
@@ -134,6 +136,7 @@ pub const EN: Text = Text {
 
 pub const FR: Text = Text {
     title: "Réseau",
+    description: "Wi-Fi, connexions filaires et VPN.",
     wifi: "Wi-Fi",
     airplane: "Mode avion",
     airplane_body: "Coupe le Wi-Fi et le haut débit mobile",

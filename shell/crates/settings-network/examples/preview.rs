@@ -13,7 +13,8 @@ fn main() {
         .application_id("studio.facile.FluxNetworkPreview")
         .build();
     application.connect_activate(move |application| {
-        shell_common::theme::init("", "settings-network");
+        let css: &'static str = Box::leak(format!("{}\nwindow.fx-network-preview, window.fx-network-preview.backdrop {{ background-color: @fc_page; }}\nwindow.fx-network-preview scrolledwindow, window.fx-network-preview viewport {{ background-color: transparent; }}", shell_common::ui::CSS).into_boxed_str());
+        shell_common::theme::init(css, "settings-network");
         let window = gtk4::ApplicationWindow::builder()
             .application(application)
             .title(settings_network::title())

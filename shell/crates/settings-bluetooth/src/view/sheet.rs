@@ -174,7 +174,7 @@ impl Sheet {
         card.set_vexpand(true);
         let root = Revealer::new();
         root.set_transition_type(gtk4::RevealerTransitionType::Crossfade);
-        root.set_transition_duration(ui::motion(160));
+        root.set_transition_duration(ui::MOTION_MS);
         root.set_child(Some(&scrim));
         root.set_can_target(false);
         let input = Rc::new(Cell::new(None));

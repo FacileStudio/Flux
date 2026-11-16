@@ -144,14 +144,7 @@ pub struct Row {
 pub fn row_with(title: &str, subtitle: &str, suffix: Option<&gtk4::Widget>) -> Row {
     let line = gtk4::Box::new(Orientation::Horizontal, 24);
     line.add_css_class("fx-row");
-    let labels = gtk4::Box::new(Orientation::Vertical, 4);
-    labels.set_hexpand(true);
-    labels.set_valign(Align::Center);
-    let title = label(title, "fx-title");
-    labels.append(&title);
-    let subtitle = label(subtitle, "fx-subtitle");
-    subtitle.set_visible(!subtitle.text().is_empty());
-    labels.append(&subtitle);
+    let (labels, title, subtitle) = texts(title, subtitle);
     line.append(&labels);
     if let Some(suffix) = suffix {
         suffix.set_valign(Align::Center);
@@ -163,6 +156,19 @@ pub fn row_with(title: &str, subtitle: &str, suffix: Option<&gtk4::Widget>) -> R
         title,
         subtitle,
     }
+}
+
+/// A row's text column: the title over a muted subtitle that is hidden while empty. It expands to push anything after it to the end.
+pub fn texts(title: &str, subtitle: &str) -> (gtk4::Box, gtk4::Label, gtk4::Label) {
+    let labels = gtk4::Box::new(Orientation::Vertical, 4);
+    labels.set_hexpand(true);
+    labels.set_valign(Align::Center);
+    let title = label(title, "fx-title");
+    labels.append(&title);
+    let subtitle = label(subtitle, "fx-subtitle");
+    subtitle.set_visible(!subtitle.text().is_empty());
+    labels.append(&subtitle);
+    (labels, title, subtitle)
 }
 
 /// A settings row: `title` and an optional muted `subtitle` (empty hides it) on the left, `suffix` on the right.
@@ -241,12 +247,12 @@ pub fn empty_state(icon_name: &str, title: &str, description: &str) -> gtk4::Box
     empty_state_with(icon_name, title, description).0
 }
 
-/// [`empty_state`] with its title and description labels, so a page can reword it in place.
+/// [`empty_state`] with its icon, title and description, so a page can change them in place.
 pub fn empty_state_with(
     icon_name: &str,
     title: &str,
     description: &str,
-) -> (gtk4::Box, gtk4::Label, gtk4::Label) {
+) -> (gtk4::Box, gtk4::Image, gtk4::Label, gtk4::Label) {
     let column = gtk4::Box::new(Orientation::Vertical, 16);
     column.add_css_class("fx-empty");
     column.set_halign(Align::Fill);
@@ -267,7 +273,7 @@ pub fn empty_state_with(
     detail.set_visible(!description.is_empty());
     labels.append(&detail);
     column.append(&labels);
-    (column, heading, detail)
+    (column, glyph, heading, detail)
 }
 
 /// A row that shows work in progress: a spinning indicator beside `title`.

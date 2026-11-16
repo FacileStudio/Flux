@@ -13,7 +13,8 @@ fn main() {
         .application_id("studio.facile.FluxBluetoothPreview")
         .build();
     application.connect_activate(|application| {
-        shell_common::theme::init("", "settings-bluetooth");
+        let css: &'static str = Box::leak(format!("{}\nwindow {{ background-color: @fc_page; }}", shell_common::ui::CSS).into_boxed_str());
+        shell_common::theme::init(css, "settings-bluetooth");
         let quick = std::env::var("FLUX_BLUETOOTH_PREVIEW").is_ok_and(|scene| scene == "quick");
         let content = if quick {
             settings_bluetooth::quick_menu()
