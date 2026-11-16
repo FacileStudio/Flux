@@ -1,0 +1,15 @@
+[package]
+name = "settings-power"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "flux-idle"
+path = "src/bin/flux-idle.rs"
+
+[dependencies]
+gtk4.workspace = true
+shell-common.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
