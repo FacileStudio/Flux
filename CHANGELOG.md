@@ -6,6 +6,17 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-16
+
+### Security
+
+- The live ISO no longer runs an SSH server. In 0.1.0 it accepted the known login `flux` / `flux` with passwordless sudo, so anyone on the same network could take over a machine running the live session. If you booted the 0.1.0 ISO on a network you do not trust, treat that session as exposed. Installed systems were not affected.
+
+### Fixed
+
+- Installed systems now include redistributable firmware, so Wi-Fi, Bluetooth and AMD graphics work after the first reboot.
+- The `facile` CLI is preinstalled, and binaries it installs run thanks to nix-ld.
+
 ## [0.1.0] - 2026-11-16
 
 First open beta. Expect rough edges and breaking changes before 1.0.
@@ -29,5 +40,6 @@ First open beta. Expect rough edges and breaking changes before 1.0.
 - A machine flake template: `nix flake init -t github:FacileStudio/Flux`.
 - Release ISOs for both systems, with a `SHA256SUMS` file.
 
-[Unreleased]: https://github.com/FacileStudio/Flux/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/FacileStudio/Flux/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/FacileStudio/Flux/releases/tag/v0.1.1
 [0.1.0]: https://github.com/FacileStudio/Flux/releases/tag/v0.1.0

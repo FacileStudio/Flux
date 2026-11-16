@@ -2,6 +2,7 @@
 
 lib.mkIf (config.flux.profile == "desktop") {
   programs.niri.enable = true;
+  hardware.enableRedistributableFirmware = lib.mkDefault true;
   environment.etc."niri/config.kdl".source = ./niri.kdl;
 
   services.greetd = {

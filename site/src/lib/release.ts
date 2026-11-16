@@ -1,7 +1,7 @@
 import type { DownloadEntry } from '@facile/muse';
 
 /** The Flux release the site offers. Bump it when a new ISO is published. */
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
 
 /** The Flux repository. */
 export const REPO = 'https://github.com/FacileStudio/Flux';
