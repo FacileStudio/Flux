@@ -21,6 +21,7 @@ lib.mkIf (config.flux.profile == "desktop") {
     ghostty
     fuzzel
     wl-clipboard
+    pulseaudio
     xwayland-satellite
   ];
 
