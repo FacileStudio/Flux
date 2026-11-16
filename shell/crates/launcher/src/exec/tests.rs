@@ -23,6 +23,6 @@ fn quotes_and_escapes_are_respected() {
 
 #[test]
 fn launch_spawns_detached() {
-    assert!(launch("/bin/echo ok").is_ok());
+    assert!(launch("echo ok").is_ok());
     assert!(launch("").is_err());
 }
