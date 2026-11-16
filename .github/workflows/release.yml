@@ -60,9 +60,51 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  boite:
+    name: boite image (x86_64-linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/share/powershell \
+            /usr/share/swift /usr/local/julia* /opt/microsoft /opt/google
+          sudo docker image prune --all --force || true
+          df -h /
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - name: Build the Boite image
+        run: nix build --print-build-logs ".#packages.x86_64-linux.boite"
+      - name: Compress and size-check the image
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mapfile -t images < <(find -L result -maxdepth 1 -name '*.qcow2')
+          if [ "${#images[@]}" -ne 1 ]; then
+            echo "Expected one qcow2 under result, found ${#images[@]}"
+            exit 1
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq qemu-utils
+          mkdir -p dist
+          name="flux-boite-$version-x86_64-linux.qcow2"
+          qemu-img convert -O qcow2 -c "${images[0]}" "dist/$name"
+          size=$(stat -c %s "dist/$name")
+          echo "$name: $size bytes"
+          if [ "$size" -ge 2147483648 ]; then
+            echo "$name is 2 GiB or larger, over the GitHub release asset limit"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: boite-x86_64-linux
+          path: dist/*.qcow2
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
   publish:
     name: publish
-    needs: iso
+    needs: [iso, boite]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -70,7 +112,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
-          pattern: iso-*
+          pattern: "*-*-linux"
           path: dist
           merge-multiple: true
       - name: Check the tag against the version file
@@ -83,7 +125,7 @@ jobs:
       - name: Write checksums
         working-directory: dist
         run: |
-          sha256sum -- *.iso > SHA256SUMS
+          sha256sum -- *.iso *.qcow2 > SHA256SUMS
           cat SHA256SUMS
       - name: Extract release notes
         run: |
@@ -107,4 +149,4 @@ jobs:
             --verify-tag \
             --title "Flux ${GITHUB_REF_NAME#v}" \
             --notes-file notes.md \
-            dist/*.iso dist/SHA256SUMS
+            dist/*.iso dist/*.qcow2 dist/SHA256SUMS

@@ -36,6 +36,22 @@
 
   security.sudo.wheelNeedsPassword = false;
 
+  environment.systemPackages = with pkgs; [
+    go
+    cargo
+    rustc
+    rust-analyzer
+    clippy
+    rustfmt
+    gcc
+    gnumake
+    pkg-config
+    python3
+    nodejs
+    tmux
+    htop
+  ];
+
   services.openssh = {
     enable = true;
     ports = [ 22 ];
