@@ -1,0 +1,55 @@
+{
+  "eDP-1": {
+    "name": "eDP-1",
+    "make": "BOE",
+    "model": "NE160QDM-NY1",
+    "serial": null,
+    "physical_size": [340, 220],
+    "modes": [
+      { "width": 2560, "height": 1600, "refresh_rate": 240000, "is_preferred": false },
+      { "width": 2560, "height": 1600, "refresh_rate": 60002, "is_preferred": true },
+      { "width": 1920, "height": 1200, "refresh_rate": 60000, "is_preferred": false },
+      { "width": 1280, "height": 800, "refresh_rate": 59940, "is_preferred": false }
+    ],
+    "current_mode": 1,
+    "is_custom_mode": false,
+    "vrr_supported": false,
+    "vrr_enabled": false,
+    "logical": { "x": 0, "y": 0, "width": 1707, "height": 1067, "scale": 1.5, "transform": "Normal" }
+  },
+  "DP-1": {
+    "name": "DP-1",
+    "make": "Dell Inc.",
+    "model": "DELL U2723QE",
+    "serial": "7XKF3H3",
+    "physical_size": [600, 340],
+    "modes": [
+      { "width": 3840, "height": 2160, "refresh_rate": 59997, "is_preferred": true },
+      { "width": 3840, "height": 2160, "refresh_rate": 29981, "is_preferred": false },
+      { "width": 2560, "height": 1440, "refresh_rate": 143998, "is_preferred": false },
+      { "width": 2560, "height": 1440, "refresh_rate": 59951, "is_preferred": false },
+      { "width": 1920, "height": 1080, "refresh_rate": 60000, "is_preferred": false },
+      { "width": 1920, "height": 1080, "refresh_rate": 59940, "is_preferred": false }
+    ],
+    "current_mode": 0,
+    "is_custom_mode": false,
+    "vrr_supported": true,
+    "vrr_enabled": false,
+    "logical": { "x": 1707, "y": 0, "width": 1920, "height": 1080, "scale": 2.0, "transform": "Normal" }
+  },
+  "HDMI-A-1": {
+    "name": "HDMI-A-1",
+    "make": "Unknown",
+    "model": "Unknown",
+    "serial": null,
+    "physical_size": null,
+    "modes": [
+      { "width": 1920, "height": 1080, "refresh_rate": 60000, "is_preferred": true }
+    ],
+    "current_mode": null,
+    "is_custom_mode": false,
+    "vrr_supported": false,
+    "vrr_enabled": false,
+    "logical": null
+  }
+}
