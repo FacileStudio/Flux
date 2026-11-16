@@ -971,6 +971,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-bluetooth"
+version = "0.11.1"
+dependencies = [
+ "async-channel",
+ "futures-util",
+ "gtk4",
+ "serde",
+ "shell-common",
+ "tokio",
+ "zbus",
+]
+
+[[package]]
 name = "shell-common"
 version = "0.11.1"
 dependencies = [
