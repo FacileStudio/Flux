@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Facile Studio</vendor>
+  <vendor_url>https://flux.facile.studio</vendor_url>
+  <action id="studio.facile.flux.config">
+    <description>Change system settings</description>
+    <description xml:lang="fr">Modifier les réglages du système</description>
+    <message>Authentication is required to change the device name, accounts, updates or the system version</message>
+    <message xml:lang="fr">Authentifiez-vous pour modifier le nom de l'appareil, les comptes, les mises à jour ou la version du système</message>
+    <icon_name>preferences-system</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">@flux-config@</annotate>
+  </action>
+</policyconfig>
