@@ -1,6 +1,6 @@
-# Flux dans Boite
+# Flux dans Boîte
 
-Chaque VM de dev [Boite](https://boite.facile.studio) tourne sur Flux, sans le bureau : le même shell, les mêmes outils, en quelques secondes.
+Chaque VM de dev [Boîte](https://boite.facile.studio) tourne sur Flux, sans le bureau : le même shell, les mêmes outils, en quelques secondes.
 
 ```sh
 boite new api

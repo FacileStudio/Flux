@@ -17,7 +17,7 @@
 	import Command from '$lib/components/Command.svelte';
 	import DesktopDemo from '$lib/components/DesktopDemo.svelte';
 	import LandingShell from '$lib/components/LandingShell.svelte';
-	import BoiteTile from '$lib/components/tiles/BoiteTile.svelte';
+	import BoîteTile from '$lib/components/tiles/BoîteTile.svelte';
 	import RollbackTile from '$lib/components/tiles/RollbackTile.svelte';
 
 	const FEATURES = [
@@ -41,7 +41,7 @@
 		{ name: 'Nuage', icon: marks.nuage, line: t('with.nuage'), href: 'https://nuage.facile.studio' },
 		{ name: 'Casier', icon: marks.casier, line: t('with.casier'), href: 'https://casier.facile.studio' },
 		{ name: 'Bulle', icon: marks.bulle, line: t('with.bulle'), href: 'https://bulle.facile.studio' },
-		{ name: 'Boite', icon: marks.boite, line: t('with.boite'), href: 'https://boite.facile.studio' }
+		{ name: 'Boîte', icon: marks.boite, line: t('with.boite'), href: 'https://boite.facile.studio' }
 	]);
 
 	$effect(() => {
@@ -81,7 +81,7 @@
 			<h2 id="tiles-title" class="mb-10 text-center {LANDING_HEADING}">{t('tiles.title')}</h2>
 			<div class="grid gap-4 md:grid-cols-2 md:gap-6">
 				<div class="grid"><RollbackTile /></div>
-				<div class="grid"><BoiteTile /></div>
+				<div class="grid"><BoîteTile /></div>
 			</div>
 		</section>
 

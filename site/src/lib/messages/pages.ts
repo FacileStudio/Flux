@@ -58,8 +58,8 @@ export const pages = {
 	'downloads.vm.line': ['With Nix installed, one command boots the desktop.', 'Avec Nix installé, une commande démarre le bureau.', 'Con Nix instalado, un comando arranca el escritorio.', 'Mit Nix startet ein Befehl den Desktop.'],
 	'downloads.nixos.title': ['Already on NixOS', 'Déjà sous NixOS', 'Ya en NixOS', 'Schon auf NixOS'],
 	'downloads.nixos.line': ['Start a machine config that imports Flux.', 'Créez une config machine qui importe Flux.', 'Cree una configuración que importa Flux.', 'Legen Sie eine Maschinenkonfiguration an, die Flux importiert.'],
-	'downloads.boite.title': ['In Boite', 'Dans Boite', 'En Boite', 'In Boite'],
-	'downloads.boite.line': ['Every Boite dev VM runs Flux headless.', 'Chaque VM de dev Boite tourne sous Flux, sans bureau.', 'Cada VM de desarrollo de Boite ejecuta Flux sin escritorio.', 'Jede Boite-Dev-VM läuft mit Flux ohne Desktop.'],
+	'downloads.boite.title': ['In Boîte', 'Dans Boîte', 'En Boîte', 'In Boîte'],
+	'downloads.boite.line': ['Every Boîte dev VM runs Flux headless.', 'Chaque VM de dev Boîte tourne sous Flux, sans bureau.', 'Cada VM de desarrollo de Boîte ejecuta Flux sin escritorio.', 'Jede Boîte-Dev-VM läuft mit Flux ohne Desktop.'],
 	'docs.title': ['Flux docs', 'Documentation Flux', 'Documentación de Flux', 'Flux-Doku'],
 	'docs.heading': ['Install and use Flux', 'Installer et utiliser Flux', 'Instalar y usar Flux', 'Flux installieren und nutzen'],
 	'docs.line': [

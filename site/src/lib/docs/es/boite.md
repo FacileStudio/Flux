@@ -1,6 +1,6 @@
-# Flux en Boite
+# Flux en Boîte
 
-Cada VM de desarrollo de [Boite](https://boite.facile.studio) ejecuta Flux sin escritorio: el mismo shell, las mismas herramientas, en segundos.
+Cada VM de desarrollo de [Boîte](https://boite.facile.studio) ejecuta Flux sin escritorio: el mismo shell, las mismas herramientas, en segundos.
 
 ```sh
 boite new api

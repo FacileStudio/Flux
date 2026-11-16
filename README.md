@@ -7,7 +7,7 @@ The same flake builds three things:
 
 - the desktop you install on a machine
 - a live ISO with an installer
-- the headless image that every [Boite](https://github.com/FacileStudio/boite) dev VM runs
+- the headless image that every [Boîte](https://github.com/FacileStudio/boite) dev VM runs
 
 ## What you get
 
@@ -74,7 +74,7 @@ Set `flux.profile = "headless";` for a server or VM without the desktop.
 |---|---|
 | `nix run .#vm` | boots the desktop in QEMU |
 | `nix build .#iso` | live installer ISO |
-| `nix build .#boite` | headless qcow2 image for Boite |
+| `nix build .#boite` | headless qcow2 image for Boîte |
 | `nix build .#facile-tools` | the Facile CLIs |
 | `nix build .#flux-shell` | statusbar, sidebar, launcher, exit |
 
@@ -97,7 +97,7 @@ Adding a file to `modules/` or a directory to `hosts/` or `pkgs/` is enough to w
 ## Releasing
 
 1. Move the `[Unreleased]` changelog entries under the new version and bump `version` and `site/src/lib/release.ts`.
-2. Push a `v<version>` tag. The release workflow builds both ISOs and the Boite image, then creates a GitHub prerelease with the notes and `SHA256SUMS`.
+2. Push a `v<version>` tag. The release workflow builds both ISOs and the Boîte image, then creates a GitHub prerelease with the notes and `SHA256SUMS`.
 3. On ruche, run `scripts/publish-assets.sh v<version>`. It downloads the images from that run, checks them against `SHA256SUMS`, and publishes them at `https://flux.facile.studio/releases/v<version>/`. The images exceed GitHub's 2 GiB asset limit, so the site serves them.
 
 ## Status
