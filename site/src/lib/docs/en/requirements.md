@@ -3,7 +3,7 @@
 Flux runs on most recent computers. You need:
 
 - a computer that boots in **UEFI** mode
-- an **x86_64** (Intel or AMD) or **ARM64** processor
+- an **x86_64** (Intel or AMD) or **ARM64** processor (ARM64 needs UEFI: VMs, ARM servers and EDK2 boards, not a stock Raspberry Pi or Apple Silicon bare metal)
 - **4 GB** of RAM
 - **20 GB** of disk space
 - a USB stick of 4 GB or more for the install

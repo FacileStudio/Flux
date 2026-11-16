@@ -22,10 +22,10 @@ export const pages = {
 	],
 	'downloads.arm.name': ['ARM', 'ARM', 'ARM', 'ARM'],
 	'downloads.arm.line': [
-		'ARM64 laptops and boards, and VMs on Apple Silicon Macs.',
-		'Portables et cartes ARM64, et VM sur Mac Apple Silicon.',
-		'Portátiles y placas ARM64, y VM en Mac con Apple Silicon.',
-		'ARM64-Laptops und -Boards sowie VMs auf Macs mit Apple Silicon.'
+		'UEFI ARM64 only: VMs (UTM, Parallels, QEMU), ARM servers and EDK2 boards. Not a stock Raspberry Pi or Apple Silicon bare metal.',
+		'ARM64 UEFI uniquement : VM (UTM, Parallels, QEMU), serveurs ARM et cartes EDK2. Pas un Raspberry Pi d’origine ni un Mac Apple Silicon sans VM.',
+		'Solo ARM64 UEFI: VM (UTM, Parallels, QEMU), servidores ARM y placas EDK2. No una Raspberry Pi de serie ni un Mac Apple Silicon sin VM.',
+		'Nur ARM64 mit UEFI: VMs (UTM, Parallels, QEMU), ARM-Server und EDK2-Boards. Kein Raspberry Pi ab Werk und kein Apple Silicon ohne VM.'
 	],
 	'downloads.recommended': ['For this device', 'Pour cet appareil', 'Para este dispositivo', 'Für dieses Gerät'],
 	'downloads.button': ['Download the ISO', 'Télécharger l’ISO', 'Descargar la ISO', 'ISO herunterladen'],
