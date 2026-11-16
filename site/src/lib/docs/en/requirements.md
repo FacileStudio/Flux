@@ -3,7 +3,7 @@
 Flux runs on most recent computers. You need:
 
 - a computer that boots in **UEFI** mode
-- an **x86_64** (Intel or AMD) or **ARM64** processor (ARM64 needs UEFI: VMs, ARM servers and EDK2 boards, not a stock Raspberry Pi or Apple Silicon bare metal)
+- an **x86_64** processor (Intel or AMD), or an **ARM64 UEFI** machine: a VM or a server. The ARM ISO does not boot a stock Raspberry Pi or an Apple Silicon Mac directly
 - **4 GB** of RAM
 - **20 GB** of disk space
 - a USB stick of 4 GB or more for the install

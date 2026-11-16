@@ -37,7 +37,7 @@
 			const { architecture } = await data.getHighEntropyValues(['architecture']).catch(() => ({ architecture: undefined }));
 			if (architecture) return architecture.startsWith('arm') ? 'arm' : 'x86';
 		}
-		return /Macintosh|aarch64|arm64/i.test(navigator.userAgent) ? 'arm' : 'x86';
+		return /aarch64|arm64/i.test(navigator.userAgent) ? 'arm' : 'x86';
 	}
 
 	const steps = [

@@ -1,35 +1,40 @@
-/** The hero desktop's state: what the terminal shows, the launcher, and whether Sablier has opened. */
+/** A page of the faux Flux Settings window. */
+export type SettingsPage = 'wifi' | 'bluetooth' | 'sound' | 'displays' | 'appearance';
+
+/** Where the hero's Wi-Fi network stands. */
+export type WifiState = 'idle' | 'connecting' | 'connected';
+
+/** The hero desktop's state: the terminal, the launcher, the Settings column, the network and the theme. */
 export class DesktopScene {
 	command = $state('');
 	done = $state(false);
+	hint = $state(false);
 	launcher = $state(false);
 	query = $state('');
 	opened = $state(false);
-	seconds = $state(4);
+	page = $state<SettingsPage>('wifi');
+	wifi = $state<WifiState>('idle');
+	swapped = $state(false);
 
-	/** Puts the desktop back on its opening frame: an empty prompt, Nuage peeking on the right. */
+	/** Puts the desktop back on its opening frame: an empty prompt in Ghostty, Files beside it. */
 	reset(): void {
 		this.command = '';
 		this.done = false;
+		this.hint = false;
 		this.launcher = false;
 		this.query = '';
 		this.opened = false;
-		this.seconds = 4;
+		this.page = 'wifi';
+		this.wifi = 'idle';
+		this.swapped = false;
 	}
 
-	/** The frame that tells the story alone: the timer started, Sablier open as its own column. */
+	/** The frame that tells the story alone: the timer started, Settings open on Wi-Fi, the network connected. */
 	poster(command: string): void {
+		this.reset();
 		this.command = command;
 		this.done = true;
-		this.launcher = false;
-		this.query = '';
 		this.opened = true;
-		this.seconds = 12;
+		this.wifi = 'connected';
 	}
-}
-
-/** Seconds as the `hh:mm:ss` a running Sablier timer shows. */
-export function clock(seconds: number): string {
-	const pad = (value: number) => String(value).padStart(2, '0');
-	return `${pad(Math.floor(seconds / 3600))}:${pad(Math.floor((seconds % 3600) / 60))}:${pad(seconds % 60)}`;
 }

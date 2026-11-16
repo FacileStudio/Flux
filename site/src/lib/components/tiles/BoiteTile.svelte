@@ -1,14 +1,12 @@
 <script lang="ts">
-	import { Icon } from '@facile/muse';
-	import { Caret, Stage, Terminal, Tile, type Act } from '@facile/mise-en-scene';
+	import { Caret, Stage, Terminal, type Act } from '@facile/mise-en-scene';
 	import { t } from '$lib/i18n';
-	import { marks } from '$lib/marks';
 
 	type Line = { kind: 'cmd' | 'ok' | 'prompt'; text: string };
 
 	const story = $derived<Line[]>([
 		{ kind: 'cmd', text: 'boite new api' },
-		{ kind: 'ok', text: `api · flux · headless · ${t('tile.boite.ready')}` },
+		{ kind: 'ok', text: `api · flux · headless · ${t('demo.boite.ready')}` },
 		{ kind: 'cmd', text: 'boite ssh api' },
 		{ kind: 'prompt', text: 'flux@api ~ ❯' }
 	]);
@@ -36,19 +34,15 @@
 	}
 </script>
 
-<Tile title={t('tile.boite.title')} body={t('tile.boite.body')}>
-	{#snippet badge()}
-		<a
-			href="https://boite.facile.studio"
-			class="inline-flex size-11 shrink-0 items-center justify-center rounded-fc-md text-fc-fg-muted hover:bg-fc-surface hover:text-fc-fg"
-			aria-label={t('tile.boite.link')}
-		>
-			<Icon icon={marks.boite} size={22} />
-		</a>
-	{/snippet}
-	<Stage width={420} height={250} compact={{ below: 330, width: 320, height: 250 }} {script} {reset} poster={() => (lines = [...story])}>
+<!--
+@component
+A Boîte VM made and opened from the terminal: it comes up running Flux, headless.
+-->
+
+<div class="rounded-fc-lg bg-fc-component">
+	<Stage width={520} height={300} compact={{ below: 400, width: 340, height: 290 }} {script} {reset} poster={() => (lines = [...story])}>
 		{#snippet children({ compact })}
-			<Terminal style="top:28px;left:{compact ? 16 : 40}px;right:{compact ? 16 : 40}px;bottom:16px">
+			<Terminal style="inset:{compact ? 14 : 24}px">
 				{#each lines as line, i (i)}
 					<div class="line">
 						{#if line.kind === 'cmd'}
@@ -67,7 +61,7 @@
 			</Terminal>
 		{/snippet}
 	</Stage>
-</Tile>
+</div>
 
 <style>
 	.line {

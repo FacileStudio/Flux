@@ -3,7 +3,7 @@
 Téléchargez l’ISO qui correspond à votre processeur sur la [page de téléchargement](/downloads) :
 
 - `flux-0.1.1-x86_64-linux.iso` pour Intel et AMD ;
-- `flux-0.1.1-aarch64-linux.iso` pour les machines ARM64 UEFI : VM (UTM, Parallels, QEMU), serveurs ARM et cartes EDK2.
+- `flux-0.1.1-aarch64-linux.iso` pour ARM64 UEFI (VM et serveurs).
 
 Vérifiez ensuite que le fichier est intact. Dans le dossier qui contient l’ISO :
 

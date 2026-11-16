@@ -17,7 +17,7 @@ export const RELEASE_NOTES = `${RELEASES}/tag/v${VERSION}`;
 /** The live installer ISO for Intel and AMD machines. */
 export const ISO_X86_64 = `${base}/flux-${VERSION}-x86_64-linux.iso`;
 
-/** The live installer ISO for ARM64 machines. */
+/** The live installer ISO for ARM64 UEFI virtual machines and servers. */
 export const ISO_AARCH64 = `${base}/flux-${VERSION}-aarch64-linux.iso`;
 
 /** The SHA-256 sums of both ISOs. */
