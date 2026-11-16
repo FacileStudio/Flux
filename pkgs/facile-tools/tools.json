@@ -1,0 +1,372 @@
+{
+  "agenda": {
+    "version": "0.7.1",
+    "repo": "FacileStudio/agenda-cli",
+    "bins": [
+      "agenda"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/agenda-cli/releases/download/v0.7.1/agenda_0.7.1_linux_amd64.tar.gz",
+        "hash": "sha256-p9ogZ88NwWPKevVVkj8vfs1I43Z0mzOO71EExMA2zxM="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/agenda-cli/releases/download/v0.7.1/agenda_0.7.1_linux_arm64.tar.gz",
+        "hash": "sha256-uhDEsWzNDd1pobqG5VUrocKW5TIyvw0E0PQJEVFSOog="
+      }
+    }
+  },
+  "antenne": {
+    "version": "0.5.1",
+    "repo": "FacileStudio/antenne-cli",
+    "bins": [
+      "antenne"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/antenne-cli/releases/download/v0.5.1/antenne-cli_0.5.1_linux_amd64.tar.gz",
+        "hash": "sha256-Cvky0JbWQphyuJpRSe0WHwJyleU1ujRSpodGeoJbtas="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/antenne-cli/releases/download/v0.5.1/antenne-cli_0.5.1_linux_arm64.tar.gz",
+        "hash": "sha256-Ez1K1kbq14ZpGCXcjtqq1e1PBub0vZQrQnnut+3TP8g="
+      }
+    }
+  },
+  "ardoise": {
+    "version": "0.1.0",
+    "repo": "FacileStudio/ardoise-cli",
+    "bins": [
+      "ardoise"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/ardoise-cli/releases/download/v0.1.0/ardoise_0.1.0_linux_amd64.tar.gz",
+        "hash": "sha256-64tuB3ycXHkxe5+KAsPaDvS+MPPbKnGGk2vfxAB9TUk="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/ardoise-cli/releases/download/v0.1.0/ardoise_0.1.0_linux_arm64.tar.gz",
+        "hash": "sha256-++dffaUQkCcSRwlqErpuI6EPZt/JgPCjnHtbE4T+vHo="
+      }
+    }
+  },
+  "boite": {
+    "version": "0.18.1",
+    "repo": "FacileStudio/boite",
+    "bins": [
+      "boite"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/boite/releases/download/v0.18.1/boite_0.18.1_linux_amd64.tar.gz",
+        "hash": "sha256-OMftFXK9vplGeC01GvwL+013mIaJvApYFv4bUtiYM3g="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/boite/releases/download/v0.18.1/boite_0.18.1_linux_arm64.tar.gz",
+        "hash": "sha256-B2heKv+6aNwr8qsHCIgoHApkAcumgwHL08swnaszuwM="
+      }
+    }
+  },
+  "bulle": {
+    "version": "3.66.0",
+    "repo": "FacileStudio/bulle",
+    "bins": [
+      "bulle"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/Bulle/releases/download/v3.66.0/bulle_3.66.0_linux_amd64.tar.gz",
+        "hash": "sha256-BPu6BA+qAiAePTN81m48yfgU0HbtiUYT+E3n8clErIE="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/Bulle/releases/download/v3.66.0/bulle_3.66.0_linux_arm64.tar.gz",
+        "hash": "sha256-YHM9zPdzRQBHvPve4i3ABOcZ7pYoW9nNNSrvdOIiIQU="
+      }
+    }
+  },
+  "capsule": {
+    "version": "0.4.2",
+    "repo": "FacileStudio/capsule-cli",
+    "bins": [
+      "capsule"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/capsule-cli/releases/download/v0.4.2/capsule-cli_0.4.2_linux_amd64.tar.gz",
+        "hash": "sha256-55SX2STmRksm7DNimwsKo5w6TR+mTgzXA3k/6HnBRzE="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/capsule-cli/releases/download/v0.4.2/capsule-cli_0.4.2_linux_arm64.tar.gz",
+        "hash": "sha256-twobV54SOjtGWm8oa9s3WSF1ZmwW63lmZTV2/21C3js="
+      }
+    }
+  },
+  "casier": {
+    "version": "0.4.3",
+    "repo": "FacileStudio/casier-cli",
+    "bins": [
+      "casier"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/casier-cli/releases/download/v0.4.3/casier_0.4.3_linux_amd64.tar.gz",
+        "hash": "sha256-3sqPf2JLlATmqEQXmmFoQnxqOts1Ua859SBL7WJ00Nw="
+      }
+    }
+  },
+  "clap": {
+    "version": "0.1.0",
+    "repo": "FacileStudio/Clap",
+    "bins": [
+      "clap"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/Clap/releases/download/v0.1.0/clap_0.1.0_linux_amd64.tar.gz",
+        "hash": "sha256-NYNcTDvBZhaAB8ShosC6Ndn+lp17NiPIcTSyXtrsxqc="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/Clap/releases/download/v0.1.0/clap_0.1.0_linux_arm64.tar.gz",
+        "hash": "sha256-bIACq21aBNukHDmV3gwXpP2gtCLOeiHCibjvh1pEe3k="
+      }
+    }
+  },
+  "courrier": {
+    "version": "0.7.1",
+    "repo": "FacileStudio/courrier-cli",
+    "bins": [
+      "courrier"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/courrier-cli/releases/download/v0.7.1/courrier-cli_0.7.1_linux_amd64.tar.gz",
+        "hash": "sha256-IjYR4p/gNE39Qzq1VZC9AQt7M/3/rOOs7tPjZi1X8g0="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/courrier-cli/releases/download/v0.7.1/courrier-cli_0.7.1_linux_arm64.tar.gz",
+        "hash": "sha256-OWs9uZ1V98FcGLXtk5f4QGjIZM1+wZzBGc9veqaoLtM="
+      }
+    }
+  },
+  "diapo": {
+    "version": "0.2.0",
+    "repo": "FacileStudio/Diapo",
+    "bins": [
+      "diapo"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/Diapo/releases/download/v0.2.0/diapo_0.2.0_linux_amd64.tar.gz",
+        "hash": "sha256-Wj6YV43A8JukVxRODNwOZtWL4CvgHqig3L+xXng+So4="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/Diapo/releases/download/v0.2.0/diapo_0.2.0_linux_arm64.tar.gz",
+        "hash": "sha256-akWLcRIgRZSBfpLnKF17NtAtk5+L3J3J6N/XNOfhGd4="
+      }
+    }
+  },
+  "douane": {
+    "version": "0.7.4",
+    "repo": "FacileStudio/douane",
+    "bins": [
+      "douane"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/douane/releases/download/v0.7.4/douane_0.7.4_linux_amd64.tar.gz",
+        "hash": "sha256-GtSFwnRZxhcJSmXz1cWcfeIlDQjatm0uw71UMMGxpng="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/douane/releases/download/v0.7.4/douane_0.7.4_linux_arm64.tar.gz",
+        "hash": "sha256-O0s+2fx5Oj8PQmMvac0PyTJ7nN7tp2kmUjE2g3LehhQ="
+      }
+    }
+  },
+  "encre": {
+    "version": "0.12.1",
+    "repo": "FacileStudio/encre",
+    "bins": [
+      "encre"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/encre/releases/download/v0.12.1/encre_0.12.1_linux_amd64.tar.gz",
+        "hash": "sha256-i9EmF/DMmZRglGiZMQxvIsZ9DTw/81UvO/1KV91FIk4="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/encre/releases/download/v0.12.1/encre_0.12.1_linux_arm64.tar.gz",
+        "hash": "sha256-X7ONZsFVkjLfb2ISpHFArn/5pF7827iv3AYbXDMPWVY="
+      }
+    }
+  },
+  "filet": {
+    "version": "0.21.0",
+    "repo": "FacileStudio/filet",
+    "bins": [
+      "filet"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/filet/releases/download/v0.21.0/filet_0.21.0_linux_amd64.tar.gz",
+        "hash": "sha256-Ujr/fhJHGyz8BXBCLlDwEKL+RwDUVh9jCWYSBOqlKjQ="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/filet/releases/download/v0.21.0/filet_0.21.0_linux_arm64.tar.gz",
+        "hash": "sha256-ghe42x7kyBmPU+vHbmOf+V7aPky7QnH5aVoLBzcyyqk="
+      }
+    }
+  },
+  "gare": {
+    "version": "0.18.0",
+    "repo": "FacileStudio/gare",
+    "bins": [
+      "gare"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/gare/releases/download/v0.18.0/gare_0.18.0_linux_amd64.tar.gz",
+        "hash": "sha256-Upk2F7iVaQqIR7mRLWTrFfIXT34nowD9Hssjqfh6f+8="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/gare/releases/download/v0.18.0/gare_0.18.0_linux_arm64.tar.gz",
+        "hash": "sha256-NTJTVHEWuH4O247vf6+/DH0F/bG60cb4CX//XYZNdZQ="
+      }
+    }
+  },
+  "journal": {
+    "version": "0.5.1",
+    "repo": "FacileStudio/journal-cli",
+    "bins": [
+      "journal"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/journal-cli/releases/download/v0.5.1/journal-cli_0.5.1_linux_amd64.tar.gz",
+        "hash": "sha256-2LmimUBnqDXKjPjbZkyRtdOGXbm9BMY0p8W6gxurcMY="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/journal-cli/releases/download/v0.5.1/journal-cli_0.5.1_linux_arm64.tar.gz",
+        "hash": "sha256-DDkDNlOp/vKQrTzeOv1A574kudllDo3j3BgwKU11kfA="
+      }
+    }
+  },
+  "mycelium": {
+    "version": "0.54.2",
+    "repo": "FacileStudio/Mycelium",
+    "bins": [
+      "mycelium"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/Mycelium/releases/download/v0.54.2/Mycelium_0.54.2_linux_amd64.tar.gz",
+        "hash": "sha256-61ChBxqFHxBHKQvIL0JJe+iqP7Ipd0AWKfzAZ+xLGPU="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/Mycelium/releases/download/v0.54.2/Mycelium_0.54.2_linux_arm64.tar.gz",
+        "hash": "sha256-2t1rgslLrG19G1oI21eL1HanVj/HCoZnSwloTm3AEpM="
+      }
+    }
+  },
+  "nuage": {
+    "version": "0.12.1",
+    "repo": "FacileStudio/nuage-cli",
+    "bins": [
+      "nuage"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/nuage-cli/releases/download/v0.12.1/nuage_0.12.1_linux_amd64.tar.gz",
+        "hash": "sha256-4v36AnsPIdfdh0PrfOqNkI3cVaAPEhTa/T0hB0T5e8g="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/nuage-cli/releases/download/v0.12.1/nuage_0.12.1_linux_arm64.tar.gz",
+        "hash": "sha256-cNZl8WHvz6xpW0FDfaesSjeAhdE8eammdHmffkLVL/o="
+      }
+    }
+  },
+  "opus": {
+    "version": "0.9.2",
+    "repo": "FacileStudio/opus-cli",
+    "bins": [
+      "opus"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/opus-cli/releases/download/v0.9.2/opus_0.9.2_linux_amd64.tar.gz",
+        "hash": "sha256-meaAxgbEHZOJjzZJQMuYE/cPoDVDZ4ld1RpZFFmWgGo="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/opus-cli/releases/download/v0.9.2/opus_0.9.2_linux_arm64.tar.gz",
+        "hash": "sha256-DmPk+rJRnPZFfn3lLs8KZ6lNEd+DMiTI4CazxoggDSM="
+      }
+    }
+  },
+  "sablier": {
+    "version": "0.6.0",
+    "repo": "FacileStudio/sablier-cli",
+    "bins": [
+      "sablier"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/sablier-cli/releases/download/v0.6.0/sablier_0.6.0_linux_amd64.tar.gz",
+        "hash": "sha256-cxScXst5XzADSE782wgog6Rh3Xh7k3tbmu/B/aQ6gm8="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/sablier-cli/releases/download/v0.6.0/sablier_0.6.0_linux_arm64.tar.gz",
+        "hash": "sha256-51y43bpEktUwJx1ILxQumwq5a6j4aceX/EdPNfqXeKQ="
+      }
+    }
+  },
+  "sonar": {
+    "version": "0.23.1",
+    "repo": "FacileStudio/sonar",
+    "bins": [
+      "sonar"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/sonar/releases/download/v0.23.1/sonar_0.23.1_linux_amd64.tar.gz",
+        "hash": "sha256-zcS02pxCAiZlKKLTqYLYkhE+07WY+WZ07fDURkYrHrE="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/sonar/releases/download/v0.23.1/sonar_0.23.1_linux_arm64.tar.gz",
+        "hash": "sha256-6KH6p/xJvAttMCyn/nndV44uGIYDBdiZWZnFYkI9o9Y="
+      }
+    }
+  },
+  "sonde": {
+    "version": "0.5.1",
+    "repo": "FacileStudio/sonde-cli",
+    "bins": [
+      "sonde"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/sonde-cli/releases/download/v0.5.1/sonde-cli_0.5.1_linux_amd64.tar.gz",
+        "hash": "sha256-5nWaspn6KbiwUK9bYQ0w14VknMetE0ufgLSg5CwbOZA="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/sonde-cli/releases/download/v0.5.1/sonde-cli_0.5.1_linux_arm64.tar.gz",
+        "hash": "sha256-Ffd7NbDiNekpeoh9HLa0BGN6/A4VG9O+5pVDlOnZwSw="
+      }
+    }
+  },
+  "tiroir": {
+    "version": "0.2.3",
+    "repo": "FacileStudio/tiroir",
+    "bins": [
+      "tiroir"
+    ],
+    "systems": {
+      "x86_64-linux": {
+        "url": "https://github.com/FacileStudio/tiroir/releases/download/v0.2.3/tiroir_0.2.3_linux_amd64.tar.gz",
+        "hash": "sha256-2dTJ63rbEPPoDC3RgSSIaPYsOw9iDoiW5/LMyLmp6fk="
+      },
+      "aarch64-linux": {
+        "url": "https://github.com/FacileStudio/tiroir/releases/download/v0.2.3/tiroir_0.2.3_linux_arm64.tar.gz",
+        "hash": "sha256-J3BHaCFwafj5UBMrXBNbdpdAbtkOHPPPpo0yIk1xuWk="
+      }
+    }
+  }
+}
