@@ -1,5 +1,6 @@
-//! `flux-settings`: the Flux settings app. `flux-settings --page <id>` opens a page,
-//! and a second launch hands its page to the window already open.
+//! `flux-settings`: the Flux settings app. `flux-settings <id>` or
+//! `flux-settings --page <id>` opens a page, and a second launch hands its page
+//! to the window already open.
 
 mod about;
 mod app;
@@ -13,7 +14,7 @@ use gtk4::{gio, glib, Application};
 
 const APP_ID: &str = "studio.facile.flux.Settings";
 
-/// The page named by `--page <id>` or `--page=<id>` in `args`, program name first.
+/// The page named by `--page <id>`, `--page=<id>` or a bare `<id>` in `args`, program name first.
 fn requested_page(args: &[String]) -> Option<String> {
     let mut rest = args.iter().skip(1);
     while let Some(argument) = rest.next() {
@@ -22,6 +23,9 @@ fn requested_page(args: &[String]) -> Option<String> {
         }
         if let Some(id) = argument.strip_prefix("--page=") {
             return Some(id.to_string());
+        }
+        if !argument.starts_with('-') {
+            return Some(argument.clone());
         }
     }
     None
@@ -36,6 +40,7 @@ fn main() -> glib::ExitCode {
     let mut flags = gio::ApplicationFlags::HANDLES_COMMAND_LINE;
     if let Some(preview) = preview::current() {
         i18n::force(&preview.language);
+        preview::forward(preview);
         flags |= gio::ApplicationFlags::NON_UNIQUE;
     }
     let application = Application::builder()
@@ -74,6 +79,10 @@ mod tests {
         assert_eq!(
             requested_page(&args(&["flux-settings", "--page=appearance"])),
             Some("appearance".into())
+        );
+        assert_eq!(
+            requested_page(&args(&["flux-settings", "network"])),
+            Some("network".into())
         );
         assert_eq!(requested_page(&args(&["flux-settings"])), None);
         assert_eq!(requested_page(&args(&["flux-settings", "--page"])), None);

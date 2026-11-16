@@ -14,51 +14,39 @@ pub struct Page {
     pub build: fn() -> gtk4::Widget,
 }
 
-#[cfg(any(
-    feature = "page-network",
-    feature = "page-bluetooth",
-    feature = "page-audio",
-    feature = "page-display",
-    feature = "page-power",
-    feature = "page-system"
-))]
-macro_rules! external {
-    ($krate:ident) => {
+macro_rules! entry {
+    ($($module:ident)::+) => {
         Page {
-            id: $krate::ID,
-            icon: $krate::ICON,
-            title: $krate::title,
-            build: $krate::page,
+            id: $($module)::+::ID,
+            icon: $($module)::+::ICON,
+            title: $($module)::+::title,
+            build: $($module)::+::page,
         }
     };
 }
 
-/// The pages in the order the navigation lists them.
+/// The pages in the order the navigation lists them: connections, devices, look, power, the machine, then About.
 pub const PAGES: &[Page] = &[
     #[cfg(feature = "page-network")]
-    external!(settings_network),
+    entry!(settings_network),
     #[cfg(feature = "page-bluetooth")]
-    external!(settings_bluetooth),
+    entry!(settings_bluetooth),
     #[cfg(feature = "page-audio")]
-    external!(settings_audio),
+    entry!(settings_audio),
     #[cfg(feature = "page-display")]
-    external!(settings_display),
-    Page {
-        id: appearance::ID,
-        icon: appearance::ICON,
-        title: appearance::title,
-        build: appearance::page,
-    },
+    entry!(settings_display::display),
+    #[cfg(feature = "page-display")]
+    entry!(settings_display::input),
+    entry!(appearance),
     #[cfg(feature = "page-power")]
-    external!(settings_power),
+    entry!(settings_power),
     #[cfg(feature = "page-system")]
-    external!(settings_system),
-    Page {
-        id: about::ID,
-        icon: about::ICON,
-        title: about::title,
-        build: about::page,
-    },
+    entry!(settings_system::system),
+    #[cfg(feature = "page-system")]
+    entry!(settings_system::users),
+    #[cfg(feature = "page-system")]
+    entry!(settings_system::updates),
+    entry!(about),
 ];
 
 /// Lower-case `text` and drop the accents French puts on Latin letters, so "reglages" finds "Réglages".

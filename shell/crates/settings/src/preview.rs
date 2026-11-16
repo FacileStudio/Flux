@@ -9,11 +9,12 @@ pub struct Preview {
     pub language: String,
     pub page: String,
     pub dark: bool,
+    pub scene: String,
 }
 
 static PREVIEW: OnceLock<Option<Preview>> = OnceLock::new();
 
-/// Read `lang:page[:dark]`; a value without a colon is a page in English.
+/// Read `lang:page[:dark|light][:scene]`; a value without a colon is a page in English. The scene picks a page crate's sample state.
 pub fn parse(value: &str) -> Option<Preview> {
     let mut parts = value.split(':').map(str::trim);
     let first = parts.next().filter(|part| !part.is_empty())?;
@@ -21,10 +22,12 @@ pub fn parse(value: &str) -> Option<Preview> {
         Some(page) if !page.is_empty() => (first, page),
         _ => ("en", first),
     };
+    let scheme = parts.next();
     Some(Preview {
         language: language.to_string(),
         page: page.to_string(),
-        dark: parts.next() == Some("dark"),
+        dark: scheme == Some("dark"),
+        scene: parts.next().filter(|scene| !scene.is_empty()).unwrap_or("default").to_string(),
     })
 }
 
@@ -38,6 +41,20 @@ pub fn current() -> Option<&'static Preview> {
                 .and_then(parse)
         })
         .as_ref()
+}
+
+/// Put every page crate in its own sample-data mode, in `preview`'s language, before any page is built.
+pub fn forward(preview: &Preview) {
+    let locale = if preview.language == "fr" { "fr_FR.UTF-8" } else { "en_US.UTF-8" };
+    std::env::set_var("LC_ALL", locale);
+    std::env::set_var("LANGUAGE", &preview.language);
+    std::env::set_var("FLUX_LANG", &preview.language);
+    std::env::set_var("FLUX_NETWORK_PREVIEW", format!("{}:{}", preview.language, preview.scene));
+    std::env::set_var("FLUX_BLUETOOTH_PREVIEW", &preview.scene);
+    std::env::set_var("FLUX_AUDIO_PREVIEW", &preview.scene);
+    std::env::set_var("FLUX_SETTINGS_PREVIEW", format!("{}:{}", preview.page, preview.scene));
+    #[cfg(feature = "page-power")]
+    settings_power::use_sample_data(&preview.language, preview.scene != "desktop");
 }
 
 /// Whether this run shows sample data.

@@ -37,10 +37,15 @@ pub fn preview() -> bool {
     std::env::var_os("FLUX_SETTINGS_PREVIEW").is_some_and(|value| !value.is_empty())
 }
 
-/// The screen a preview opens on, from `FLUX_SETTINGS_PREVIEW`: `keep`
-/// shows the revert countdown.
+/// The screen a preview opens on, the last `:` part of `FLUX_SETTINGS_PREVIEW`:
+/// `keep` shows the revert countdown.
 pub fn preview_scene() -> String {
-    std::env::var("FLUX_SETTINGS_PREVIEW").unwrap_or_default()
+    std::env::var("FLUX_SETTINGS_PREVIEW")
+        .unwrap_or_default()
+        .rsplit(':')
+        .next()
+        .unwrap_or_default()
+        .to_string()
 }
 
 fn config_home() -> Option<PathBuf> {
