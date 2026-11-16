@@ -1,4 +1,6 @@
 {
+  description = "My Flux machine";
+
   inputs.flux.url = "github:FacileStudio/Flux";
 
   outputs = { flux, ... }: {
