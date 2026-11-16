@@ -1,0 +1,176 @@
+{
+  "default_sink": "alsa_output.pci-0000_00_1f.3.analog-stereo",
+  "default_source": "alsa_input.pci-0000_00_1f.3.analog-stereo",
+  "sinks": [
+    {
+      "index": 48,
+      "name": "alsa_output.pci-0000_00_1f.3.analog-stereo",
+      "description": "Built-in Audio Analog Stereo",
+      "properties": {
+        "device.bus": "pci",
+        "device.form_factor": "internal",
+        "device.class": "sound",
+        "alsa.card_name": "HDA Intel PCH"
+      },
+      "ports": [
+        { "name": "analog-output-speaker", "description": "Speakers", "available": "Unknown" },
+        { "name": "analog-output-headphones", "description": "Headphones", "available": "No" }
+      ],
+      "active_port": "analog-output-speaker",
+      "volume": 45875,
+      "muted": false,
+      "card": 42,
+      "monitor": "alsa_output.pci-0000_00_1f.3.analog-stereo.monitor"
+    },
+    {
+      "index": 51,
+      "name": "alsa_output.pci-0000_00_1f.3.hdmi-stereo",
+      "description": "Built-in Audio Digital Stereo (HDMI)",
+      "properties": { "device.bus": "pci", "device.class": "sound" },
+      "ports": [
+        { "name": "hdmi-output-0", "description": "HDMI / DisplayPort", "available": "Yes" }
+      ],
+      "active_port": "hdmi-output-0",
+      "volume": 65536,
+      "card": 42,
+      "monitor": "alsa_output.pci-0000_00_1f.3.hdmi-stereo.monitor"
+    },
+    {
+      "index": 77,
+      "name": "bluez_output.AC_80_0A_12_34_56.1",
+      "description": "WH-1000XM4",
+      "properties": {
+        "device.bus": "bluetooth",
+        "device.form_factor": "headphone",
+        "api.bluez5.profile": "a2dp-sink"
+      },
+      "ports": [
+        { "name": "headphone-output", "description": "Headphone", "available": "Yes" }
+      ],
+      "active_port": "headphone-output",
+      "volume": 39321,
+      "card": 70,
+      "monitor": "bluez_output.AC_80_0A_12_34_56.1.monitor"
+    },
+    {
+      "index": 90,
+      "name": "alsa_output.usb-Focusrite_Scarlett_Solo_USB-00.analog-stereo",
+      "description": "Scarlett Solo USB Analog Stereo",
+      "properties": { "device.bus": "usb", "device.class": "sound" },
+      "ports": [
+        { "name": "analog-output", "description": "Analog Output", "available": "Unknown" }
+      ],
+      "active_port": "analog-output",
+      "volume": 65536,
+      "card": 85,
+      "monitor": "alsa_output.usb-Focusrite_Scarlett_Solo_USB-00.analog-stereo.monitor"
+    }
+  ],
+  "sources": [
+    {
+      "index": 49,
+      "name": "alsa_output.pci-0000_00_1f.3.analog-stereo.monitor",
+      "description": "Monitor of Built-in Audio Analog Stereo",
+      "properties": { "device.class": "monitor" },
+      "volume": 65536,
+      "card": 42,
+      "is_monitor": true
+    },
+    {
+      "index": 50,
+      "name": "alsa_input.pci-0000_00_1f.3.analog-stereo",
+      "description": "Built-in Audio Analog Stereo",
+      "properties": { "device.bus": "pci", "device.form_factor": "internal" },
+      "ports": [
+        { "name": "analog-input-internal-mic", "description": "Internal Microphone", "available": "Unknown" },
+        { "name": "analog-input-mic", "description": "Microphone", "available": "No" }
+      ],
+      "active_port": "analog-input-internal-mic",
+      "volume": 52429,
+      "card": 42
+    },
+    {
+      "index": 91,
+      "name": "alsa_input.usb-Focusrite_Scarlett_Solo_USB-00.analog-stereo",
+      "description": "Scarlett Solo USB Analog Stereo",
+      "properties": { "device.bus": "usb" },
+      "ports": [
+        { "name": "analog-input", "description": "Analog Input", "available": "Unknown" }
+      ],
+      "active_port": "analog-input",
+      "volume": 65536,
+      "card": 85
+    }
+  ],
+  "streams": [
+    {
+      "index": 120,
+      "sink": 48,
+      "volume": 65536,
+      "properties": {
+        "application.name": "Firefox",
+        "application.process.binary": "firefox",
+        "application.icon_name": "firefox",
+        "media.name": "YouTube"
+      }
+    },
+    {
+      "index": 121,
+      "sink": 48,
+      "volume": 52429,
+      "properties": {
+        "application.name": "Firefox",
+        "application.process.binary": "firefox",
+        "media.name": "Meet"
+      }
+    },
+    {
+      "index": 130,
+      "sink": 48,
+      "volume": 49152,
+      "muted": true,
+      "properties": {
+        "application.name": "spotify",
+        "application.process.binary": "spotify",
+        "media.name": "Spotify"
+      }
+    },
+    {
+      "index": 140,
+      "sink": 48,
+      "volume": 65536,
+      "properties": { "application.name": "Flux Settings", "media.name": "Test" }
+    }
+  ],
+  "cards": [
+    {
+      "index": 42,
+      "name": "alsa_card.pci-0000_00_1f.3",
+      "profiles": [
+        { "name": "output:analog-stereo+input:analog-stereo", "description": "Analog Stereo Duplex", "priority": 6565 },
+        { "name": "output:hdmi-stereo+input:analog-stereo", "description": "Digital Stereo (HDMI) Output + Analog Stereo Input", "priority": 6065 },
+        { "name": "output:hdmi-surround", "description": "Digital Surround 5.1 (HDMI) Output", "priority": 800, "available": false },
+        { "name": "off", "description": "Off", "priority": 0 }
+      ],
+      "active_profile": "output:analog-stereo+input:analog-stereo"
+    },
+    {
+      "index": 70,
+      "name": "bluez_card.AC_80_0A_12_34_56",
+      "profiles": [
+        { "name": "a2dp-sink", "description": "High Fidelity Playback (A2DP Sink)", "priority": 40 },
+        { "name": "headset-head-unit", "description": "Headset Head Unit (HSP/HFP)", "priority": 30 },
+        { "name": "off", "description": "Off", "priority": 0 }
+      ],
+      "active_profile": "a2dp-sink"
+    },
+    {
+      "index": 85,
+      "name": "alsa_card.usb-Focusrite_Scarlett_Solo_USB-00",
+      "profiles": [
+        { "name": "output:analog-stereo+input:analog-stereo", "description": "Analog Stereo Duplex", "priority": 6565 }
+      ],
+      "active_profile": "output:analog-stereo+input:analog-stereo"
+    }
+  ]
+}
