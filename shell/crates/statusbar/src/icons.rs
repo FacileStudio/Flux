@@ -6,7 +6,7 @@
 //! loader (librsvg) is a separate package on most distributions, and a machine
 //! without it drew a pill's label and nothing beside it, silently.
 //!
-//! The tint is the palette's `palette_fg`. A texture is a fixed bitmap and cannot
+//! The tint is the palette's `fc_fg`. A texture is a fixed bitmap and cannot
 //! follow the stylesheet cascade the way the label next to it does, so the icons
 //! are painted once and painted again by [`follow_palette`] whenever the
 //! stylesheet is rebuilt — which is what moves the glyphs and the text together
@@ -95,7 +95,7 @@ pub fn follow_palette(icons: Rc<RefCell<Painted>>) {
 /// The ink the glyphs are drawn in: the palette's foreground, or a neutral grey
 /// when it cannot be parsed, so a pill is never left without its icon.
 pub(crate) fn tint() -> RGBA {
-    shell_common::palette::palette_fg_rgba().unwrap_or_else(|| RGBA::new(0.5, 0.5, 0.5, 1.0))
+    shell_common::palette::fg_rgba().unwrap_or_else(|| RGBA::new(0.5, 0.5, 0.5, 1.0))
 }
 
 /// The 24×24 texture one icon paints as.

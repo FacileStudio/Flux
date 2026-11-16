@@ -65,7 +65,7 @@ fn stylesheets_parse() {
         "the palette and the shared base sheet must parse"
     );
 
-    for widget in ["statusbar", "sidebar", "launcher"] {
+    for widget in ["statusbar", "sidebar", "launcher", "exit"] {
         let document = format!("{}\n{}", palette_and_base, widget_sheet(widget));
         assert_eq!(
             parse_errors(&document),
@@ -87,8 +87,8 @@ fn stylesheets_parse() {
 /// still hands GTK a complete document.
 fn palette_with(fg: &str) -> String {
     crate::palette::FALLBACK.replace(
-        "@define-color palette_fg #e8e1dd;",
-        &format!("@define-color palette_fg {fg};"),
+        "@define-color fc_fg #0a0a0a;",
+        &format!("@define-color fc_fg {fg};"),
     )
 }
 
@@ -123,7 +123,7 @@ fn a_rewritten_palette_reaches_a_running_provider() {
     provider.load_from_data(&rebuild("statusbar", SHIPPED));
     watch::watch(provider.clone(), "statusbar", SHIPPED);
     let before = provider.to_string();
-    assert!(before.contains("palette_bg"), "the palette layer is loaded");
+    assert!(before.contains("fc_page"), "the palette layer is loaded");
 
     std::fs::write(config.join("palette.css"), palette_with("#00ff00")).expect("rewrite it");
     assert!(
@@ -164,9 +164,29 @@ fn pump_until(check: impl Fn() -> bool) -> bool {
 /// in there, or a palette change would quietly drop a widget's own rules.
 #[test]
 fn document_layers_are_all_present() {
-    let widget = ".statusbar { color: @palette_fg; }";
+    let widget = ".statusbar { color: @fc_fg; }";
     let full = document(widget);
     assert!(full.contains(BASE_CSS), "the shared base is missing");
     assert!(full.ends_with(widget), "the widget sheet is missing");
-    assert!(full.contains("palette_bg"), "the palette layer is missing");
+    assert!(full.contains("fc_page"), "the palette layer is missing");
+}
+
+#[test]
+fn the_portal_scheme_picks_its_palette_file() {
+    use crate::palette::system_palette_in;
+    use crate::scheme::Scheme;
+
+    assert_eq!(Scheme::from_portal(1), Scheme::Dark);
+    assert_eq!(Scheme::from_portal(2), Scheme::Light);
+    assert_eq!(Scheme::from_portal(0), Scheme::Light);
+
+    let dir = std::env::temp_dir().join(format!("widgets-scheme-test-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("the test palette directory");
+    std::fs::write(dir.join("palette-dark.css"), "").expect("a dark palette");
+
+    assert_eq!(system_palette_in(&dir, Some(Scheme::Dark)), dir.join("palette-dark.css"));
+    assert_eq!(system_palette_in(&dir, Some(Scheme::Light)), dir.join("palette.css"));
+    assert_eq!(system_palette_in(&dir, None), dir.join("palette.css"));
+    let _ = std::fs::remove_dir_all(&dir);
 }

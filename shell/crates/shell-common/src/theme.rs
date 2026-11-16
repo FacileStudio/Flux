@@ -1,9 +1,10 @@
 //! The shared visual language of every widget.
 //!
-//! One base stylesheet defines what all three widgets agree on — transparent
-//! windows, muted text, soft pill buttons, panel surfaces — so a widget's own
+//! One base stylesheet defines what every widget agrees on — transparent
+//! windows, muted text, filled buttons, panel surfaces — so a widget's own
 //! stylesheet only has to say what makes it different. Colours come from the
-//! palette file (`~/.config/widgets/palette.css`), never from literals.
+//! muse palette (`/etc/flux/palette.css`, overridden by
+//! `~/.config/widgets/palette.css`), never from literals.
 //!
 //! [`init`] loads the three layers into a single provider and then watches the
 //! palette file. `palette sync` rewrites that file whenever the wallpaper or the
@@ -59,76 +60,64 @@ pub const WINDOW_TOP_GAP: i32 = BAR_HEIGHT + GAP;
 
 /// Loaded before every widget stylesheet, which may override any of it.
 ///
-/// The rules here follow one strict scale so the three widgets read as one
-/// system: spacing in 4/8/12/16/24, a single hairline in a low-contrast tone,
-/// one accent, and no shadows or gradients. Hierarchy comes from type size and
-/// weight plus empty space, not from borders and fills.
+/// The rules follow the muse charter so the shell reads as one system with the
+/// Facile apps: colours only through the `@fc_*` palette names, Inter as the UI
+/// face, a 4/8/12/16/24 spacing scale, fill steps instead of borders (none
+/// anywhere, inputs included), `fc_ring` as the one focus outline, and the muse
+/// radii (12px on a surface, 8px on what it holds).
 pub const BASE_CSS: &str = r#"
+* {
+  border: none;
+  box-shadow: none;
+}
+
 window {
   background-color: transparent;
-  font-family: "undefined";
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: @fc_fg;
 }
 
 window.backdrop {
   background-color: transparent;
 }
 
-/* Muted text: timestamps, hints, secondary labels. */
 .dim {
-  color: alpha(@palette_fg, 0.55);
-  font-size: 11px;
+  color: @fc_fg_muted;
+  font-size: 12px;
 }
 
-/* Any raised area over the desktop: the sidebar panel, the launcher. A flat
-   floating card — no border and no rounded corners, so the three widgets read as
-   one hard-edged system rather than a family of pills. */
 .surface {
-  background-color: alpha(@palette_bg, 0.96);
-  color: @palette_fg;
-  border-radius: 0;
+  background-color: @fc_component;
+  color: @fc_fg;
+  border-radius: 12px;
 }
 
-/* Ghost button, shared by the statusbar chips and the sidebar actions: a
-   low-contrast fill that only deepens on hover. No border — a hairline here
-   would fight the modules for pixels when they sit next to the bar. */
 button {
-  border: none;
-  background-color: alpha(@palette_fg, 0.08);
+  background-color: @fc_surface;
   background-image: none;
-  box-shadow: none;
-  color: @palette_fg;
-  font-size: 11px;
+  color: @fc_fg;
+  font-size: 12px;
   font-weight: 500;
   padding: 2px 8px;
   min-height: 20px;
   min-width: 20px;
-  /* The default theme rings a focused widget with a 2px accent-coloured
-     outline. Nothing here wants that chrome; focus is shown in the palette. */
+  border-radius: 8px;
   outline: 0 solid transparent;
 }
 
 button:hover {
-  background-color: alpha(@palette_fg, 0.16);
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
 }
 
 button:focus-visible {
-  background-color: alpha(@palette_color4, 0.22);
-  color: @palette_color4;
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
 }
 
 button:disabled {
   background-color: transparent;
-  color: alpha(@palette_fg, 0.35);
-}
-
-/* Nothing in the shell is rounded, ever. The toolkit's own theme rounds
-   buttons, fields, rows, sliders and their focus rings by default, so a corner
-   would creep back in through whichever widget nobody remembered to square
-   off. A universal rule is the point: every single node — the bar, the pills,
-   the network popup, the launcher field, the exit dialog — is hard-edged, and
-   one place says so. */
-* {
-  border-radius: 0;
+  color: @fc_fg_muted;
 }
 "#;
 
@@ -150,7 +139,12 @@ thread_local! {
 /// instead of the compiled-in default, and it is watched for hot-reload — edit
 /// the file and the widget restyles itself in place.
 pub fn init(widget_css: &'static str, name: &str) {
-    let provider = palette::provider(&rebuild(name, widget_css));
+    let provider = gtk4::CssProvider::new();
+    let scheme_provider = provider.clone();
+    let scheme_name = name.to_string();
+    crate::scheme::follow(move || watch::reload(&scheme_provider, &scheme_name, widget_css));
+    provider.load_from_data(&rebuild(name, widget_css));
+    palette::register(&provider);
     watch::watch(provider, name, widget_css);
 }
 

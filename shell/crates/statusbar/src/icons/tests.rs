@@ -141,20 +141,10 @@ fn glyph_colour(image: &gtk4::Image) -> Option<(u8, u8, u8)> {
         .map(|pixel| (pixel[0], pixel[1], pixel[2]))
 }
 
-/// Write a palette into `dir` naming `fg` as the foreground, the way `palette
-/// sync` writes it, so the widget under test reads it back from disk. Every other
-/// token is filled in too, so the document the bar loads is complete.
+/// Write a user palette override into `dir` naming `fg` as the foreground, so
+/// the widget under test reads it back from disk on top of the system palette.
 fn palette_at(dir: &std::path::Path, fg: &str) {
-    let mut sheet = format!("@define-color palette_fg {fg};\n");
-    let others = [
-        "bg", "cursor", "color0", "color1", "color2", "color3", "color4", "color5", "color6",
-        "color7", "color8", "color9", "color10", "color11", "color12", "color13", "color14",
-        "color15",
-    ];
-    for name in others {
-        sheet.push_str(&format!("@define-color palette_{name} #19120c;\n"));
-    }
-
+    let sheet = format!("@define-color fc_fg {fg};\n");
     let config = dir.join(".config/widgets");
     std::fs::create_dir_all(&config).expect("the test config directory");
     std::fs::write(config.join("palette.css"), sheet).expect("write the palette");
