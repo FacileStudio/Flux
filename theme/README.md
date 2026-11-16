@@ -3,7 +3,7 @@
 `tokens.css` is a verbatim copy of `src/lib/styles/tokens.css` from muse
 (https://github.com/FacileStudio/muse). It is the only design source for Flux.
 
-Vendored from muse commit `66668d56e39eea1be59ba9ad7aa40b05d80dcdd1`.
+Vendored from muse commit `266a6f8cb14107577bbc6365969927e755be2897`.
 
 ## Bump muse
 
