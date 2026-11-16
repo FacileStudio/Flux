@@ -5,6 +5,7 @@
 , gtk4
 , gtk4-layer-shell
 , runtimeShell
+, mkpasswd
 }:
 
 let
@@ -21,6 +22,10 @@ rustPlatform.buildRustPackage {
   nativeBuildInputs = [ pkg-config wrapGAppsHook4 ];
   buildInputs = [ gtk4 gtk4-layer-shell ];
 
+  preFixup = ''
+    gappsWrapperArgs+=(--suffix PATH : ${lib.makeBinPath [ mkpasswd ]})
+  '';
+
   postInstall = ''
     cat > $out/bin/flux-wallpaper <<EOF
     #!${runtimeShell}
@@ -30,7 +35,7 @@ rustPlatform.buildRustPackage {
   '';
 
   meta = {
-    description = "Flux desktop shell: statusbar, sidebar, launcher and exit menu";
+    description = "Flux desktop shell: statusbar, sidebar, launcher, exit menu and installer";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     mainProgram = "statusbar";
