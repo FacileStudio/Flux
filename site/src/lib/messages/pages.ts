@@ -22,10 +22,10 @@ export const pages = {
 	],
 	'downloads.arm.name': ['ARM', 'ARM', 'ARM', 'ARM'],
 	'downloads.arm.line': [
-		'ARM64 laptops and boards, and VMs on Apple Silicon Macs.',
-		'Portables et cartes ARM64, et VM sur Mac Apple Silicon.',
-		'Portátiles y placas ARM64, y VM en Mac con Apple Silicon.',
-		'ARM64-Laptops und -Boards sowie VMs auf Macs mit Apple Silicon.'
+		'ARM64 UEFI, for virtual machines and servers. It does not boot a stock Raspberry Pi or an Apple Silicon Mac directly.',
+		'ARM64 UEFI, pour les machines virtuelles et les serveurs. Elle ne démarre pas directement sur un Raspberry Pi standard ni sur un Mac Apple Silicon.',
+		'ARM64 UEFI, para máquinas virtuales y servidores. No arranca directamente en una Raspberry Pi estándar ni en un Mac con Apple Silicon.',
+		'ARM64 UEFI, für virtuelle Maschinen und Server. Es startet nicht direkt auf einem normalen Raspberry Pi oder einem Mac mit Apple Silicon.'
 	],
 	'downloads.recommended': ['For this device', 'Pour cet appareil', 'Para este dispositivo', 'Für dieses Gerät'],
 	'downloads.button': ['Download the ISO', 'Télécharger l’ISO', 'Descargar la ISO', 'ISO herunterladen'],
@@ -41,14 +41,14 @@ export const pages = {
 	'downloads.usb.title': ['Write it to a USB stick', 'L’écrire sur une clé USB', 'Grabarla en una memoria USB', 'Auf einen USB-Stick schreiben'],
 	'downloads.usb.line': [
 		'Use Impression on Linux or balenaEtcher on macOS and Windows. In a terminal, replace /dev/sdX with your stick: everything on it is erased.',
-		'Utilisez Impression sur Linux ou balenaEtcher sur macOS et Windows. Dans un terminal, remplacez /dev/sdX par votre clé : tout ce qu’elle contient est effacé.',
+		'Utilisez Impression sur Linux ou balenaEtcher sur macOS et Windows. Dans un terminal, remplacez /dev/sdX par votre clé : tout ce qu’elle contient est effacé.',
 		'Use Impression en Linux o balenaEtcher en macOS y Windows. En una terminal, sustituya /dev/sdX por su memoria: todo su contenido se borra.',
 		'Nutzen Sie Impression unter Linux oder balenaEtcher unter macOS und Windows. Im Terminal ersetzen Sie /dev/sdX durch Ihren Stick: alles darauf wird gelöscht.'
 	],
 	'downloads.boot.title': ['Boot and install', 'Démarrer et installer', 'Arrancar e instalar', 'Starten und installieren'],
 	'downloads.boot.line': [
 		'Start your computer from the stick. Flux opens on its desktop; run sudo flux-install when you want to keep it.',
-		'Démarrez l’ordinateur sur la clé. Flux s’ouvre sur son bureau ; lancez sudo flux-install quand vous voulez le garder.',
+		'Démarrez l’ordinateur sur la clé. Flux s’ouvre sur son bureau ; lancez sudo flux-install quand vous voulez le garder.',
 		'Arranque el ordenador desde la memoria. Flux se abre en su escritorio; ejecute sudo flux-install cuando quiera quedárselo.',
 		'Starten Sie den Computer vom Stick. Flux öffnet seinen Desktop; führen Sie sudo flux-install aus, wenn Sie es behalten wollen.'
 	],
