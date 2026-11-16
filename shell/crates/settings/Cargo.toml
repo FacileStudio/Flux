@@ -1,0 +1,22 @@
+[package]
+name = "settings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "flux-settings"
+path = "src/main.rs"
+
+[features]
+default = []
+page-network = []
+page-bluetooth = []
+page-audio = []
+page-display = []
+page-power = []
+page-system = []
+
+[dependencies]
+gtk4.workspace = true
+shell-common.workspace = true

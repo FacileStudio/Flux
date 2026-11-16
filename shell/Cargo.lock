@@ -971,6 +971,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings"
+version = "0.11.1"
+dependencies = [
+ "gtk4",
+ "shell-common",
+]
+
+[[package]]
 name = "shell-common"
 version = "0.11.1"
 dependencies = [
