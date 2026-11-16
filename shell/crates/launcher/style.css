@@ -1,0 +1,53 @@
+.popup {
+  padding: 8px;
+  border-radius: 12px;
+}
+
+entry {
+  min-height: 44px;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: @fc_fg;
+  background-color: @fc_surface;
+  background-image: none;
+  border-radius: 8px;
+  outline: 0 solid transparent;
+}
+
+entry text {
+  background-color: transparent;
+  color: @fc_fg;
+}
+
+entry:focus-within {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+list {
+  background-color: transparent;
+  background-image: none;
+}
+
+row {
+  padding: 8px 12px;
+  background-color: transparent;
+  background-image: none;
+  color: @fc_fg;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+row:hover {
+  background-color: @fc_surface;
+}
+
+row:selected {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+row:selected .dim {
+  color: alpha(@fc_accent_fg, 0.7);
+}
