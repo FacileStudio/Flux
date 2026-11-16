@@ -9,8 +9,26 @@ permissions:
   contents: read
 
 jobs:
+  check:
+    name: check the tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the tag against the version file and the changelog
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [ "$(cat version)" != "$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version file $(cat version)"
+            exit 1
+          fi
+          if ! grep -qF "## [$version]" CHANGELOG.md; then
+            echo "CHANGELOG.md has no section for $version"
+            exit 1
+          fi
+
   iso:
     name: iso (${{ matrix.system }})
+    needs: check
     strategy:
       fail-fast: true
       matrix:
@@ -30,9 +48,8 @@ jobs:
             /usr/share/swift /usr/local/julia* /opt/microsoft /opt/google
           sudo docker image prune --all --force || true
           df -h /
-      - uses: actions/checkout@v7
-      - uses: DeterminateSystems/nix-installer-action@v23
-      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - name: Build the ISO
         run: nix build --print-build-logs ".#packages.$SYSTEM.iso"
       - name: Name the ISO
@@ -48,16 +65,17 @@ jobs:
           cp -L "${isos[0]}" "dist/$name"
           size=$(stat -c %s "dist/$name")
           echo "$name: $size bytes"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: iso-${{ matrix.system }}
           path: dist/*.iso
           compression-level: 0
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: error
 
   boite:
     name: boite image (x86_64-linux)
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - name: Free disk space
@@ -67,9 +85,8 @@ jobs:
             /usr/share/swift /usr/local/julia* /opt/microsoft /opt/google
           sudo docker image prune --all --force || true
           df -h /
-      - uses: actions/checkout@v7
-      - uses: DeterminateSystems/nix-installer-action@v23
-      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - name: Build the Boite image
         run: nix build --print-build-logs ".#packages.x86_64-linux.boite"
       - name: Compress the image
@@ -86,39 +103,61 @@ jobs:
           qemu-img convert -O qcow2 -c "${images[0]}" "dist/$name"
           size=$(stat -c %s "dist/$name")
           echo "$name: $size bytes"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: boite-x86_64-linux
           path: dist/*.qcow2
           compression-level: 0
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: error
+
+  boot-test:
+    name: boot test
+    needs: check
+    uses: ./.github/workflows/boot-test.yml
+    with:
+      strict: true
 
   publish:
     name: publish
-    needs: [iso, boite]
+    needs: [iso, boite, boot-test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+    env:
+      SIGN: ${{ secrets.MINISIGN_SECRET_KEY != '' }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: "*-*-linux"
           path: dist
           merge-multiple: true
-      - name: Check the tag against the version file
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          if [ "$(cat version)" != "$version" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match version file $(cat version)"
-            exit 1
-          fi
       - name: Write checksums
         working-directory: dist
         run: |
           sha256sum -- *.iso *.qcow2 > SHA256SUMS
           cat SHA256SUMS
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/SHA256SUMS
+      - name: Sign the checksums
+        if: env.SIGN == 'true'
+        working-directory: dist
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq minisign
+          key="$RUNNER_TEMP/minisign.key"
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > "$key"
+          minisign -S -s "$key" -m SHA256SUMS -t "Flux $GITHUB_REF_NAME SHA256SUMS"
+          rm -f "$key"
+          cat SHA256SUMS.minisig
+      - name: Skip signing
+        if: env.SIGN != 'true'
+        run: echo "::notice::MINISIGN_SECRET_KEY is not set, SHA256SUMS is not signed"
       - name: Extract release notes
         run: |
           version="${GITHUB_REF_NAME#v}"
@@ -135,21 +174,31 @@ jobs:
             echo
             echo "### Downloads"
             echo
-            echo "The images are larger than GitHub's 2 GiB asset limit, so flux.facile.studio serves them. Check them against SHA256SUMS below."
+            echo "The images are larger than GitHub's 2 GiB asset limit, so flux.facile.studio serves them. Check them against the SHA256SUMS attached to this release, which is a second origin."
             echo
             for f in dist/*.iso dist/*.qcow2; do
               n=$(basename "$f")
               echo "- https://flux.facile.studio/releases/$GITHUB_REF_NAME/$n"
             done
+            echo
+            echo "Verify the provenance of an image with \`gh attestation verify <file> -R $GITHUB_REPOSITORY\`."
+            if [ -f dist/SHA256SUMS.minisig ]; then
+              echo "Verify the checksums with \`minisign -Vm SHA256SUMS -p minisign.pub\` (key: https://flux.facile.studio/minisign.pub)."
+            fi
           } >> notes.md
           cat notes.md
-      - name: Create the release
+      - name: Create the draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          assets=(dist/SHA256SUMS)
+          if [ -f dist/SHA256SUMS.minisig ]; then
+            assets+=(dist/SHA256SUMS.minisig)
+          fi
           gh release create "$GITHUB_REF_NAME" \
+            --draft \
             --prerelease \
             --verify-tag \
             --title "Flux ${GITHUB_REF_NAME#v}" \
             --notes-file notes.md \
-            dist/SHA256SUMS
+            "${assets[@]}"
