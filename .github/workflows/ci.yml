@@ -1,0 +1,88 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  eval:
+    name: eval
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - name: Evaluate every host and package on both systems
+        run: nix flake check --no-build --all-systems --print-build-logs
+
+  build:
+    name: build (${{ matrix.system }})
+    needs: eval
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            system: x86_64-linux
+          - runner: ubuntu-24.04-arm
+            system: aarch64-linux
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - name: Build every package except the images
+        env:
+          SYSTEM: ${{ matrix.system }}
+        run: |
+          mapfile -t pkgs < <(nix eval --json ".#packages.$SYSTEM" \
+            --apply 'ps: builtins.filter (n: !(builtins.elem n [ "iso" "boite" "vm" ])) (builtins.attrNames ps)' \
+            | jq -r '.[]')
+          if [ "${#pkgs[@]}" -eq 0 ]; then
+            echo "No packages to build on $SYSTEM"
+            exit 0
+          fi
+          printf 'Building %s\n' "${pkgs[@]}"
+          nix build --no-link --print-build-logs "${pkgs[@]/#/.#packages.$SYSTEM.}"
+
+  site:
+    name: site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Detect the site
+        id: detect
+        run: |
+          if [ -f site/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No site/package.json, skipping"
+          fi
+      - uses: oven-sh/setup-bun@v2
+        if: steps.detect.outputs.present == 'true'
+      - name: Install dependencies
+        if: steps.detect.outputs.present == 'true'
+        working-directory: site
+        run: bun install --frozen-lockfile
+      - name: Check
+        if: steps.detect.outputs.present == 'true'
+        working-directory: site
+        run: |
+          if jq -e '.scripts.check' package.json > /dev/null; then
+            bun run check
+          else
+            echo "No check script, skipping"
+          fi
+      - name: Build
+        if: steps.detect.outputs.present == 'true'
+        working-directory: site
+        run: bun run build
