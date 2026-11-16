@@ -444,7 +444,7 @@ class Run:
 
     def target_drives(self, boot_index):
         return [
-            "-drive", f"file={self.target},if=none,id=target,format=qcow2,discard=unmap",
+            "-drive", f"file={self.disk},if=none,id=target,format=qcow2,discard=unmap",
             "-device", f"virtio-blk-pci,drive=target,bus=pcie.0,addr=0x10,bootindex={boot_index}",
             "-drive", f"file={self.script},if=none,id=script,format=raw,readonly=on",
             "-device", f"virtio-blk-pci,drive=script,serial={SCRIPT_SERIAL},bus=pcie.0,addr=0x11",
@@ -470,8 +470,8 @@ class Run:
         self.vars = self.work / "OVMF_VARS.fd"
         shutil.copyfile(vars_template, self.vars)
         os.chmod(self.vars, 0o644)
-        self.target = self.work / "target.qcow2"
-        subprocess.run(["qemu-img", "create", "-q", "-f", "qcow2", str(self.target), o.disk_size], check=True)
+        self.disk = self.work / "target.qcow2"
+        subprocess.run(["qemu-img", "create", "-q", "-f", "qcow2", str(self.disk), o.disk_size], check=True)
         script = GUEST_SCRIPT.replace("@HASH@", PASSWORD_HASH).replace("@INSTALL@", "no" if o.no_install else "yes")
         self.script = self.work / "script.img"
         self.script.write_bytes(script.encode().ljust(1024 * 1024, b"\x00"))
