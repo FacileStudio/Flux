@@ -91,6 +91,9 @@ fn hostnames_come_from_the_username() {
 fn names_are_validated_like_the_backend() {
     assert!(valid_username("ada"));
     assert!(valid_username("_svc-1"));
+    assert!(!valid_username("wheel"));
+    assert!(!valid_username("networkmanager"));
+    assert!(!valid_username("systemd-oom"));
     assert!(!valid_username("Ada"));
     assert!(!valid_username("1ada"));
     assert!(!valid_username("root"));
@@ -134,7 +137,11 @@ fn progress_lines_parse() {
     );
     assert_eq!(
         parse_progress(r#"{"step":"error","message":"the \"install\" step failed"}"#),
-        Some(Event::Error("the \"install\" step failed".into()))
+        Some(Event::Error { message: "the \"install\" step failed".into(), log_tail: String::new() })
+    );
+    assert_eq!(
+        parse_progress(r#"{"step":"error","message":"no disk","log_tail":"a\nb"}"#),
+        Some(Event::Error { message: "no disk".into(), log_tail: "a\nb".into() })
     );
     assert_eq!(
         parse_progress(r#"{"step":"bootloader","percent":250}"#),

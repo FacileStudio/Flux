@@ -13,6 +13,14 @@ pub fn error(app: &Rc<App>) -> Widget {
     panel.add_css_class("danger-panel");
     panel.set_valign(gtk4::Align::Start);
     panel.append(&label(&app.state.borrow().error, "danger-body"));
+    let (details, log) = super::progress::details(text);
+    let tail = app.state.borrow().error_log.clone();
+    if !tail.is_empty() {
+        log.buffer().set_text(&tail);
+    }
+    let body = Box::new(Orientation::Vertical, 12);
+    body.append(&panel);
+    body.append(&details);
     let copy = button(text.copy_log, "primary");
     let copied = text.copied;
     copy.connect_clicked(move |copy| {
@@ -20,7 +28,7 @@ pub fn error(app: &Rc<App>) -> Widget {
         copy.set_label(copied);
     });
     super::default(app, &copy);
-    page(app, text.error_title, text.error_subtitle, &panel, &[&copy])
+    page(app, text.error_title, text.error_subtitle, &body, &[&copy])
 }
 
 pub fn done(app: &Rc<App>) -> Widget {

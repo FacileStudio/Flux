@@ -43,8 +43,11 @@ struct View {
     log: TextView,
 }
 
-fn fail(app: &Rc<App>, message: String) {
-    app.state.borrow_mut().error = message;
+fn fail(app: &Rc<App>, message: String, log_tail: String) {
+    let mut state = app.state.borrow_mut();
+    state.error = message;
+    state.error_log = log_tail;
+    drop(state);
     app.replace(Screen::Error);
 }
 
@@ -61,12 +64,12 @@ fn handle(app: &Rc<App>, view: &View, message: Message) -> glib::ControlFlow {
             view.bar.set_fraction(f64::from(percent) / 100.0);
             glib::ControlFlow::Continue
         }
-        Message::Event(Event::Error(error)) => {
-            fail(app, error);
+        Message::Event(Event::Error { message, log_tail }) => {
+            fail(app, message, log_tail);
             glib::ControlFlow::Break
         }
         Message::Failed(failure) => {
-            fail(app, failure_text(text, failure));
+            fail(app, failure_text(text, failure), String::new());
             glib::ControlFlow::Break
         }
     }
@@ -77,7 +80,7 @@ fn poll(app: &Rc<App>, view: View, receiver: Receiver<Message>) {
     let mut ticks = 0u32;
     glib::timeout_add_local(Duration::from_millis(100), move || {
         ticks = ticks.wrapping_add(1);
-        if view.details.is_expanded() && ticks % 10 == 0 {
+        if view.details.is_expanded() && ticks.is_multiple_of(10) {
             view.log.buffer().set_text(&model::tail(&system::log(), 200));
         }
         for message in receiver.try_iter() {
@@ -89,7 +92,8 @@ fn poll(app: &Rc<App>, view: View, receiver: Receiver<Message>) {
     });
 }
 
-fn details(text: &Text) -> (Expander, TextView) {
+/// The Details expander over the install log. It shows the log's tail when opened, unless  already holds text.
+pub(super) fn details(text: &Text) -> (Expander, TextView) {
     let log = TextView::new();
     log.add_css_class("log");
     log.set_editable(false);
@@ -105,7 +109,7 @@ fn details(text: &Text) -> (Expander, TextView) {
     expander.set_child(Some(&scroll));
     let view = log.clone();
     expander.connect_expanded_notify(move |expander| {
-        if expander.is_expanded() {
+        if expander.is_expanded() && view.buffer().char_count() == 0 {
             view.buffer().set_text(&model::tail(&system::log(), 200));
         }
     });

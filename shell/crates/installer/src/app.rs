@@ -53,6 +53,7 @@ pub struct State {
     pub timezone_chosen: bool,
     pub zones: Vec<String>,
     pub error: String,
+    pub error_log: String,
     pub preview: bool,
 }
 
@@ -251,6 +252,7 @@ fn preview(app: &Rc<App>, name: &str) -> Option<Screen> {
     state.password = "flux".to_string();
     state.password_again = "flux".to_string();
     state.error = "the install step failed, see /tmp/flux-install.log".to_string();
+    state.error_log = "copying path '/nix/store/7d0x-linux-6.18-modules' from 'auto?trusted=1'\nerror: writing to file: No space left on device".to_string();
     state.disk = Some(Disk {
         name: "nvme0n1".to_string(),
         path: "/dev/nvme0n1".to_string(),

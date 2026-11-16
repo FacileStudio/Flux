@@ -126,7 +126,7 @@ pub fn parse_disks(json: &str, live: &[String]) -> Vec<Disk> {
                 .filter(|path| !path.is_empty())
                 .unwrap_or_else(|| format!("/dev/{name}"));
             Disk {
-                live: live.iter().any(|disk| *disk == name),
+                live: live.contains(&name),
                 size: number(device.get("size")),
                 model: text(device.get("model")),
                 removable: flag(device.get("rm")),
@@ -219,14 +219,28 @@ pub fn derive_hostname(username: &str) -> String {
     name.trim_end_matches('-').to_string()
 }
 
-/// Whether `name` matches `^[a-z_][a-z0-9_-]{0,31}$` and is not `root`.
+/// The names the system keeps for itself, shared with `flux-install` and `flux-config` through `rules.json`.
+fn reserved_users() -> &'static [String] {
+    static NAMES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+    NAMES.get_or_init(|| {
+        serde_json::from_str::<Value>(include_str!("../../flux-config/rules.json"))
+            .ok()
+            .and_then(|rules| rules.get("reservedUsers").and_then(Value::as_array).cloned())
+            .map(|names| names.iter().filter_map(Value::as_str).map(str::to_string).collect())
+            .unwrap_or_else(|| vec!["root".to_string()])
+    })
+}
+
+/// Whether `name` matches `^[a-z_][a-z0-9_-]{0,31}$` and is not a name the system keeps.
 pub fn valid_username(name: &str) -> bool {
     let mut chars = name.chars();
     let Some(first) = chars.next() else {
         return false;
     };
     name.len() <= 32
-        && name != "root"
+        && !reserved_users().iter().any(|reserved| reserved == name)
+        && !name.starts_with("systemd-")
+        && !name.starts_with("nixbld")
         && (first.is_ascii_lowercase() || first == '_')
         && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-')
 }
@@ -285,7 +299,7 @@ pub enum Step {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Event {
     Progress { step: Step, percent: u8, message: String },
-    Error(String),
+    Error { message: String, log_tail: String },
 }
 
 /// Read one progress line. Anything that is not a progress object is `None`.
@@ -293,7 +307,10 @@ pub fn parse_progress(line: &str) -> Option<Event> {
     let value: Value = serde_json::from_str(line.trim()).ok()?;
     let message = value.get("message").and_then(Value::as_str).unwrap_or("").to_string();
     let step = match value.get("step")?.as_str()? {
-        "error" => return Some(Event::Error(message)),
+        "error" => {
+            let log_tail = value.get("log_tail").and_then(Value::as_str).unwrap_or("").to_string();
+            return Some(Event::Error { message, log_tail });
+        }
         "partition" => Step::Partition,
         "format" => Step::Format,
         "config" => Step::Config,

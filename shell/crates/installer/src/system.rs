@@ -134,7 +134,7 @@ fn relay(child: &mut Child, sender: &Sender<Message>) -> bool {
     let mut finished = false;
     let events = BufReader::new(stdout).lines().map_while(Result::ok);
     for event in events.filter_map(|line| model::parse_progress(&line)) {
-        finished |= matches!(event, Event::Error(_) | Event::Progress { step: Step::Done, .. });
+        finished |= matches!(event, Event::Error { .. } | Event::Progress { step: Step::Done, .. });
         let _ = sender.send(Message::Event(event));
     }
     finished
