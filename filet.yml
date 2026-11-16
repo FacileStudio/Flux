@@ -1,0 +1,10 @@
+ignore: [.git, node_modules, target, result, dist, build, .svelte-kit, vendor]
+
+extensions: [.rs, .ts, .js, .svelte, .sh]
+
+style:
+  banInlineComments: true
+  banTODO: true
+  banTrailingSpace: true
+
+failOn: error
