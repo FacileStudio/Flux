@@ -7,6 +7,26 @@ let
   dark = cfg.scheme == "dark";
   gtkTheme = if dark then "Flux-dark" else "Flux";
   monoFont = "JetBrains Mono";
+  fluxScheme = pkgs.writeShellApplication {
+    name = "flux-scheme";
+    runtimeInputs = [ pkgs.dconf pkgs.coreutils ];
+    text = ''
+      current=$(dconf read /org/gnome/desktop/interface/color-scheme || true)
+      case "''${1:-toggle}" in
+        light) want=light ;;
+        dark) want=dark ;;
+        toggle) if [ "$current" = "'prefer-dark'" ]; then want=light; else want=dark; fi ;;
+        get) if [ "$current" = "'prefer-dark'" ]; then echo dark; else echo light; fi; exit 0 ;;
+        *) echo "usage: flux-scheme [light|dark|toggle|get]" >&2; exit 2 ;;
+      esac
+      if [ "$want" = dark ]; then gtk=Flux-dark; else gtk=Flux; fi
+      dconf write /org/gnome/desktop/interface/color-scheme "'prefer-$want'"
+      dconf write /org/gnome/desktop/interface/gtk-theme "'$gtk'"
+      mkdir -p "$HOME/.config/fuzzel"
+      printf '[main]\ninclude=${share}/fuzzel/%s.ini\nfont=${cfg.font}:size=12\n\n[border]\nwidth=0\nradius=12\n' "$want" > "$HOME/.config/fuzzel/fuzzel.ini"
+      echo "$want"
+    '';
+  };
 in
 {
   options.flux.theme = {
@@ -18,16 +38,18 @@ in
     scheme = lib.mkOption {
       type = lib.types.enum [ "light" "dark" ];
       default = "light";
-      description = "muse color scheme for /etc/flux/palette.css, GTK, fuzzel and the GNOME color-scheme preference.";
+      description = "Initial muse color scheme. Users switch at runtime with `flux-scheme light|dark|toggle` or the shell toggle; the shell, libadwaita apps and Ghostty follow the GNOME color-scheme preference live.";
     };
   };
 
   config = lib.mkIf (config.flux.profile == "desktop") {
-    environment.systemPackages = [ theme ];
+    environment.systemPackages = [ theme fluxScheme ];
     environment.pathsToLink = [ "/share/themes" ];
 
     environment.etc = {
       "flux/palette.css".source = "${share}/palette-${cfg.scheme}.css";
+      "flux/palette-light.css".source = "${share}/palette-light.css";
+      "flux/palette-dark.css".source = "${share}/palette-dark.css";
       "flux/gtk-4.0/gtk.css".source = "${share}/gtk-4.0/gtk.css";
       "flux/ghostty/config".text = ''
         theme = light:${share}/ghostty/themes/flux-light,dark:${share}/ghostty/themes/flux-dark
