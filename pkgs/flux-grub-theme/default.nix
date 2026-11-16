@@ -38,7 +38,7 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p $out $splash
     sed "s/currentColor/$fg/g" ${../../site/static/flux-mark.svg} > mark.svg
-    rsvg-convert -w 160 -h 160 -o $out/mark.png mark.svg
+    rsvg-convert -w 80 -h 80 -o $out/mark.png mark.svg
 
     pill() {
       echo "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"$2\" height=\"${h}\">$3</svg>" \
