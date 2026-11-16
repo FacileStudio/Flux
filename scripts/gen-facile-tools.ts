@@ -55,5 +55,20 @@ for (const [name, result] of results.sort(([a], [b]) => a.localeCompare(b))) {
     if (missing.length) console.error(`note ${name}: no asset for ${missing.join(", ")}`);
   }
 }
+/** Every tool or tool system the current lock holds that `next` no longer does. */
+async function dropped(next: Record<string, Entry>): Promise<string[]> {
+  const file = Bun.file(out);
+  if (!(await file.exists())) return [];
+  const previous = (await file.json()) as Record<string, Entry>;
+  return Object.entries(previous).flatMap(([name, entry]) =>
+    !next[name] ? [name] : Object.keys(entry.systems).filter((s) => !next[name].systems[s]).map((s) => `${name} (${s})`)
+  );
+}
+
+const lost = await dropped(locked);
+if (lost.length) {
+  console.error(`refusing to drop locked tools: ${lost.join(", ")}`);
+  process.exit(1);
+}
 await Bun.write(out, JSON.stringify(locked, null, 2) + "\n");
 console.error(`wrote ${Object.keys(locked).length} tools to ${out}`);
