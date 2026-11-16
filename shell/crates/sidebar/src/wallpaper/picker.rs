@@ -34,31 +34,8 @@ impl Picker {
     pub fn build(window: &ApplicationWindow) -> Rc<Picker> {
         let root = Box::new(gtk4::Orientation::Vertical, 8);
         root.add_css_class("wallpapers");
-
-        let header = Box::new(gtk4::Orientation::Horizontal, 8);
-        let title = Label::new(Some("Wallpaper"));
-        title.add_css_class("title");
-        title.set_halign(gtk4::Align::Start);
-        title.set_hexpand(true);
-        let add = Button::with_label("Add from file");
-        add.add_css_class("clear");
-        header.append(&title);
-        header.append(&add);
-
-        let grid = FlowBox::new();
-        grid.set_selection_mode(SelectionMode::None);
-        grid.set_homogeneous(true);
-        grid.set_min_children_per_line(3);
-        grid.set_max_children_per_line(3);
-        grid.set_column_spacing(8);
-        grid.set_row_spacing(8);
-
-        let scroll = ScrolledWindow::new();
-        scroll.set_child(Some(&grid));
-        scroll.set_policy(PolicyType::Never, PolicyType::Automatic);
-        scroll.set_propagate_natural_height(true);
-        scroll.set_max_content_height(220);
-
+        let (header, add) = header();
+        let (scroll, grid) = grid();
         let status = Label::new(None);
         status.add_css_class("dim");
         status.set_halign(gtk4::Align::Start);
@@ -166,6 +143,38 @@ impl Picker {
             }
         });
     }
+}
+
+/// The title row: the heading and the "Add from file" button.
+fn header() -> (Box, Button) {
+    let header = Box::new(gtk4::Orientation::Horizontal, 8);
+    let title = Label::new(Some("Wallpaper"));
+    title.add_css_class("title");
+    title.set_halign(gtk4::Align::Start);
+    title.set_hexpand(true);
+    let add = Button::with_label("Add from file");
+    add.add_css_class("clear");
+    header.append(&title);
+    header.append(&add);
+    (header, add)
+}
+
+/// The three-across thumbnail grid, scrolling past a few rows.
+fn grid() -> (ScrolledWindow, FlowBox) {
+    let grid = FlowBox::new();
+    grid.set_selection_mode(SelectionMode::None);
+    grid.set_homogeneous(true);
+    grid.set_min_children_per_line(3);
+    grid.set_max_children_per_line(3);
+    grid.set_column_spacing(8);
+    grid.set_row_spacing(8);
+
+    let scroll = ScrolledWindow::new();
+    scroll.set_child(Some(&grid));
+    scroll.set_policy(PolicyType::Never, PolicyType::Automatic);
+    scroll.set_propagate_natural_height(true);
+    scroll.set_max_content_height(220);
+    (scroll, grid)
 }
 
 /// One thumbnail button for `path`, its image decoded in the background.

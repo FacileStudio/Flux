@@ -98,22 +98,28 @@ pub fn follow(on_change: impl Fn() + 'static) {
     };
     CURRENT.with(|slot| slot.set(read(&proxy)));
     proxy.connect_local("g-signal", false, move |values| {
-        let signal = values.get(2)?.get::<String>().ok()?;
-        let parameters = values.get(3)?.get::<Variant>().ok()?;
-        if signal != "SettingChanged" {
-            return None;
-        }
-        let namespace = parameters.child_value(0).get::<String>()?;
-        let key = parameters.child_value(1).get::<String>()?;
-        if namespace != NAMESPACE || key != KEY {
-            return None;
-        }
-        let scheme = portal_value(&parameters.child_value(2)).map(Scheme::from_portal);
+        let scheme = changed_scheme(values);
         if scheme.is_some() && scheme != current() {
             CURRENT.with(|slot| slot.set(scheme));
             on_change();
         }
-        None::<glib::Value>
+        None
     });
     PROXY.with(|slot| *slot.borrow_mut() = Some(proxy));
+}
+
+/// The scheme a proxy `g-signal` emission carries, when it is the portal's
+/// `SettingChanged` for `color-scheme`.
+fn changed_scheme(values: &[glib::Value]) -> Option<Scheme> {
+    let signal = values.get(2)?.get::<String>().ok()?;
+    let parameters = values.get(3)?.get::<Variant>().ok()?;
+    if signal != "SettingChanged" {
+        return None;
+    }
+    let namespace = parameters.child_value(0).get::<String>()?;
+    let key = parameters.child_value(1).get::<String>()?;
+    if namespace != NAMESPACE || key != KEY {
+        return None;
+    }
+    portal_value(&parameters.child_value(2)).map(Scheme::from_portal)
 }
