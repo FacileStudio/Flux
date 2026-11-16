@@ -12,12 +12,32 @@ use crate::popup::{self, FillBar, Popup};
 use crate::{text, work};
 use power::{Battery, State};
 
-/// The pill's label, or `None` to hide the pill: the level, and a `+` while
-/// the battery charges.
+/// The pill's label, or `None` to hide the pill: the level and a `+` while
+/// the battery charges, or nothing beside the icon unless Settings turned the
+/// percentage on.
 pub fn label() -> Option<String> {
     let battery = Battery::read()?;
+    if !shows_percentage() {
+        return Some(String::new());
+    }
     let charging = battery.state() == State::Charging;
     Some(format!("{}%{}", battery.pct, if charging { "+" } else { "" }))
+}
+
+/// Whether `~/.config/flux/shell.json` turns the percentage on. A missing file or key means off.
+fn shows_percentage() -> bool {
+    std::env::var_os("HOME")
+        .map(|home| std::path::PathBuf::from(home).join(".config/flux/shell.json"))
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .is_some_and(|document| percentage_on(&document))
+}
+
+/// Read the boolean `battery_percentage` key of a `shell.json` document.
+fn percentage_on(document: &str) -> bool {
+    serde_json::from_str::<serde_json::Value>(document)
+        .ok()
+        .and_then(|value| value.get("battery_percentage").and_then(serde_json::Value::as_bool))
+        .unwrap_or(false)
 }
 
 /// The state in words, for the popup.

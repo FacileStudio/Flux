@@ -1,3 +1,5 @@
+include optional=true "/etc/flux/niri/platform.kdl"
+
 input {
     keyboard {
         xkb {
@@ -60,7 +62,8 @@ binds {
     Mod+N { spawn "sidebar" "toggle"; }
     Mod+Comma { spawn "flux-settings"; }
     Mod+Escape { spawn "exit"; }
-    Super+Alt+L { spawn "flux-lock"; }
+    Super+Alt+L { spawn "loginctl" "lock-session"; }
+    Mod+Shift+V { spawn "sh" "-c" "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
 
     Mod+Q { close-window; }
     Mod+O repeat=false { toggle-overview; }
@@ -146,3 +149,6 @@ binds {
     Mod+Shift+P { power-off-monitors; }
     Mod+Shift+E { quit; }
 }
+
+include optional=true "~/.config/flux/niri/input.kdl"
+include optional=true "~/.config/flux/niri/outputs.kdl"

@@ -34,3 +34,11 @@ fn nothing_is_counted_when_nothing_is_moving() {
     assert_eq!(remaining_text(State::Charging, Some(0), strings), None);
     assert_eq!(remaining_text(State::Discharging, None, strings), None);
 }
+
+#[test]
+fn the_percentage_follows_shell_json() {
+    assert!(percentage_on(r#"{"battery_percentage": true, "other": 1}"#));
+    assert!(!percentage_on(r#"{"battery_percentage": false}"#));
+    assert!(!percentage_on("{}"));
+    assert!(!percentage_on("not json"));
+}

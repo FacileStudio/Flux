@@ -126,6 +126,7 @@ fn refresh(control: &'static Control, button: &Button, label: &Label) {
         };
         if let Some(text) = &text {
             label.set_text(text);
+            label.set_visible(!text.is_empty());
         }
         button.set_visible(text.is_some());
     });
