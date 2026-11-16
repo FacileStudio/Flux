@@ -1,0 +1,280 @@
+window.fx-network-preview,
+window.fx-network-preview.backdrop {
+  background-color: @fc_page;
+}
+
+window.fx-network-preview scrolledwindow,
+window.fx-network-preview viewport {
+  background-color: transparent;
+}
+
+.fx-network {
+  padding: 32px 32px 40px 32px;
+}
+
+.fx-network.fx-quick {
+  padding: 8px;
+}
+
+.fx-network .fx-section {
+  background-color: @fc_component;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.fx-network.fx-quick .fx-section {
+  background-color: transparent;
+  padding: 0;
+}
+
+.fx-network .fx-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: @fc_fg;
+  padding: 8px 12px 4px 12px;
+}
+
+.fx-network .fx-list-header .fx-section-title {
+  padding: 0;
+}
+
+.fx-network .fx-list-header {
+  padding: 4px 4px 4px 12px;
+  min-height: 36px;
+}
+
+.fx-network .fx-row {
+  padding: 12px;
+  min-height: 24px;
+}
+
+.fx-network .fx-row.fx-inline {
+  padding: 4px 0;
+}
+
+.fx-network .fx-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.fx-network .fx-subtitle {
+  font-size: 12px;
+  color: @fc_fg_muted;
+}
+
+.fx-network .fx-value {
+  font-size: 14px;
+  color: @fc_fg;
+}
+
+.fx-network .fx-error {
+  font-size: 12px;
+  color: @fc_danger;
+}
+
+.fx-network .fx-banner {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+  font-size: 14px;
+}
+
+.fx-network .fx-empty {
+  padding: 48px 24px;
+}
+
+.fx-network.fx-quick .fx-empty {
+  padding: 24px 12px;
+}
+
+.fx-network .fx-net {
+  border-radius: 8px;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-network .fx-net-header {
+  padding: 10px 12px;
+  min-height: 28px;
+  border-radius: 8px;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-network .fx-net-header:hover {
+  background-color: @fc_surface;
+}
+
+.fx-network .fx-net-header.fx-connected .fx-title {
+  font-weight: 600;
+}
+
+.fx-network .fx-bars,
+.fx-network .fx-lock,
+.fx-network .fx-chevron {
+  color: @fc_fg;
+}
+
+.fx-network .fx-lock {
+  color: @fc_fg_muted;
+}
+
+.fx-network .fx-expand {
+  padding: 4px 12px 16px 42px;
+}
+
+.fx-network.fx-quick .fx-expand {
+  padding: 4px 12px 12px 12px;
+}
+
+.fx-network button {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.fx-network button.fx-primary {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+.fx-network button.fx-primary:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+}
+
+.fx-network button.fx-primary:disabled {
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
+}
+
+.fx-network button.fx-secondary {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+.fx-network button.fx-secondary:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+.fx-network button.fx-ghost,
+.fx-network button.fx-link {
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+.fx-network button.fx-ghost:hover,
+.fx-network button.fx-link:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+.fx-network button.fx-ghost-danger {
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+.fx-network button.fx-ghost-danger:hover {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+.fx-network button.fx-icon-button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  background-color: transparent;
+}
+
+.fx-network button.fx-icon-button:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+.fx-network button:focus-visible,
+.fx-network switch:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+.fx-network switch {
+  min-width: 40px;
+  min-height: 24px;
+  border-radius: 999px;
+  background-color: @fc_surface;
+  background-image: none;
+  outline: 0 solid transparent;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-network switch:checked {
+  background-color: @fc_accent;
+}
+
+.fx-network switch:disabled {
+  opacity: 0.5;
+}
+
+.fx-network switch slider {
+  min-width: 20px;
+  min-height: 20px;
+  margin: 2px;
+  border-radius: 999px;
+  background-color: @fc_page;
+  background-image: none;
+}
+
+.fx-network switch image {
+  color: transparent;
+}
+
+.fx-network entry,
+.fx-network passwordentry {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+  color: @fc_fg;
+  font-size: 14px;
+  outline: 0 solid transparent;
+}
+
+.fx-network entry:focus-within,
+.fx-network passwordentry:focus-within {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+.fx-network entry text,
+.fx-network passwordentry text {
+  background-color: transparent;
+  color: @fc_fg;
+}
+
+.fx-network entry text placeholder,
+.fx-network passwordentry text placeholder {
+  color: @fc_fg_muted;
+}
+
+.fx-network passwordentry image {
+  color: @fc_fg_muted;
+}
+
+.fx-network dropdown > button {
+  background-color: @fc_surface;
+  color: @fc_fg;
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.fx-network spinner {
+  color: @fc_fg_muted;
+}
+
+.fx-network selection,
+.fx-network text selection,
+.fx-network label selection {
+  background-color: alpha(@fc_fg, 0.16);
+  color: @fc_fg;
+}

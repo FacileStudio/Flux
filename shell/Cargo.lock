@@ -971,6 +971,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-network"
+version = "0.11.1"
+dependencies = [
+ "async-channel",
+ "futures-util",
+ "gtk4",
+ "serde",
+ "shell-common",
+ "tokio",
+ "zbus",
+]
+
+[[package]]
 name = "shell-common"
 version = "0.11.1"
 dependencies = [
@@ -1133,8 +1146,20 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "socket2",
+ "tokio-macros",
  "tracing",
  "windows-sys",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "78773a2a397f451582ce068015985c33193cf6dea8b74d2a639fe457b2f07b0e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
 ]
 
 [[package]]
