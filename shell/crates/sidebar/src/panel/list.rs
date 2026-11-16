@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use gtk4::prelude::*;
 
-use crate::model;
+use crate::{model, text};
 
 use super::App;
 
@@ -68,11 +68,12 @@ impl App {
         name.set_halign(gtk4::Align::Start);
         name.set_hexpand(true);
 
-        let time = gtk4::Label::new(Some(&model::relative_time(notification.ts, now)));
+        let time = gtk4::Label::new(Some(&model::relative_time(notification.ts, now, text::get().just_now)));
         time.add_css_class("dim");
         times.push((time.clone(), notification.ts));
 
-        let dismiss = gtk4::Button::with_label("x");
+        let dismiss = gtk4::Button::with_label("×");
+        dismiss.set_tooltip_text(Some(text::get().dismiss));
         dismiss.add_css_class("dismiss");
         let row_app = app.clone();
         let row_id = notification.id;

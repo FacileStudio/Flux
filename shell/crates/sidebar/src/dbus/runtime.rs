@@ -8,12 +8,16 @@ use zbus::object_server::SignalEmitter;
 use super::{Notifications, NotificationsSignals, EMITTER};
 
 /// Own the name on the session bus on its own thread and hand back a handle the
-/// widget layers can spawn on. The daemon ends with the process.
-pub fn start(next_id: u32) -> tokio::runtime::Handle {
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .expect("sidebar: tokio runtime");
+/// widget layers can spawn on. The daemon ends with the process. Without a
+/// runtime the panel still works and simply receives nothing.
+pub fn start(next_id: u32) -> Option<tokio::runtime::Handle> {
+    let runtime = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+        Ok(runtime) => runtime,
+        Err(error) => {
+            eprintln!("sidebar: no tokio runtime, notifications are off: {error}");
+            return None;
+        }
+    };
     let handle = runtime.handle().clone();
     std::thread::spawn(move || {
         runtime.block_on(async move {
@@ -23,12 +27,15 @@ pub fn start(next_id: u32) -> tokio::runtime::Handle {
             }
         });
     });
-    handle
+    Some(handle)
 }
 
 /// Tell every client on the bus that a notification is gone. `reason` is the
 /// spec's: 1 expired, 2 dismissed, 3 closed by request.
-pub fn emit_closed(handle: &tokio::runtime::Handle, id: u32, reason: u32) {
+pub fn emit_closed(handle: Option<&tokio::runtime::Handle>, id: u32, reason: u32) {
+    let Some(handle) = handle else {
+        return;
+    };
     handle.spawn(async move {
         if let Some(emitter) = EMITTER.get() {
             let _ = emitter.notification_closed(id, reason).await;

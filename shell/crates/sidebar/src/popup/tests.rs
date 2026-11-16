@@ -27,7 +27,7 @@ pub(crate) fn force_expiry(popups: &Popups) {
     }
 }
 
-/// The ids currently on screen, oldest first. Used to prove the stack really
+/// The ids currently on screen, newest first. Used to prove the stack really
 /// holds what the count says it does.
 pub(crate) fn ids(popups: &Rc<Popups>) -> Vec<u32> {
     popups

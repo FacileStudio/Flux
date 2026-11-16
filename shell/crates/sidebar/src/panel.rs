@@ -23,12 +23,13 @@ use gtk4::{gdk, glib};
 
 use crate::dbus::{self, Event};
 use crate::wallpaper::picker::Picker;
-use crate::{model, popup};
+use crate::{model, popup, text};
 
 /// The panel and everything on it. The fields are the children of this module
 /// too, so `list` and `actions` reach them directly.
 pub(super) struct App {
     pub(super) window: ApplicationWindow,
+    root: Box,
     list: Box,
     scroll: ScrolledWindow,
     count: Label,
@@ -38,7 +39,7 @@ pub(super) struct App {
     time_labels: RefCell<Vec<(Label, i64)>>,
     toasts: Rc<popup::Popups>,
     picker: Rc<Picker>,
-    handle: tokio::runtime::Handle,
+    handle: Option<tokio::runtime::Handle>,
 }
 
 /// Fold one daemon event into the list.
@@ -53,6 +54,7 @@ pub(super) fn apply_event(app: &Rc<App>, event: &Event) {
         }
         Event::Removed(id) => {
             app.items.borrow_mut().retain(|item| item.id != *id);
+            app.toasts.dismiss(*id);
         }
     }
     model::save(&app.items.borrow());
@@ -61,28 +63,27 @@ pub(super) fn apply_event(app: &Rc<App>, event: &Event) {
 
 impl App {
     pub(super) fn build(
+        application: &gtk4::Application,
         window: ApplicationWindow,
         items: Vec<model::Notification>,
-        handle: tokio::runtime::Handle,
+        handle: Option<tokio::runtime::Handle>,
     ) -> Rc<App> {
         let (header, count, clear) = header();
         let (scroll, list) = list();
-        let empty = Label::new(Some("No notifications"));
+        let empty = Label::new(Some(text::get().empty));
         empty.add_css_class("dim");
 
         let picker = Picker::build(&window);
-        window.set_child(Some(&surface(&header, &scroll, &empty, picker.widget())));
+        let root = surface(&header, &scroll, &empty, picker.widget());
+        window.set_child(Some(&root));
 
-        let application = window
-            .application()
-            .expect("sidebar: the panel window has an application");
         let toast_handle = handle.clone();
-        let toasts = popup::Popups::new(&application, move |id, reason| {
-            dbus::emit_closed(&toast_handle, id, reason);
+        let toasts = popup::Popups::new(application, move |id, reason| {
+            dbus::emit_closed(toast_handle.as_ref(), id, reason);
         });
 
         let app = Rc::new(App {
-            window, list, scroll, count, empty, clear, toasts, picker, handle,
+            window, root, list, scroll, count, empty, clear, toasts, picker, handle,
             items: RefCell::new(items),
             time_labels: RefCell::new(Vec::new()),
         });
@@ -94,23 +95,32 @@ impl App {
     /// Hook up what acts on the panel: the clear button, `Esc`, and the timer
     /// that keeps the relative times honest.
     fn wire(app: &Rc<App>) {
-        let clear_app = app.clone();
-        app.clear.connect_clicked(move |_| App::clear_all(&clear_app));
+        let clear_app = Rc::downgrade(app);
+        app.clear.connect_clicked(move |_| {
+            if let Some(app) = clear_app.upgrade() {
+                App::clear_all(&app);
+            }
+        });
 
-        let escape_window = app.window.clone();
+        let escape_app = Rc::downgrade(app);
         let key = EventControllerKey::new();
         key.connect_key_pressed(move |_, pressed, _, _| {
-            if pressed == gdk::Key::Escape {
-                escape_window.set_visible(false);
-                return glib::Propagation::Stop;
+            if pressed != gdk::Key::Escape {
+                return glib::Propagation::Proceed;
             }
-            glib::Propagation::Proceed
+            if let Some(app) = escape_app.upgrade() {
+                app.hide();
+            }
+            glib::Propagation::Stop
         });
         app.window.add_controller(key);
 
-        let tick_app = app.clone();
+        let tick_app = Rc::downgrade(app);
         glib::timeout_add_seconds_local(30, move || {
-            tick_app.refresh_times();
+            let Some(app) = tick_app.upgrade() else {
+                return glib::ControlFlow::Break;
+            };
+            app.refresh_times();
             glib::ControlFlow::Continue
         });
     }
@@ -118,10 +128,11 @@ impl App {
 
 /// The title row: the heading, the count and the clear button.
 fn header() -> (Box, Label, Button) {
+    let strings = text::get();
     let header = Box::new(gtk4::Orientation::Horizontal, 8);
     header.add_css_class("header");
 
-    let title = Label::new(Some("Notifications"));
+    let title = Label::new(Some(strings.notifications));
     title.add_css_class("title");
     title.set_halign(gtk4::Align::Start);
     title.set_hexpand(true);
@@ -130,7 +141,7 @@ fn header() -> (Box, Label, Button) {
     count.add_css_class("count");
     count.add_css_class("dim");
 
-    let clear = Button::with_label("Clear all");
+    let clear = Button::with_label(strings.clear_all);
     clear.add_css_class("clear");
 
     header.append(&title);
@@ -152,11 +163,13 @@ fn list() -> (ScrolledWindow, Box) {
 }
 
 /// The panel surface: the quick controls, the header, the scrolling list, the
-/// empty-state line and the wallpaper picker at the foot.
+/// empty-state line and the wallpaper picker at the foot. It slides in from the
+/// right edge.
 fn surface(header: &Box, scroll: &ScrolledWindow, empty: &Label, picker: &Box) -> Box {
     let root = Box::new(gtk4::Orientation::Vertical, 10);
     root.add_css_class("surface");
     root.add_css_class("panel");
+    root.add_css_class("fx-reveal-side");
     root.append(&controls::controls());
     root.append(header);
     root.append(scroll);
