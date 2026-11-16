@@ -1,9 +1,9 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   users.users.flux = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "video" "audio" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     initialPassword = "flux";
   };
   security.sudo.wheelNeedsPassword = false;
@@ -17,8 +17,15 @@
   virtualisation.vmVariant.virtualisation = {
     memorySize = 4096;
     cores = 4;
-    qemu.options = [ "-device virtio-vga-gl" "-display gtk,gl=on" ];
+    qemu.options = [
+      (if pkgs.stdenv.hostPlatform.isAarch64 then "-device virtio-gpu-gl-pci" else "-device virtio-vga-gl")
+      "-display gtk,gl=on"
+    ];
   };
 
-  environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
+  flux.niri.platformConfig = ''
+    debug {
+        disable-cursor-plane
+    }
+  '';
 }
