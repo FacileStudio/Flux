@@ -86,7 +86,7 @@ fn a_machine_without_a_battery_reads_as_none() {
 /// A supply directory of our own under a temp directory, named for the check so
 /// two of them cannot answer for each other.
 fn fixture(tag: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("widgets-power-{tag}"));
+    let root = std::env::temp_dir().join(format!("flux-power-{tag}"));
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(&root).expect("the fixture directory");
     root

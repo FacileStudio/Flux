@@ -4,14 +4,17 @@
 //! windows, muted text, filled buttons, panel surfaces — so a widget's own
 //! stylesheet only has to say what makes it different. Colours come from the
 //! muse palette (`/etc/flux/palette.css`, overridden by
-//! `~/.config/widgets/palette.css`), never from literals.
+//! `~/.config/flux/palette.css`), never from literals.
 //!
-//! [`init`] loads the three layers into a single provider and then watches the
-//! palette file. `palette sync` rewrites that file whenever the wallpaper or the
-//! palette changes, so a running widget restyles itself instead of waiting for a
-//! restart. The reload rereads what it is built from — see [`rebuild`] — because
-//! a document captured at start-up would be loaded back unchanged, which is the
-//! same as not watching at all.
+//! [`init`] loads the three layers into a single provider, then watches the
+//! user's palette and sheet and follows the light or dark scheme, so a running
+//! widget restyles itself instead of waiting for a restart. The reload rereads
+//! what it is built from (see [`rebuild`]) because a document captured at
+//! start-up would be loaded back unchanged, which is the same as not watching.
+//!
+//! Motion lives here too: every button eases its fill on hover and press, and
+//! the `fx-reveal` classes give [`crate::motion`] its slide and fade. All of it
+//! is CSS transitions, which GTK drops when `gtk-enable-animations` is off.
 
 use std::cell::RefCell;
 
@@ -19,22 +22,13 @@ mod watch;
 
 use crate::palette;
 
-/// The gap around a floating widget and the window rectangles it sits inside,
-/// matching `gaps outer` in the compositor config. The bar is inset by it on
-/// every side, and the sidebar and its toasts keep it off the right and bottom
-/// edges so they float the same way.
+/// The gap around a floating widget, matching `gaps 10` in `niri.kdl`. The bar
+/// is inset by it on every side, and the sidebar and its toasts keep it off the
+/// right and bottom edges so they float the same way.
 ///
-/// This is the *same unit* sway uses for `gaps`. A sway gap and a layer-shell
-/// margin are both logical (device-independent) pixels — sway multiplies its
-/// config values by the output scale to place things physically, and GTK does
-/// the same with `set_margin` (surface-local coordinates) and CSS `px`. So
-/// `gaps outer 10` and `GAP = 10` are the same 10 pixels on screen at any
-/// scale, and the numbers can be kept literally equal. Read the value from
-/// `gaps outer` in the compositor config; it is what the windows respect too.
+/// niri gaps and layer-shell margins are both logical pixels, scaled by the
+/// output, so the two numbers stay literally equal at any scale.
 pub const GAP: i32 = 10;
-/// `gaps inner` in the compositor config, the same measure used between the bar
-/// and the windows it sits beside.
-pub const GAP_INNER: i32 = 10;
 
 /// The gap between two modules on a widget and between the items inside one.
 ///
@@ -104,10 +98,35 @@ button {
   min-width: 20px;
   border-radius: 8px;
   outline: 0 solid transparent;
+  transition: background-color 160ms ease-out, color 160ms ease-out, opacity 160ms ease-out;
 }
 
 button:hover {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+button:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+.fx-reveal,
+.fx-reveal-side {
+  opacity: 0;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+
+.fx-reveal {
+  transform: translateY(-8px);
+}
+
+.fx-reveal-side {
+  transform: translateX(16px);
+}
+
+.fx-reveal.fx-shown,
+.fx-reveal-side.fx-shown {
+  opacity: 1;
+  transform: none;
 }
 
 button:focus-visible {
@@ -131,11 +150,11 @@ thread_local! {
 ///
 /// The three layers go into a single provider, so the widget sheet always wins
 /// over the base and both win over nothing else. The provider is then tied to
-/// `~/.config/widgets/palette.css`: when the file changes, the document is
+/// `~/.config/flux/palette.css`: when the file changes, the document is
 /// rebuilt from the new palette and loaded back into the same provider, which
 /// restyles every widget on the display without a restart.
 ///
-/// If `~/.config/widgets/<name>.css` exists it is used as the widget sheet
+/// If `~/.config/flux/<name>.css` exists it is used as the widget sheet
 /// instead of the compiled-in default, and it is watched for hot-reload — edit
 /// the file and the widget restyles itself in place.
 pub fn init(widget_css: &'static str, name: &str) {
@@ -148,7 +167,7 @@ pub fn init(widget_css: &'static str, name: &str) {
     watch::watch(provider, name, widget_css);
 }
 
-/// Run `callback` after every stylesheet rebuild: a `palette sync`, or an edit
+/// Run `callback` after every stylesheet rebuild: a colour scheme switch, a palette edit, or an edit
 /// to the user's own sheet.
 ///
 /// Most of what a widget draws follows the cascade by itself and needs nothing
@@ -177,7 +196,7 @@ fn document(widget_css: &str) -> String {
     format!("{}\n{}\n{}", palette::palette_css(), BASE_CSS, widget_css)
 }
 
-/// The sheet the user placed at `$HOME/.config/widgets/<name>.css`. When present
+/// The sheet the user placed at `$HOME/.config/flux/<name>.css`. When present
 /// it replaces the compiled-in default so the user's file is what the widget
 /// renders.
 fn user_sheet(name: &str) -> Option<String> {

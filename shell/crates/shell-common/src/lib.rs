@@ -1,6 +1,9 @@
 pub mod app;
 pub mod instance;
 pub mod layer;
+pub mod locale;
+pub mod motion;
 pub mod palette;
 pub mod scheme;
+pub mod spawn;
 pub mod theme;
