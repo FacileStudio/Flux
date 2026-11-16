@@ -7,6 +7,8 @@ in
   imports = [ "${modulesPath}/installer/cd-dvd/installation-cd-base.nix" ];
 
   flux.profile = "desktop";
+
+  services.openssh.enable = lib.mkForce false;
   system.stateVersion = lib.mkForce lib.trivial.release;
 
   image.baseName = lib.mkForce "flux-${version}-${pkgs.stdenv.hostPlatform.system}";

@@ -48,7 +48,6 @@
     pkg-config
     python3
     nodejs
-    tmux
     htop
   ];
 
@@ -63,9 +62,6 @@
 
   environment.interactiveShellInit = ''
     export WORKSPACE=/workspace
-    if command -v tiroir >/dev/null 2>&1; then
-      eval "$(tiroir export)"
-    fi
   '';
 
   systemd.tmpfiles.rules = [

@@ -102,5 +102,5 @@ Adding a file to `modules/` or a directory to `hosts/` or `pkgs/` is enough to w
 
 ## Status
 
-Open beta since 0.1.0. The stable release is planned for around March 2027. Expect rough edges and
+Open beta since 0.1.1. The stable release is planned for around March 2027. Expect rough edges and
 breaking changes until then, and report bugs at https://github.com/FacileStudio/Flux/issues.
