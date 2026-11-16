@@ -57,12 +57,17 @@ impl App {
     pub(crate) fn show(&self) {
         Picker::reload(&self.picker);
         self.refresh_times();
+        self.toasts.suppress(true);
         self.window.present();
         motion::reveal(&self.root);
     }
 
     pub(crate) fn hide(&self) {
         let window = self.window.clone();
-        motion::conceal(&self.root, move || window.set_visible(false));
+        let toasts = self.toasts.clone();
+        motion::conceal(&self.root, move || {
+            window.set_visible(false);
+            toasts.suppress(false);
+        });
     }
 }

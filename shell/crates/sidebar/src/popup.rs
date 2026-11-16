@@ -7,7 +7,7 @@
 //! Each toast fades and slides in on arrival and fades out on leaving; the
 //! others stay put. They live in memory only.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -48,6 +48,7 @@ pub struct Popups {
     list: gtk4::Box,
     toasts: RefCell<Vec<Toast>>,
     rows: RefCell<HashMap<u32, gtk4::Box>>,
+    suppressed: Cell<bool>,
     on_closed: Box<dyn Fn(u32, u32)>,
 }
 
@@ -76,6 +77,7 @@ impl Popups {
             list,
             toasts: RefCell::new(Vec::new()),
             rows: RefCell::new(HashMap::new()),
+            suppressed: Cell::new(false),
             on_closed: Box::new(on_closed),
         });
 
@@ -111,7 +113,9 @@ impl Popups {
                 self.list.prepend(&row);
                 self.rows.borrow_mut().insert(id, row.clone());
                 self.toasts.borrow_mut().insert(0, toast);
-                self.window.present();
+                if !self.suppressed.get() {
+                    self.window.present();
+                }
                 motion::reveal(&row);
             }
         }
@@ -124,6 +128,17 @@ impl Popups {
             .collect();
         for id in overflow {
             self.remove(id);
+        }
+    }
+
+    /// Keep the stack off screen while the panel is open: the panel lists the
+    /// same notifications, and the toasts would sit on top of it.
+    pub fn suppress(&self, on: bool) {
+        self.suppressed.set(on);
+        if on {
+            self.window.set_visible(false);
+        } else if self.list.first_child().is_some() {
+            self.window.present();
         }
     }
 

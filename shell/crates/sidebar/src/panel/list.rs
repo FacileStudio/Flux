@@ -48,6 +48,13 @@ impl App {
 
         row.append(&App::row_top(app, notification, now, times));
 
+        let summary = gtk4::Label::new(Some(&notification.summary));
+        summary.add_css_class("summary");
+        summary.set_halign(gtk4::Align::Start);
+        summary.set_xalign(0.0);
+        summary.set_wrap(true);
+        row.append(&summary);
+
         if let Some(body) = row_body(notification) {
             row.append(&body);
         }
