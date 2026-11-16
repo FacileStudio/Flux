@@ -11,7 +11,7 @@ use std::rc::{Rc, Weak};
 use std::time::Duration;
 
 use gtk4::prelude::*;
-use gtk4::{glib, Align, Box, Button, Image, Label, Orientation, Overlay, Revealer, Spinner, Stack, Switch};
+use gtk4::{glib, Align, Box, Button, Image, Label, Orientation, Overlay, Spinner, Stack, Switch};
 
 use crate::backend::{Answer, Command, Event, Op, Request};
 use crate::client::{self, Client};
@@ -49,7 +49,6 @@ pub struct Page {
     text: &'static Text,
     power_card: Box,
     power: Switch,
-    visible: Revealer,
     visible_label: Label,
     stack: Stack,
     empty: Empty,
@@ -132,15 +131,11 @@ impl Page {
         let (scroll, column) = ui::page(text.title, text.description);
         column.add_css_class("bt-page");
         let (power_card, power_rows) = ui::section("");
-        let (power_row, power) = ui::switch_row(text.title, "", false, |_| {});
-        let visible_label = ui::label("", "fx-subtitle");
-        visible_label.add_css_class("bt-visible");
-        let visible = Revealer::new();
-        visible.set_transition_type(gtk4::RevealerTransitionType::SlideDown);
-        visible.set_transition_duration(ui::MOTION_MS);
-        visible.set_child(Some(&visible_label));
-        power_rows.append(&power_row);
-        power_rows.append(&visible);
+        let power = Switch::new();
+        power.update_property(&[gtk4::accessible::Property::Label(text.title)]);
+        let power_parts = ui::row_with(text.title, "", Some(power.upcast_ref()));
+        let visible_label = power_parts.subtitle.clone();
+        power_rows.append(&power_parts.root);
         column.append(&power_card);
         let empty = empty_state();
         let devices = Box::new(Orientation::Vertical, 32);
@@ -163,7 +158,6 @@ impl Page {
             text,
             power_card,
             power,
-            visible,
             visible_label,
             stack,
             empty,
@@ -322,10 +316,11 @@ impl Page {
         self.power.set_sensitive(availability != Availability::HardBlocked);
         let adapter = snapshot.adapter.as_ref();
         let visible = powered && adapter.is_some_and(|adapter| adapter.discoverable && !adapter.name.is_empty());
-        if let Some(adapter) = adapter {
-            self.visible_label.set_text(&i18n::named(self.text.visible_as, &adapter.name));
-        }
-        self.visible.set_reveal_child(visible);
+        let line = match adapter {
+            Some(adapter) if visible => i18n::named(self.text.visible_as, &adapter.name),
+            _ => String::new(),
+        };
+        ui::set_subtitle(&self.visible_label, &line);
     }
 
     fn render_empty(&self, availability: Availability) {

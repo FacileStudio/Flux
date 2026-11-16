@@ -196,9 +196,9 @@ pub fn generations() -> Vec<Generation> {
         let day = 86_400;
         let base = 1_794_787_200;
         return vec![
-            Generation { number: 14, date: base, version: "Flux 0.2.0".into(), kernel: "6.12.8".into(), current: true },
-            Generation { number: 13, date: base - 9 * day, version: "Flux 0.1.1".into(), kernel: "6.12.8".into(), current: false },
-            Generation { number: 12, date: base - 23 * day, version: "Flux 0.1.0".into(), kernel: "6.12.1".into(), current: false },
+            Generation { number: 14, date: base, version: "Flux 0.1.0".into(), kernel: "6.12.8".into(), current: true },
+            Generation { number: 13, date: base - 9 * day, version: "Flux 0.1.0".into(), kernel: "6.12.8".into(), current: false },
+            Generation { number: 12, date: base - 23 * day, version: "Flux 0.0.9".into(), kernel: "6.12.1".into(), current: false },
         ];
     }
     let paths = paths();

@@ -34,8 +34,8 @@ pub fn battery_line(text: &Text, battery: &Battery) -> String {
 }
 
 /// A percentage as the page prints it: `76 %` in both languages.
-pub fn percent(value: f64) -> String {
-    format!("{} %", value.clamp(0.0, 100.0).round() as u32)
+pub fn percent(text: &Text, value: f64) -> String {
+    text.percent.replace("{n}", &(value.clamp(0.0, 100.0).round() as u32).to_string())
 }
 
 #[cfg(test)]
@@ -63,7 +63,8 @@ mod tests {
         battery.state = State::Charging;
         battery.time_to_full = 1800;
         assert_eq!(battery_line(&FR, &battery), "En charge · 30 min avant la charge complète");
-        assert_eq!(percent(75.6), "76 %");
-        assert_eq!(percent(140.0), "100 %");
+        assert_eq!(percent(&EN, 75.6), "76%");
+        assert_eq!(percent(&EN, 140.0), "100%");
+        assert_eq!(percent(&FR, 75.6), "76\u{202f}%");
     }
 }

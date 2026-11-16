@@ -5,6 +5,7 @@ use std::cell::Cell;
 pub struct Text {
     pub title: &'static str,
     pub description: &'static str,
+    pub percent: &'static str,
     pub battery: &'static str,
     pub no_battery: &'static str,
     pub no_battery_body: &'static str,
@@ -44,6 +45,7 @@ pub struct Text {
 pub const EN: Text = Text {
     title: "Power",
     description: "Battery, power mode, and when the screen sleeps.",
+    percent: "{n}%",
     battery: "Battery",
     no_battery: "No battery",
     no_battery_body: "This computer runs on mains power.",
@@ -83,6 +85,7 @@ pub const EN: Text = Text {
 pub const FR: Text = Text {
     title: "Alimentation",
     description: "Batterie, mode d'alimentation et mise en veille de l'écran.",
+    percent: "{n}\u{202f}%",
     battery: "Batterie",
     no_battery: "Aucune batterie",
     no_battery_body: "Cet ordinateur fonctionne sur secteur.",

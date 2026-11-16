@@ -122,10 +122,11 @@ impl Other {
         root.add_css_class("fx-net");
         let open = Rc::new(Cell::new(false));
         let chevron = draw::chevron(open.clone());
+        chevron.set_size_request(32, 12);
         let header = ui::row(text.other, text.other_body, &chevron);
         header.add_css_class("fx-net-header");
         let indent = Box::new(Orientation::Horizontal, 0);
-        indent.set_size_request(18, -1);
+        indent.set_size_request(6, -1);
         header.prepend(&indent);
         root.append(&header);
         let body = Revealer::new();

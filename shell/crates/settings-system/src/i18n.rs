@@ -112,7 +112,7 @@ pub const EN: Text = Text {
     unavailable: "Not available on this system",
 
     system_title: "System",
-    system_subtitle: "Device name, date and time, language",
+    system_subtitle: "Device name, date and time, and language.",
     device_section: "Device",
     device_name: "Device name",
     device_name_hint: "Other devices on your network see this name",
@@ -136,7 +136,7 @@ pub const EN: Text = Text {
     next_login: "Language and formats apply the next time you sign in.",
 
     users_title: "Users",
-    users_subtitle: "Who can sign in to this device",
+    users_subtitle: "Who can sign in to this device.",
     users_section: "Accounts",
     add_user: "Add user",
     administrator: "Administrator",
@@ -163,7 +163,7 @@ pub const EN: Text = Text {
     no_users_body: "Accounts Flux manages appear here.",
 
     updates_title: "Updates",
-    updates_subtitle: "Keep Flux current, or go back to an earlier version",
+    updates_subtitle: "Keep Flux current, or go back to an earlier version.",
     installed: "Released {date} · revision {rev}",
     check: "Check for updates",
     checking: "Checking for updates…",
@@ -214,7 +214,7 @@ pub const FR: Text = Text {
     unavailable: "Indisponible sur ce système",
 
     system_title: "Système",
-    system_subtitle: "Nom de l'appareil, date et heure, langue",
+    system_subtitle: "Nom de l'appareil, date et heure, et langue.",
     device_section: "Appareil",
     device_name: "Nom de l'appareil",
     device_name_hint: "Les autres appareils du réseau voient ce nom",
@@ -238,7 +238,7 @@ pub const FR: Text = Text {
     next_login: "La langue et les formats s'appliquent à la prochaine connexion.",
 
     users_title: "Utilisateurs",
-    users_subtitle: "Qui peut se connecter à cet appareil",
+    users_subtitle: "Qui peut se connecter à cet appareil.",
     users_section: "Comptes",
     add_user: "Ajouter un utilisateur",
     administrator: "Administrateur",
@@ -265,7 +265,7 @@ pub const FR: Text = Text {
     no_users_body: "Les comptes gérés par Flux apparaissent ici.",
 
     updates_title: "Mises à jour",
-    updates_subtitle: "Gardez Flux à jour, ou revenez à une version précédente",
+    updates_subtitle: "Gardez Flux à jour, ou revenez à une version précédente.",
     installed: "Publiée le {date} · révision {rev}",
     check: "Rechercher des mises à jour",
     checking: "Recherche de mises à jour…",

@@ -1,7 +1,3 @@
-.bt-visible {
-  padding: 0 0 4px 0;
-}
-
 @keyframes bt-fade {
   from {
     opacity: 0;

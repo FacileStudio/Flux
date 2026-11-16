@@ -137,7 +137,7 @@ impl Page {
         self.lid.set_visible(snapshot.lid);
         if let Some(level) = &snapshot.battery {
             battery.level.set_value(level.percentage.clamp(0.0, 100.0));
-            battery.level_title.set_text(&format::percent(level.percentage));
+            battery.level_title.set_text(&format::percent(self.text, level.percentage));
             ui::set_subtitle(&battery.level_line, &format::battery_line(self.text, level));
             battery.health.set_visible(true);
             match (level.health, level.cycles) {
@@ -147,7 +147,7 @@ impl Page {
                 }
                 (health, cycles) => {
                     battery.health_title.set_text(&match health {
-                        Some(health) => format!("{} · {}", self.text.health, format::percent(health)),
+                        Some(health) => format!("{} · {}", self.text.health, format::percent(self.text, health)),
                         None => self.text.health.to_string(),
                     });
                     ui::set_subtitle(&battery.health_line, &cycles.map(|cycles| format!("{cycles} {}", self.text.cycles)).unwrap_or_default());

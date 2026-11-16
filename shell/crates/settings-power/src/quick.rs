@@ -41,7 +41,7 @@ pub fn build(text: &'static Text, source: Source) -> gtk4::Widget {
         if let Some(battery) = &snapshot.battery {
             let charging = battery.state == crate::upower::State::Charging;
             icon.set_icon_name(Some(&icon_for(battery.percentage, charging)));
-            label.set_text(&format!("{} · {}", format::percent(battery.percentage), format::battery_line(text, battery)));
+            label.set_text(&format!("{} · {}", format::percent(text, battery.percentage), format::battery_line(text, battery)));
         }
         modes.sync(&snapshot);
     };

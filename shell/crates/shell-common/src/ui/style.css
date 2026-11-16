@@ -198,7 +198,7 @@ scale:focus-visible slider {
   outline-offset: 2px;
 }
 
-dropdown.fx-choice > button {
+dropdown > button {
   min-height: 36px;
   min-width: 140px;
   padding: 0 12px;
@@ -210,11 +210,11 @@ dropdown.fx-choice > button {
   transition: background-color 150ms ease-out;
 }
 
-dropdown.fx-choice > button:hover {
+dropdown > button:hover {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
 }
 
-dropdown.fx-choice arrow {
+dropdown arrow {
   color: @fc_fg_muted;
 }
 
@@ -324,7 +324,7 @@ button.fx-icon-button:disabled {
 
 button.fx-button:focus-visible,
 button.fx-icon-button:focus-visible,
-dropdown.fx-choice > button:focus-visible {
+dropdown > button:focus-visible {
   outline: 2px solid @fc_ring;
   outline-offset: 2px;
 }

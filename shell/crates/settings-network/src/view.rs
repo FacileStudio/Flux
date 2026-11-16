@@ -303,11 +303,10 @@ impl Page {
     fn warn(self: &Rc<Self>, message: &str) {
         self.banner_label
             .set_text(&format!("{}: {message}", self.text.action_failed));
-        self.banner.set_transition_duration(ui::MOTION_MS);
-        self.banner.set_reveal_child(true);
+        ui::show(&self.banner, true);
         let banner = self.banner.clone();
         glib::timeout_add_local_once(Duration::from_secs(6), move || {
-            banner.set_reveal_child(false)
+            ui::show(&banner, false)
         });
     }
 
@@ -393,12 +392,9 @@ impl Page {
 const EMPTY_ICON: &str = "network-wireless-offline-symbolic";
 
 fn banner() -> (Revealer, Label) {
-    let revealer = Revealer::new();
-    revealer.set_transition_type(gtk4::RevealerTransitionType::SlideDown);
     let label = ui::label("", "fx-banner");
     label.add_css_class("fx-danger");
-    revealer.set_child(Some(&label));
-    (revealer, label)
+    (ui::reveal(&label), label)
 }
 
 fn scan_header(text: &Text, header: &Box) -> (Spinner, Button, Label) {
