@@ -34,13 +34,17 @@ pub(super) fn detail(state: &NetState) -> String {
     }
 }
 
+/// `name` trimmed, cut to 13 characters plus an ellipsis past 16. The cut counts
+/// characters, never bytes, so a multibyte SSID is never split inside a code point.
 fn short_name(name: &str) -> String {
     let name = name.trim();
-    if name.len() <= 16 {
+    if name.chars().count() <= 16 {
         return name.to_string();
     }
-    let mut out = String::with_capacity(18);
-    out.push_str(&name[..13]);
+    let mut out: String = name.chars().take(13).collect();
     out.push('…');
     out
 }
+
+#[cfg(test)]
+mod tests;
