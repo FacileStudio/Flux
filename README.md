@@ -37,13 +37,15 @@ sudo flux-install
 ```
 
 The installer wipes the disk you choose, after you type its name a second time. It writes your
-machine config to `/etc/flux`, as a flake that imports Flux. That config is yours to edit.
+machine config to `/etc/flux`, as a flake that imports Flux. That config is yours to edit with
+`sudoedit`. Its `flake.lock` pins Flux and nixpkgs to the ISO's own revisions, and the ISO carries
+that system, so the install copies from the USB stick instead of downloading or compiling.
 
-To update:
+To update to the latest release:
 
 ```sh
 cd /etc/flux
-nix flake update
+sudo nix flake update
 sudo nixos-rebuild switch --flake /etc/flux#flux
 ```
 
@@ -53,7 +55,7 @@ Add Flux as a flake input and import its module:
 
 ```nix
 {
-  inputs.flux.url = "github:FacileStudio/Flux";
+  inputs.flux.url = "github:FacileStudio/Flux/stable";
 
   outputs = { flux, ... }: {
     nixosConfigurations.my-machine = flux.inputs.nixpkgs.lib.nixosSystem {
@@ -96,9 +98,22 @@ Adding a file to `modules/` or a directory to `hosts/` or `pkgs/` is enough to w
 
 ## Releasing
 
-1. Move the `[Unreleased]` changelog entries under the new version and bump `version` and `site/src/lib/release.ts`.
-2. Push a `v<version>` tag. The release workflow builds both ISOs and the Boîte image, then creates a GitHub prerelease with the notes and `SHA256SUMS`.
-3. On ruche, run `scripts/publish-assets.sh v<version>`. It downloads the images from that run, checks them against `SHA256SUMS`, and publishes them at `https://flux.facile.studio/releases/v<version>/`. The images exceed GitHub's 2 GiB asset limit, so the site serves them.
+1. Move the `[Unreleased]` changelog entries under the new version and bump `version`.
+2. Push a `v<version>` tag. The release workflow first checks the tag against `version` and `CHANGELOG.md`, then builds both ISOs and the Boîte image, runs the boot test, attests the images, signs `SHA256SUMS` when the minisign key is set, and creates a draft GitHub prerelease with the notes, `SHA256SUMS` and `SHA256SUMS.minisig`. The workflow artifacts are kept 90 days.
+3. On ruche, run `scripts/publish-assets.sh v<version>`. It downloads the images from that run, checks them against `SHA256SUMS`, publishes them at `https://flux.facile.studio/releases/v<version>/`, checks that every public URL answers 200, then publishes the draft release. The images exceed GitHub's 2 GiB asset limit, so the site serves them.
+4. Bump `VERSION` in `site/src/lib/release.ts` and merge it. The CI site job checks that every release link there answers 200, so this step fails until step 3 is done.
+5. Move the `stable` branch to the tag: `git push origin v<version>^{commit}:refs/heads/stable` (a fast-forward; create the branch the same way on the first release). Machine flakes follow `github:FacileStudio/Flux/stable`, so `nix flake update` on an installed machine moves to this release and never to `main`. Move it only after the release is public and the boot test passed.
+
+### Signing key
+
+The workflow signs `SHA256SUMS` with minisign when the `MINISIGN_SECRET_KEY` repository secret is set, and skips signing otherwise. To create the key once, offline:
+
+```sh
+minisign -G -W -p minisign.pub -s minisign.key
+gh secret set MINISIGN_SECRET_KEY -R FacileStudio/Flux < minisign.key
+```
+
+Commit `minisign.pub` at the repository root and copy it to `site/static/minisign.pub`, so it is served at `https://flux.facile.studio/minisign.pub`. Keep `minisign.key` offline, out of the repository. Users verify with `minisign -Vm SHA256SUMS -p minisign.pub`, then `sha256sum --check --ignore-missing SHA256SUMS`. Every image also carries a GitHub build provenance attestation: `gh attestation verify flux-<version>-x86_64-linux.iso -R FacileStudio/Flux`.
 
 ## Status
 
