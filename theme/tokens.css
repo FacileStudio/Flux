@@ -1,0 +1,333 @@
+/* Facile UI — Tailwind v4 theme. Values mirror CHARTE.md. */
+/* Consumers import this file once in their root layout. */
+
+@import 'tailwindcss';
+
+/* No bundled display face. The Goga files shipped here through v0.5.0 were the trial cut:
+   68 glyphs, no accented Latin, no apostrophe, no colon, no percent. Every French string in
+   the suite fell back to Helvetica mid-word, and the files were redistributed under a test
+   licence. Re-adding a face means a full Latin-1 cut and a licence — `fonts.test.ts` fails
+   the build on any font in `src/lib/fonts/` that does not cover the required set. */
+
+@theme {
+  /*
+   * Delete Tailwind's stock palette. This is the system's strongest enforcement mechanism and
+   * it costs one line: with the namespace reset, `bg-red-500` and `text-slate-700` do not
+   * exist, so an off-system colour is not a rule someone can skip — it is a class that
+   * generates nothing. Documentation asks; a missing utility refuses.
+   *
+   * Measured before switching it on: twelve of the thirteen consumer apps already use **zero**
+   * stock palette utilities, and muse itself uses none. Only Agenda has any (13, all shadcn
+   * leftovers sitting beside its parallel `ui/` directory), which is precisely the drift worth
+   * failing on.
+   *
+   * `white`, `black`, `transparent` and `current` are put back: they are theme-neutral
+   * primitives rather than palette choices — a scrim, an overlay, `border-transparent` on a
+   * badge, `border-current` following the ink. The suite uses them about six times per app,
+   * always for exactly that.
+   */
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* colors → bg-fc-*, text-fc-*, -fc-* — chroma-zero OKLCH, matches shipped suite apps.
+     `page` and `bg` carry the same value today and are kept separate on purpose: `page` is
+     the document canvas, `bg` is a component's own default fill, and an app that wants a
+     tinted canvas should be able to move one without the other. */
+  --color-fc-page: oklch(1 0 0);
+  --color-fc-bg: oklch(1 0 0);
+  --color-fc-surface: oklch(0.95 0 0);
+  --color-fc-component: oklch(0.975 0 0);
+  --color-fc-fg: oklch(0.145 0 0);
+  --color-fc-fg-muted: oklch(0.5 0 0);
+  --color-fc-accent: oklch(0.145 0 0);
+  --color-fc-accent-fg: oklch(1 0 0);
+  --color-fc-border: oklch(0.9 0 0);
+  --color-fc-ring: oklch(0.4 0 0);
+  --color-fc-danger: oklch(0.54 0.22 29);
+  --color-fc-danger-fg: oklch(1 0 0);
+  --color-fc-success: oklch(0.5 0.12 150);
+  /* `info` is a status colour like success and warning, not a second accent. It exists
+     because without it `Alert tone="info"` and `StatusDot tone="info"` had to borrow
+     `fc-accent` and rendered identically to `tone="accent"` — a tone that is
+     indistinguishable from another tone is not a tone. */
+  --color-fc-info: oklch(0.51 0.14 255);
+  /* Lightness here is set by the tinted-text case, not by taste: these are read as
+     `text-fc-warning` on `bg-fc-warning/10`, which is the *lowest*-contrast use any
+     semantic token gets. At the previous 0.58 both landed at 4.0–4.1:1 and missed AA.
+     0.55 cleared 4.5:1 on the old near-white card; v0.8.0 raised the card step for borderless
+     surfaces, so the light tones dropped to 0.50–0.54 to keep 4.5:1 on page, on
+     `fc-component`, and on their own 10% tint laid over a card. */
+  --color-fc-warning: oklch(0.52 0.13 75);
+  --color-fc-owner: oklch(0.52 0.13 64);
+  --color-fc-admin: oklch(0.5 0.16 292);
+
+  /* Scrim behind overlays. A token rather than a literal because `Modal` and `Drawer`
+     both draw one and they must never disagree. */
+  --color-fc-scrim: oklch(0 0 0 / 50%);
+
+  /* radii → rounded-fc-* — `pill` and `full` are the same value, kept as two names so
+     "a pill-shaped button" and "a circular avatar" read differently at the call site. */
+  --radius-fc-xs: 4px;
+  --radius-fc-sm: 6px;
+  --radius-fc-md: 8px;
+  --radius-fc-lg: 12px;
+  --radius-fc-pill: 999px;
+  --radius-fc-full: 999px;
+
+  /* type scale → text-fc-* (font-size + paired line-height) */
+  --text-fc-xs: 0.75rem;
+  --text-fc-xs--line-height: 1rem;
+  --text-fc-sm: 0.875rem;
+  --text-fc-sm--line-height: 1.25rem;
+  --text-fc-md: 1rem;
+  --text-fc-md--line-height: 1.5rem;
+  --text-fc-lg: 1.125rem;
+  --text-fc-lg--line-height: 1.75rem;
+  --text-fc-xl: 1.375rem;
+  --text-fc-xl--line-height: 1.75rem;
+  --text-fc-2xl: 1.75rem;
+  --text-fc-2xl--line-height: 2.125rem;
+  --text-fc-3xl: 2.25rem;
+  --text-fc-3xl--line-height: 2.5rem;
+
+  /* fonts → font-fc-* / font-sans. The platform stack renders every accented character the
+     suite actually types, which the bundled face did not. `title` stays a separate token so a
+     licensed display cut can be reintroduced on headings alone without touching body copy. */
+  --font-fc-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-fc-title: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Mono is for machine strings only — secrets, keys, IDs, endpoints. This is the platform
+     stack: nothing extra to download, and it lands on the font the user already reads code in. */
+  --font-fc-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* motion → ease-fc. This is the CSS spelling of GSAP's `power3.inOut`, the library's
+     default JS ease, so a consumer's CSS transition lands on the same curve as a muse
+     animation running beside it. It previously held easeInOutCubic (`power2.inOut`), which
+     meant the two halves of the system eased differently. */
+  --ease-fc: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* containers → container-fc-* via max-w-fc-* */
+  --container-fc-sm: 600px;
+  --container-fc-md: 720px;
+  --container-fc-lg: 960px;
+  --container-fc-xl: 1200px;
+
+  /* nav sidebar widths — SideBar reads these off getComputedStyle for its width tween, so
+     these two values are the single source of truth and changing them reaches the animation */
+  --width-fc-nav-collapsed: 68px;
+  --width-fc-nav-expanded: 220px;
+
+  /* Collapsed nav item — a fixed square, so the sidebar's width tween cannot distort it.
+     68px rail = 44px item + 12px padding either side, and 44px is exactly `min-h-11`, the
+     expanded row height. Matching them is what stops every row growing at the instant the
+     collapsed layout lands. */
+  --spacing-fc-nav-item: 44px;
+
+  /* Expanded nav content width (220px rail - 12px padding either side). Block children of
+     the sidebar take this fixed width so the collapse tween clips them instead of
+     reflowing them. */
+  --spacing-fc-nav-content: 196px;
+}
+
+/*
+ * Stacking order. Tailwind's `z-*` utilities carry the numbers; this is the contract
+ * that says which number a thing gets, because "pick one and hope" is how a dropdown
+ * ends up tied with the mobile nav bar and resolved by DOM order.
+ *
+ *   z-0   in-flow content, and anything establishing a local context (Tabs, Mosaique)
+ *   z-10  chart overlays that must clear their own svg (ChartTooltip)
+ *   z-30  sticky page chrome (Topbar)
+ *   z-40  surfaces floating out of a trigger (SpaceSwitcher's dropdown)
+ *   z-50  viewport-fixed chrome (MobileNav)
+ *   z-60  transient feedback over that chrome (Toaster)
+ *   z-[100] full-page curtain (Rideau)
+ *
+ * `Modal`, `ConfirmModal` and `Drawer` are absent by design: `<dialog>.showModal()`
+ * promotes them to the browser's top layer, which sits above every z-index there is.
+ */
+
+/*
+ * Chart series — Sablier's identity palette, deepened so it stays legible as a chart mark.
+ *
+ * `static` is load-bearing: chartColor() builds the var name with a template literal
+ * (`--color-fc-chart-${n}`), so the strings `fc-chart-3`…`fc-chart-6` never appear in any
+ * source file. A plain @theme block only emits the variables Tailwind saw used, which left
+ * every slot past the ones hardcoded in the demo undefined — and an undefined var() in an
+ * SVG `fill` falls back to black.
+ */
+@theme static {
+  --color-fc-chart-1: oklch(0.7 0.15 292);
+  --color-fc-chart-2: oklch(0.755 0.13 64);
+  --color-fc-chart-3: oklch(0.72 0.11 190);
+  --color-fc-chart-4: oklch(0.68 0.15 15);
+  --color-fc-chart-5: oklch(0.76 0.16 135);
+  --color-fc-chart-6: oklch(0.73 0.14 339);
+
+  /* Select's chevron. Chrome draws the native <select> arrow at a fixed offset that
+     padding cannot move, so Select hides it and paints this one 12px inside the border.
+     A data URI cannot read currentColor, so the dark blocks swap in a light stroke. */
+  --fc-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23252525' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/*
+ * Dark mode — variables swap, utilities pick up new values automatically.
+ *
+ * Two ways in, and they compose:
+ *   1. OS preference, automatic — nothing to wire up.
+ *   2. An explicit `.dark` / `.light` class on <html>, which always wins over the OS.
+ * The `:not(.light)` guard is what lets a user force light while the OS says dark.
+ *
+ * The two blocks below are deliberately byte-identical duplicates. Plain CSS has no way
+ * to share a declaration block between a media query and a class selector, and the one
+ * mechanism that would collapse them — `light-dark()` — needs Chrome 123, ahead of the
+ * Chrome 111 floor Tailwind v4 targets. **Edit both or neither** — `tokens.test.ts` asserts
+ * they stay identical, so drifting one is a test failure rather than a dark-mode bug nobody
+ * notices for a month.
+ */
+@utility fc-chrome {
+  --fc-h: 3.5rem;
+  --fc-pad: 0.375rem;
+  --fc-r: calc(var(--fc-h) / 2);
+  --fc-ctl: calc(var(--fc-h) - 2 * var(--fc-pad));
+  --fc-r-in: max(0px, calc(var(--fc-r) - var(--fc-pad)));
+}
+
+@utility rounded-fc-outer {
+  border-radius: var(--fc-r);
+}
+
+@utility rounded-fc-inner {
+  border-radius: var(--fc-r-in);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    /* Tells the browser to paint *its own* surfaces dark: the native <select> popup, form
+       control internals, autofill, the caret, text selection, and the canvas past the page
+       background. Without it every one of those stays light on a dark page, which is the
+       half of "dark mode" a token cannot reach. Must be in both blocks — see below. */
+    color-scheme: dark;
+
+    --color-fc-page: oklch(0.09 0 0);
+    --color-fc-bg: oklch(0.09 0 0);
+    --color-fc-surface: oklch(0.21 0 0);
+    --color-fc-component: oklch(0.16 0 0);
+    --color-fc-fg: oklch(0.985 0 0);
+    --color-fc-fg-muted: oklch(0.64 0 0);
+    --color-fc-accent: oklch(0.985 0 0);
+    --color-fc-accent-fg: oklch(0.09 0 0);
+    --color-fc-border: oklch(1 0 0 / 10%);
+    --color-fc-ring: oklch(0.6 0 0);
+    --color-fc-danger: oklch(0.65 0.22 29);
+    --color-fc-success: oklch(0.72 0.14 150);
+    --color-fc-info: oklch(0.72 0.13 255);
+    --color-fc-warning: oklch(0.8 0.13 75);
+    --color-fc-owner: oklch(0.78 0.13 64);
+    --color-fc-admin: oklch(0.75 0.14 292);
+    --color-fc-chart-1: oklch(0.58 0.15 292);
+    --color-fc-chart-2: oklch(0.66 0.14 64);
+    --color-fc-chart-3: oklch(0.6 0.12 195);
+    --color-fc-chart-4: oklch(0.55 0.16 15);
+    --color-fc-chart-5: oklch(0.64 0.15 135);
+    --color-fc-chart-6: oklch(0.62 0.14 339);
+    --fc-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23fbfbfb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
+:root.dark {
+  /* Twin of the declaration in the media block above — see the note there. */
+  color-scheme: dark;
+
+  --color-fc-page: oklch(0.09 0 0);
+  --color-fc-bg: oklch(0.09 0 0);
+  --color-fc-surface: oklch(0.21 0 0);
+  --color-fc-component: oklch(0.16 0 0);
+  --color-fc-fg: oklch(0.985 0 0);
+  --color-fc-fg-muted: oklch(0.64 0 0);
+  --color-fc-accent: oklch(0.985 0 0);
+  --color-fc-accent-fg: oklch(0.09 0 0);
+  --color-fc-border: oklch(1 0 0 / 10%);
+  --color-fc-ring: oklch(0.6 0 0);
+  --color-fc-danger: oklch(0.65 0.22 29);
+  --color-fc-success: oklch(0.72 0.14 150);
+  --color-fc-info: oklch(0.72 0.13 255);
+  --color-fc-warning: oklch(0.8 0.13 75);
+  --color-fc-owner: oklch(0.78 0.13 64);
+  --color-fc-admin: oklch(0.75 0.14 292);
+  --color-fc-chart-1: oklch(0.58 0.15 292);
+  --color-fc-chart-2: oklch(0.66 0.14 64);
+  --color-fc-chart-3: oklch(0.6 0.12 195);
+  --color-fc-chart-4: oklch(0.55 0.16 15);
+  --color-fc-chart-5: oklch(0.64 0.15 135);
+  --color-fc-chart-6: oklch(0.62 0.14 339);
+  --fc-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23fbfbfb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+@layer base {
+  html {
+    font-family: var(--font-fc-body);
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+
+    /*
+     * The light default. The two dark blocks above flip it to `dark`, and they are
+     * *unlayered* while this sits in `@layer base` — unlayered wins over layered whatever
+     * the specificity, so the override lands without needing `!important` or a longer
+     * selector. Forcing light on a dark OS also works: `:root:not(.light)` excludes the
+     * media block, so this declaration is what remains.
+     */
+    color-scheme: light;
+  }
+
+  /*
+   * Scrollbars are never visible. A classic scrollbar takes layout width, so it shifts the
+   * whole page sideways the moment content grows past one screen — and shifts it back when
+   * a modal locks the body. Scrolling itself is untouched: wheel, trackpad, touch, keyboard
+   * and the scroll-into-view APIs all still work. Do not "fix" a scroll bug by re-showing
+   * these; if content is unreachable, the container is the bug.
+   */
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    background-color: var(--color-fc-page);
+    color: var(--color-fc-fg);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-fc-title);
+    letter-spacing: -0.02em;
+  }
+
+  /*
+   * Reduced motion, globally. Every JS animation in the library already checks
+   * prefersReducedMotion() before it tweens, but that does nothing for the CSS side —
+   * `transition-colors`, `transition-all`, `animate-spin` and every consumer-authored
+   * transition ran at full speed regardless. Durations are collapsed rather than set to
+   * `none` so transitionend/animationend still fire and nothing that waits on them hangs.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
