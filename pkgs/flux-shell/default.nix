@@ -6,6 +6,9 @@
 , gtk4-layer-shell
 , librsvg
 , gsettings-desktop-schemas
+, libpulseaudio
+, pam
+, xkeyboard_config
 , runtimeShell
 , mkpasswd
 }:
@@ -22,10 +25,13 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = src + "/Cargo.lock";
 
   nativeBuildInputs = [ pkg-config wrapGAppsHook4 ];
-  buildInputs = [ gtk4 gtk4-layer-shell librsvg gsettings-desktop-schemas ];
+  buildInputs = [ gtk4 gtk4-layer-shell librsvg gsettings-desktop-schemas libpulseaudio pam ];
 
   preFixup = ''
-    gappsWrapperArgs+=(--suffix PATH : ${lib.makeBinPath [ mkpasswd ]})
+    gappsWrapperArgs+=(
+      --suffix PATH : ${lib.makeBinPath [ mkpasswd ]}
+      --set-default FLUX_XKB_RULES ${xkeyboard_config}/share/X11/xkb/rules/evdev.xml
+    )
   '';
 
   postInstall = ''
