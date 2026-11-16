@@ -1,21 +1,37 @@
 import { registerIcons } from '@facile/muse';
 import solar from './solar.json';
 
-/** The marks of Flux (Solar filters), of Nix (NixOS artwork, CC BY 4.0) and of the suite apps (Solar, CC BY 4.0), plus feature glyphs. */
+/** The marks of Flux (Solar filters), of Nix (NixOS artwork, CC BY 4.0) and of the suite apps (Solar, CC BY 4.0), plus a few feature glyphs. */
 export const marks = {
 	flux: 'solar:filters-bold-duotone',
 	nix: 'flux:nix',
 	sablier: 'solar:hourglass-bold-duotone',
 	nuage: 'solar:cloud-bold-duotone',
-	casier: 'solar:key-minimalistic-square-bold-duotone',
-	bulle: 'solar:smile-circle-bold-duotone',
 	boite: 'solar:box-minimalistic-bold-duotone',
-	columns: 'solar:posts-carousel-horizontal-bold-duotone',
 	terminal: 'solar:command-bold-duotone',
-	editor: 'solar:code-square-bold-duotone',
-	palette: 'solar:palette-bold-duotone',
-	cpu: 'solar:cpu-bolt-bold-duotone',
-	history: 'solar:history-bold-duotone'
+	cpu: 'solar:cpu-bolt-bold-duotone'
+} as const;
+
+/** The line glyphs drawn inside the faux Flux screens (Solar, CC BY 4.0). */
+export const glyphs = {
+	wifi: 'solar:wi-fi-linear',
+	wifiOff: 'solar:wi-fi-cross-linear',
+	bluetooth: 'solar:bluetooth-linear',
+	volume: 'solar:volume-loud-linear',
+	battery: 'solar:battery-full-minimalistic-linear',
+	display: 'solar:display-linear',
+	palette: 'solar:palette-linear',
+	power: 'solar:power-linear',
+	files: 'solar:folder-with-files-linear',
+	settings: 'solar:settings-linear',
+	lock: 'solar:lock-keyhole-minimalistic-linear',
+	restart: 'solar:restart-linear',
+	eye: 'solar:eye-linear',
+	usb: 'solar:usb-linear',
+	disk: 'solar:ssd-round-linear',
+	keyboard: 'solar:keyboard-linear',
+	headphones: 'solar:headphones-round-linear',
+	phone: 'solar:smartphone-linear'
 } as const;
 
 registerIcons({

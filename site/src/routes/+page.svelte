@@ -1,54 +1,27 @@
 <script lang="ts">
-	import {
-		Badge,
-		Button,
-		DownloadSection,
-		FeatureSplit,
-		Icon,
-		LANDING_HEADING,
-		WorksWith,
-		icons,
-		type FeatureItem,
-		type WorksWithApp
-	} from '@facile/muse';
+	import { Badge, Button, DownloadSection, Icon, LANDING_HEADING, icons, type DownloadEntry } from '@facile/muse';
 	import { t } from '$lib/i18n';
 	import { marks } from '$lib/marks';
-	import { CHECKSUMS, DOWNLOADS, RELEASES, REPO, TRY_VM } from '$lib/release';
+	import { CHECKSUMS, DOWNLOADS, ISO_AARCH64, RELEASES, REPO, TRY_VM } from '$lib/release';
 	import Command from '$lib/components/Command.svelte';
 	import DesktopDemo from '$lib/components/DesktopDemo.svelte';
 	import LandingShell from '$lib/components/LandingShell.svelte';
 	import BoiteTile from '$lib/components/tiles/BoiteTile.svelte';
+	import InstallerTile from '$lib/components/tiles/InstallerTile.svelte';
+	import LoginTile from '$lib/components/tiles/LoginTile.svelte';
 	import RollbackTile from '$lib/components/tiles/RollbackTile.svelte';
+	import SettingsTile from '$lib/components/tiles/SettingsTile.svelte';
 
-	const FEATURES = [
-		['columns', marks.columns],
-		['shell', marks.palette],
-		['config', marks.nix],
-		['terminal', marks.terminal],
-		['arch', marks.cpu]
-	] as const;
-
-	const features = $derived<FeatureItem[]>(
-		FEATURES.map(([key, icon]) => ({
-			icon,
-			title: t(`feature.${key}.title`),
-			text: t(`feature.${key}.text`)
-		}))
+	const downloads = $derived<DownloadEntry[]>(
+		DOWNLOADS.map((entry) => (entry.href === ISO_AARCH64 ? { ...entry, arch: t('arch.arm') } : entry))
 	);
-
-	const apps = $derived<WorksWithApp[]>([
-		{ name: 'Sablier', icon: marks.sablier, line: t('with.sablier'), href: 'https://sablier.facile.studio' },
-		{ name: 'Nuage', icon: marks.nuage, line: t('with.nuage'), href: 'https://nuage.facile.studio' },
-		{ name: 'Casier', icon: marks.casier, line: t('with.casier'), href: 'https://casier.facile.studio' },
-		{ name: 'Bulle', icon: marks.bulle, line: t('with.bulle'), href: 'https://bulle.facile.studio' },
-		{ name: 'Boîte', icon: marks.boite, line: t('with.boite'), href: 'https://boite.facile.studio' }
-	]);
 
 	$effect(() => {
 		document.querySelector('meta[name="description"]')?.setAttribute('content', t('landing.meta'));
 	});
 
-	const width = 'mx-auto w-full max-w-5xl px-4 sm:px-6';
+	const width = 'mx-auto w-full max-w-6xl px-4 sm:px-6';
+	const lead = 'text-fc-md text-fc-fg-muted sm:text-fc-lg';
 </script>
 
 <svelte:head>
@@ -57,7 +30,7 @@
 </svelte:head>
 
 {#snippet ctas()}
-	<div class="flex w-full flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+	<div class="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
 		<Button href="/downloads" size="lg" icon={icons.download}>{t('landing.cta.download')}</Button>
 		<Button href={REPO} size="lg" variant="secondary" icon={icons.github} target="_blank" rel="noopener noreferrer">
 			{t('landing.cta.github')}
@@ -66,40 +39,76 @@
 {/snippet}
 
 <LandingShell>
-	<div class="flex flex-col gap-20 pb-24 md:gap-28">
-		<section class="{width} flex flex-col items-center pt-14 text-center sm:pt-20">
+	<div class="flex flex-col gap-24 pb-24 md:gap-32 md:pb-32">
+		<section class="{width} flex flex-col items-start pt-12 sm:pt-20" aria-labelledby="hero-title">
 			<Badge tone="accent">{t('landing.badge')}</Badge>
-			<h1 class="mt-6 max-w-3xl font-fc-title text-fc-3xl leading-tight font-bold tracking-tight text-balance sm:text-5xl">
+			<h1
+				id="hero-title"
+				class="mt-6 max-w-4xl font-fc-title text-fc-3xl leading-[1.08] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl"
+			>
 				{t('landing.slogan')}
 			</h1>
-			<p class="mt-5 max-w-2xl text-fc-lg text-balance text-fc-fg-muted">{t('landing.subtitle')}</p>
-			<div class="mt-8 w-full">{@render ctas()}</div>
+			<p class="mt-5 max-w-2xl text-pretty {lead}">{t('landing.subtitle')}</p>
+			<div class="mt-8 w-full sm:w-auto">{@render ctas()}</div>
 			<DesktopDemo class="mt-12 w-full sm:mt-16" />
 		</section>
 
-		<section aria-labelledby="tiles-title" class="{width} scroll-mt-24">
-			<h2 id="tiles-title" class="mb-10 text-center {LANDING_HEADING}">{t('tiles.title')}</h2>
+		<section class="{width} flex flex-col gap-10" aria-labelledby="surfaces-title">
+			<div class="flex max-w-2xl flex-col gap-3">
+				<h2 id="surfaces-title" class="{LANDING_HEADING} text-balance">{t('surfaces.title')}</h2>
+				<p class={lead}>{t('surfaces.line')}</p>
+			</div>
 			<div class="grid gap-4 md:grid-cols-2 md:gap-6">
-				<div class="grid"><RollbackTile /></div>
-				<div class="grid"><BoiteTile /></div>
+				<div class="grid md:col-span-2"><SettingsTile /></div>
+				<div class="grid"><LoginTile /></div>
+				<div class="grid"><InstallerTile /></div>
 			</div>
 		</section>
 
-		<FeatureSplit class={width} title={t('features.title')} description={t('features.line')} {features} />
+		<section class="{width} grid items-center gap-10 md:grid-cols-2 md:gap-16" aria-labelledby="rollback-title">
+			<div class="flex flex-col items-start gap-4">
+				<h2 id="rollback-title" class="{LANDING_HEADING} text-balance">{t('rollback.title')}</h2>
+				<p class={lead}>{t('rollback.line')}</p>
+				<span class="mt-2 inline-flex items-center gap-2 text-fc-sm font-medium text-fc-fg-muted">
+					<Icon icon={marks.nix} size={18} class="text-fc-fg" />
+					{t('rollback.nix')}
+				</span>
+			</div>
+			<RollbackTile />
+		</section>
 
-		<WorksWith class={width} title={t('with.title')} description={t('with.line')} {apps} />
+		<section class="{width} grid items-center gap-10 md:grid-cols-2 md:gap-16" aria-labelledby="boite-title">
+			<div class="flex flex-col items-start gap-4 md:order-2">
+				<span class="inline-flex size-12 items-center justify-center rounded-fc-lg bg-fc-surface">
+					<Icon icon={marks.boite} size={28} />
+				</span>
+				<h2 id="boite-title" class="{LANDING_HEADING} text-balance">{t('boite.title')}</h2>
+				<p class={lead}>{t('boite.line')}</p>
+				<Button
+					href="https://boite.facile.studio"
+					variant="ghost"
+					iconRight={icons.external}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="-ml-3"
+				>
+					{t('boite.link')}
+				</Button>
+			</div>
+			<div class="md:order-1"><BoiteTile /></div>
+		</section>
 
-		<section aria-labelledby="dev-title" class="{width} grid gap-8 md:grid-cols-2 md:items-center">
+		<section class="{width} grid items-center gap-8 md:grid-cols-2 md:gap-16" aria-labelledby="dev-title">
 			<div class="flex flex-col items-start gap-4">
 				<span class="inline-flex size-12 items-center justify-center rounded-fc-lg bg-fc-surface">
-					<Icon icon={marks.nix} size={28} />
+					<Icon icon={marks.nix} size={26} />
 				</span>
 				<h2 id="dev-title" class={LANDING_HEADING}>{t('dev.title')}</h2>
-				<p class="text-fc-md text-fc-fg-muted">{t('dev.line')}</p>
+				<p class={lead}>{t('dev.line')}</p>
 			</div>
 			<div class="flex min-w-0 flex-col gap-4">
 				<Command command={TRY_VM} />
-				<Button href="/docs/vm" variant="ghost" iconRight={icons.arrow} class="self-start">{t('dev.docs')}</Button>
+				<Button href="/docs/vm" variant="ghost" iconRight={icons.arrow} class="-ml-3 self-start">{t('dev.docs')}</Button>
 			</div>
 		</section>
 
@@ -107,18 +116,18 @@
 			<DownloadSection
 				mode="device"
 				allHref="/downloads"
-				downloads={DOWNLOADS}
+				{downloads}
 				releasesHref={RELEASES}
 				checksumsHref={CHECKSUMS}
-				headingLevel={3}
+				headingLevel={2}
 			/>
 		</div>
 
-		<section class="{width} flex flex-col items-center gap-5 text-center">
+		<section class="{width} flex flex-col items-center gap-5 text-center" aria-labelledby="end-title">
 			<Badge tone="accent">{t('landing.badge')}</Badge>
-			<h2 class="{LANDING_HEADING} text-balance">{t('end.title')}</h2>
-			<p class="max-w-2xl text-fc-md text-balance text-fc-fg-muted">{t('end.line')}</p>
-			<div class="mt-2 w-full">{@render ctas()}</div>
+			<h2 id="end-title" class="{LANDING_HEADING} text-balance">{t('end.title')}</h2>
+			<p class="max-w-2xl text-balance {lead}">{t('end.line')}</p>
+			<div class="mt-2 flex w-full justify-center">{@render ctas()}</div>
 		</section>
 	</div>
 </LandingShell>

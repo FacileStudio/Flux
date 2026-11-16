@@ -1,10 +1,52 @@
 @import '@facile/muse/styles';
 @source '../node_modules/@facile/muse/src';
 
+@property --fx-p {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: white;
+}
+
+@property --fx-f {
+	syntax: '<color>';
+	inherits: true;
+	initial-value: black;
+}
+
 :root {
-	--flux-wallpaper: radial-gradient(120% 90% at 15% 0%, color-mix(in oklab, var(--color-fc-info) 22%, var(--color-fc-surface)), transparent 60%),
-		radial-gradient(100% 80% at 100% 100%, color-mix(in oklab, var(--color-fc-success) 18%, var(--color-fc-surface)), transparent 65%),
-		var(--color-fc-surface);
+	--flux-wallpaper: url('/monstera.jpg') center / cover;
+}
+
+.flux-pal {
+	--fx-p: var(--color-fc-page);
+	--fx-f: var(--color-fc-fg);
+	--fx-m: color-mix(in oklab, var(--fx-f) 56%, var(--fx-p));
+	--fx-c: color-mix(in oklab, var(--fx-f) 3.5%, var(--fx-p));
+	--fx-s: color-mix(in oklab, var(--fx-f) 7%, var(--fx-p));
+	--fx-field: color-mix(in oklab, var(--fx-f) 12%, var(--fx-p));
+	color: var(--fx-f);
+	transition:
+		--fx-p 200ms ease-out,
+		--fx-f 200ms ease-out;
+}
+
+.flux-pal.swap {
+	--fx-p: var(--color-fc-fg);
+	--fx-f: var(--color-fc-page);
+}
+
+.flux-pal .mes-bar.mes-bar {
+	background: color-mix(in oklab, var(--fx-f) 12%, transparent);
+}
+
+.desk-demo .mes-cursor.mes-cursor {
+	transition-duration: 600ms, 200ms, 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.flux-pal {
+		transition: none;
+	}
 }
 
 .doc {

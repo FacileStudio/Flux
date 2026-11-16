@@ -9,10 +9,10 @@ export const page = {
 		'Flux · Ein ruhiger Linux-Desktop mit Facile an Bord'
 	],
 	'landing.meta': [
-		'Flux is the Linux system of Facile Studio: every Facile app and tool preinstalled, and the whole system in one config you can roll back.',
-		'Flux est le système Linux de Facile Studio : toutes les apps et tous les outils Facile déjà installés, et tout le système dans une configuration que vous pouvez annuler.',
-		'Flux es el sistema Linux de Facile Studio: todas las apps y herramientas de Facile ya instaladas, y todo el sistema en una configuración que puede deshacer.',
-		'Flux ist das Linux-System von Facile Studio: alle Facile-Apps und -Werkzeuge vorinstalliert, und das ganze System in einer Konfiguration, die Sie zurückdrehen können.'
+		'Flux is the Linux system of Facile Studio: every Facile app preinstalled, one design from the boot menu to Settings, and the whole system in one config you can roll back.',
+		'Flux est le système Linux de Facile Studio : toutes les apps Facile déjà installées, un seul design du menu de démarrage aux réglages, et tout le système dans une configuration que vous pouvez annuler.',
+		'Flux es el sistema Linux de Facile Studio: todas las apps de Facile ya instaladas, un solo diseño del menú de arranque a los ajustes, y todo el sistema en una configuración que puede deshacer.',
+		'Flux ist das Linux-System von Facile Studio: alle Facile-Apps vorinstalliert, ein Design vom Bootmenü bis zu den Einstellungen, und das ganze System in einer Konfiguration, die Sie zurückdrehen können.'
 	],
 	'landing.badge': [
 		'Open beta · stable around March 2027',
@@ -21,24 +21,24 @@ export const page = {
 		'Offene Beta · stabile Version um März 2027'
 	],
 	'landing.slogan': [
-		'A calm Linux desktop with Facile built in.',
-		'Un bureau Linux calme, avec Facile déjà installé.',
-		'Un escritorio Linux tranquilo, con Facile ya instalado.',
-		'Ein ruhiger Linux-Desktop mit Facile an Bord.'
+		'A calm Linux desktop with every Facile app already there.',
+		'Un bureau Linux calme, avec toutes les apps Facile déjà là.',
+		'Un escritorio Linux tranquilo, con todas las apps de Facile ya instaladas.',
+		'Ein ruhiger Linux-Desktop, auf dem alle Facile-Apps schon da sind.'
 	],
 	'landing.subtitle': [
-		'Every Facile app and tool is there from the first boot. The whole system is one config, so an update you regret is one click away from undone.',
-		'Toutes les apps et tous les outils Facile sont là dès le premier démarrage. Le système tient dans une seule configuration : une mise à jour ratée s’annule en un clic.',
-		'Todas las apps y herramientas de Facile están ahí desde el primer arranque. El sistema cabe en una sola configuración: una actualización fallida se deshace con un clic.',
-		'Alle Facile-Apps und -Werkzeuge sind ab dem ersten Start da. Das System steckt in einer Konfiguration: Ein misslungenes Update ist mit einem Klick rückgängig.'
+		'Sablier, Nuage, Casier and Bulle are ready from the first boot. Your windows line up side by side and never overlap.',
+		'Sablier, Nuage, Casier et Bulle sont prêts dès le premier démarrage. Vos fenêtres se rangent côte à côte, sans jamais se chevaucher.',
+		'Sablier, Nuage, Casier y Bulle están listos desde el primer arranque. Sus ventanas se colocan una al lado de otra y nunca se superponen.',
+		'Sablier, Nuage, Casier und Bulle sind ab dem ersten Start bereit. Ihre Fenster stehen nebeneinander und überlappen nie.'
 	],
 	'landing.cta.download': ['Download the beta', 'Télécharger la bêta', 'Descargar la beta', 'Beta herunterladen'],
 	'landing.cta.github': ['Follow on GitHub', 'Suivre sur GitHub', 'Seguir en GitHub', 'Auf GitHub folgen'],
 	'landing.demo.label': [
-		'A Flux desktop: a terminal starts a Sablier timer, the launcher opens Sablier, and its window slides in as a new column.',
-		'Un bureau Flux : un terminal lance un minuteur Sablier, le lanceur ouvre Sablier et sa fenêtre arrive dans une nouvelle colonne.',
-		'Un escritorio Flux: un terminal inicia un temporizador de Sablier, el lanzador abre Sablier y su ventana entra como una nueva columna.',
-		'Ein Flux-Desktop: Ein Terminal startet einen Sablier-Timer, der Starter öffnet Sablier und sein Fenster gleitet als neue Spalte herein.'
+		'A Flux desktop: Ghostty starts a Sablier timer, the launcher opens Settings as a new column, a Wi-Fi network connects, then the desktop switches to dark mode and back.',
+		'Un bureau Flux : Ghostty lance un minuteur Sablier, le lanceur ouvre les réglages dans une nouvelle colonne, un réseau Wi-Fi se connecte, puis le bureau passe en mode sombre et revient.',
+		'Un escritorio Flux: Ghostty inicia un temporizador de Sablier, el lanzador abre los ajustes en una nueva columna, se conecta una red Wi-Fi y el escritorio pasa al modo oscuro y vuelve.',
+		'Ein Flux-Desktop: Ghostty startet einen Sablier-Timer, der Starter öffnet die Einstellungen als neue Spalte, ein WLAN verbindet sich, dann wechselt der Desktop in den dunklen Modus und zurück.'
 	],
 	'landing.line': [
 		'The Linux system of Facile Studio.',
@@ -52,86 +52,71 @@ export const page = {
 	'nav.releases': ['Releases', 'Versions', 'Versiones', 'Versionen'],
 	'nav.issues': ['Report a bug', 'Signaler un bug', 'Informar de un error', 'Fehler melden'],
 	'nav.suite': ['The Facile suite', 'La suite Facile', 'La suite Facile', 'Die Facile-Suite'],
-	'tiles.title': [
-		'Calm on your machine and in your VMs',
-		'Serein sur votre machine et dans vos VM',
-		'Tranquilo en su equipo y en sus VM',
-		'Gelassen auf Ihrem Rechner und in Ihren VMs'
+	'surfaces.title': [
+		'One design, from the boot menu to Settings',
+		'Un seul design, du menu de démarrage aux réglages',
+		'Un solo diseño, del menú de arranque a los ajustes',
+		'Ein Design, vom Bootmenü bis zu den Einstellungen'
 	],
-	'tile.rollback.title': ['One click back', 'Un clic pour revenir', 'Un clic para volver', 'Ein Klick zurück'],
-	'tile.rollback.body': [
-		'Each update makes a new generation. If something breaks, start the one before from the boot menu.',
-		'Chaque mise à jour crée une génération. Si quelque chose casse, démarrez la précédente depuis le menu de démarrage.',
-		'Cada actualización crea una generación. Si algo falla, arranque la anterior desde el menú de inicio.',
-		'Jedes Update erzeugt eine Generation. Geht etwas kaputt, starten Sie die vorherige im Bootmenü.'
+	'surfaces.line': [
+		'Flux draws its own Settings, installer and login screen, in the look of the Facile apps.',
+		'Flux dessine ses propres réglages, son installateur et son écran de connexion, dans le style des apps Facile.',
+		'Flux dibuja sus propios ajustes, su instalador y su pantalla de inicio de sesión, con el estilo de las apps de Facile.',
+		'Flux zeichnet seine eigenen Einstellungen, seinen Installer und seinen Anmeldebildschirm im Stil der Facile-Apps.'
 	],
-	'tile.rollback.menu': ['Start Flux', 'Démarrer Flux', 'Iniciar Flux', 'Flux starten'],
-	'tile.rollback.today': ['today', 'aujourd’hui', 'hoy', 'heute'],
-	'tile.rollback.yesterday': ['yesterday', 'hier', 'ayer', 'gestern'],
-	'tile.rollback.week': ['last week', 'la semaine dernière', 'la semana pasada', 'letzte Woche'],
-	'tile.boite.title': ['Boîte runs Flux', 'Boîte tourne sur Flux', 'Boîte funciona con Flux', 'Boîte läuft mit Flux'],
-	'tile.boite.body': [
-		'Every Boîte dev VM runs Flux headless: the same shell, the same tools, in seconds.',
-		'Chaque VM de dev Boîte tourne sur Flux sans bureau : le même shell, les mêmes outils, en quelques secondes.',
-		'Cada VM de desarrollo de Boîte ejecuta Flux sin escritorio: el mismo shell, las mismas herramientas, en segundos.',
-		'Jede Boîte-Entwicklungs-VM läuft mit Flux ohne Desktop: dieselbe Shell, dieselben Werkzeuge, in Sekunden.'
+	'surface.settings.title': ['Settings', 'Réglages', 'Ajustes', 'Einstellungen'],
+	'surface.settings.body': [
+		'Wi-Fi, Bluetooth, sound and displays in one window.',
+		'Wi-Fi, Bluetooth, son et écrans dans une seule fenêtre.',
+		'Wi-Fi, Bluetooth, sonido y pantallas en una sola ventana.',
+		'WLAN, Bluetooth, Ton und Bildschirme in einem Fenster.'
 	],
-	'tile.boite.link': ['Open Boîte', 'Ouvrir Boîte', 'Abrir Boîte', 'Boîte öffnen'],
-	'tile.boite.ready': ['ready', 'prête', 'lista', 'bereit'],
-	'features.title': ['What comes in the box', 'Ce qu’il y a dedans', 'Lo que trae', 'Was drin ist'],
-	'features.line': [
-		'A complete desktop, set up and themed with muse, the Facile design system.',
-		'Un bureau complet, réglé et habillé avec muse, le design de Facile.',
-		'Un escritorio completo, ajustado y vestido con muse, el diseño de Facile.',
-		'Ein vollständiger Desktop, eingerichtet und gestaltet mit muse, dem Facile-Design.'
+	'surface.settings.label': [
+		'The Flux Settings window, moving through its Wi-Fi, Bluetooth, Sound and Displays pages.',
+		'La fenêtre des réglages Flux, qui passe par ses pages Wi-Fi, Bluetooth, Son et Écrans.',
+		'La ventana de ajustes de Flux, que recorre sus páginas Wi-Fi, Bluetooth, Sonido y Pantallas.',
+		'Das Fenster der Flux-Einstellungen mit seinen Seiten WLAN, Bluetooth, Ton und Bildschirme.'
 	],
-	'feature.columns.title': ['Windows in columns', 'Des fenêtres en colonnes', 'Ventanas en columnas', 'Fenster in Spalten'],
-	'feature.columns.text': [
-		'niri lines windows up side by side and scrolls between them. Nothing overlaps.',
-		'niri range les fenêtres côte à côte et défile de l’une à l’autre. Rien ne se chevauche.',
-		'niri coloca las ventanas una al lado de otra y se desplaza entre ellas. Nada se superpone.',
-		'niri reiht Fenster nebeneinander auf und scrollt zwischen ihnen. Nichts überlappt.'
+	'surface.login.title': ['Login', 'Connexion', 'Inicio de sesión', 'Anmeldung'],
+	'surface.login.body': [
+		'Your wallpaper, the time and your password.',
+		'Votre fond d’écran, l’heure et votre mot de passe.',
+		'Su fondo de pantalla, la hora y su contraseña.',
+		'Ihr Hintergrundbild, die Uhrzeit und Ihr Passwort.'
 	],
-	'feature.shell.title': ['A shell designed with muse', 'Une interface dessinée avec muse', 'Una interfaz diseñada con muse', 'Eine Oberfläche aus muse'],
-	'feature.shell.text': [
-		'Status bar, sidebar and launcher share the look of the Facile apps.',
-		'Barre d’état, panneau latéral et lanceur ont l’allure des apps Facile.',
-		'Barra de estado, panel lateral y lanzador comparten el aspecto de las apps Facile.',
-		'Statusleiste, Seitenleiste und Starter sehen aus wie die Facile-Apps.'
+	'surface.install.title': ['Installer', 'Installation', 'Instalador', 'Installer'],
+	'surface.install.body': [
+		'Try Flux from the USB stick, then install it when you are ready.',
+		'Essayez Flux depuis la clé USB, puis installez-le quand vous êtes prêt.',
+		'Pruebe Flux desde la memoria USB y luego instálelo cuando quiera.',
+		'Testen Sie Flux vom USB-Stick und installieren Sie es, wenn Sie so weit sind.'
 	],
-	'feature.config.title': ['One config, every version kept', 'Une configuration, chaque version gardée', 'Una configuración, cada versión guardada', 'Eine Konfiguration, jede Version bleibt'],
-	'feature.config.text': [
-		'Flux is built on NixOS. Your machine is one file you can read, copy and roll back.',
-		'Flux repose sur NixOS. Votre machine tient dans un fichier que vous pouvez lire, copier et annuler.',
-		'Flux se basa en NixOS. Su equipo cabe en un archivo que puede leer, copiar y deshacer.',
-		'Flux baut auf NixOS. Ihr Rechner ist eine Datei, die Sie lesen, kopieren und zurückdrehen können.'
+	'rollback.title': [
+		'Your whole system is one config',
+		'Tout le système tient dans une configuration',
+		'Todo el sistema cabe en una configuración',
+		'Ihr ganzes System ist eine Konfiguration'
 	],
-	'feature.terminal.title': ['Ghostty and zsh', 'Ghostty et zsh', 'Ghostty y zsh', 'Ghostty und zsh'],
-	'feature.terminal.text': [
-		'A fast terminal with a shell ready to use, plus vim, Neovim and vis.',
-		'Un terminal rapide et un shell prêt à l’emploi, avec vim, Neovim et vis.',
-		'Un terminal rápido y un shell listo para usar, con vim, Neovim y vis.',
-		'Ein schnelles Terminal mit fertiger Shell, dazu vim, Neovim und vis.'
+	'rollback.line': [
+		'Every update keeps the version before it. If one goes wrong, start the previous one from the boot menu.',
+		'Chaque mise à jour garde la version d’avant. Si l’une se passe mal, démarrez la précédente depuis le menu de démarrage.',
+		'Cada actualización guarda la versión anterior. Si una sale mal, arranque la anterior desde el menú de inicio.',
+		'Jedes Update behält die Version davor. Geht eines schief, starten Sie die vorherige im Bootmenü.'
 	],
-	'feature.arch.title': ['Intel, AMD and ARM', 'Intel, AMD et ARM', 'Intel, AMD y ARM', 'Intel, AMD und ARM'],
-	'feature.arch.text': [
-		'One system for x86_64 and ARM64 machines.',
-		'Un même système pour les machines x86_64 et ARM64.',
-		'Un mismo sistema para equipos x86_64 y ARM64.',
-		'Ein System für x86_64- und ARM64-Rechner.'
+	'rollback.nix': ['Built on NixOS', 'Construit sur NixOS', 'Basado en NixOS', 'Gebaut auf NixOS'],
+	'boite.title': [
+		'Boîte dev VMs run the same system',
+		'Les VM de dev Boîte tournent sur le même système',
+		'Las VM de desarrollo de Boîte usan el mismo sistema',
+		'Boîte-Dev-VMs laufen mit demselben System'
 	],
-	'with.title': ['Already installed', 'Déjà installés', 'Ya instalados', 'Schon installiert'],
-	'with.line': [
-		'Every Facile app and command line tool is there on the first boot, kept to its latest release.',
-		'Chaque app et outil en ligne de commande Facile est là au premier démarrage, à sa dernière version.',
-		'Cada app y herramienta de línea de comandos de Facile está ahí en el primer arranque, en su última versión.',
-		'Jede Facile-App und jedes Kommandozeilenwerkzeug ist beim ersten Start da, in der neuesten Version.'
+	'boite.line': [
+		'Every Boîte VM runs Flux without the desktop: the same shell and the same tools, ready in seconds.',
+		'Chaque VM Boîte tourne sous Flux sans le bureau : le même shell et les mêmes outils, prêts en quelques secondes.',
+		'Cada VM de Boîte ejecuta Flux sin escritorio: el mismo shell y las mismas herramientas, listos en segundos.',
+		'Jede Boîte-VM läuft mit Flux ohne Desktop: dieselbe Shell und dieselben Werkzeuge, in Sekunden bereit.'
 	],
-	'with.sablier': ['Start a timer from the terminal.', 'Lancez un minuteur depuis le terminal.', 'Inicie un temporizador desde el terminal.', 'Starten Sie einen Timer im Terminal.'],
-	'with.nuage': ['Your files, synced from the first login.', 'Vos fichiers, synchronisés dès la première connexion.', 'Sus archivos, sincronizados desde el primer inicio de sesión.', 'Ihre Dateien, ab der ersten Anmeldung synchron.'],
-	'with.casier': ['Secrets loaded into your shell.', 'Vos secrets chargés dans le shell.', 'Sus secretos cargados en el shell.', 'Ihre Geheimnisse direkt in der Shell.'],
-	'with.bulle': ['The Facile assistant, one shortcut away.', 'L’assistant Facile, à un raccourci.', 'El asistente de Facile, a un atajo.', 'Der Facile-Assistent, ein Kürzel entfernt.'],
-	'with.boite': ['Dev VMs that run Flux headless.', 'Des VM de dev qui tournent sur Flux.', 'VM de desarrollo que ejecutan Flux.', 'Entwicklungs-VMs, die Flux laufen lassen.'],
+	'boite.link': ['Open Boîte', 'Ouvrir Boîte', 'Abrir Boîte', 'Boîte öffnen'],
 	'dev.title': ['Try it in a VM', 'Essayez-le dans une VM', 'Pruébelo en una VM', 'In einer VM ausprobieren'],
 	'dev.line': [
 		'Have Nix with flakes? One command boots the Flux desktop in QEMU. Log in as flux, password flux.',
@@ -140,6 +125,12 @@ export const page = {
 		'Sie haben Nix mit Flakes? Ein Befehl startet den Flux-Desktop in QEMU. Benutzer flux, Passwort flux.'
 	],
 	'dev.docs': ['Read the docs', 'Lire la documentation', 'Leer la documentación', 'Doku lesen'],
+	'arch.arm': [
+		'ARM64 UEFI (VMs and servers)',
+		'ARM64 UEFI (VM et serveurs)',
+		'ARM64 UEFI (VM y servidores)',
+		'ARM64 UEFI (VMs und Server)'
+	],
 	'end.title': [
 		'Open beta today, stable around March 2027',
 		'Bêta ouverte aujourd’hui, version stable vers mars 2027',

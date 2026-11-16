@@ -17,7 +17,7 @@ export const RELEASE_NOTES = `${RELEASES}/tag/v${VERSION}`;
 /** The live installer ISO for Intel and AMD machines. */
 export const ISO_X86_64 = `${base}/flux-${VERSION}-x86_64-linux.iso`;
 
-/** The live installer ISO for ARM64 machines. */
+/** The live installer ISO for ARM64 UEFI virtual machines and servers. */
 export const ISO_AARCH64 = `${base}/flux-${VERSION}-aarch64-linux.iso`;
 
 /** The SHA-256 sums of both ISOs. */
@@ -26,7 +26,7 @@ export const CHECKSUMS = `${base}/SHA256SUMS`;
 /** The two ISOs as muse download entries, for the landing's device-only download block. */
 export const DOWNLOADS: DownloadEntry[] = [
 	{ platform: 'linux', href: ISO_X86_64, label: 'ISO x86_64', arch: 'Intel / AMD', version: VERSION, checksumHref: CHECKSUMS },
-	{ platform: 'linux', href: ISO_AARCH64, label: 'ISO aarch64', arch: 'ARM64', version: VERSION, checksumHref: CHECKSUMS }
+	{ platform: 'linux', href: ISO_AARCH64, label: 'ISO aarch64', arch: 'ARM64 UEFI (VMs and servers)', version: VERSION, checksumHref: CHECKSUMS }
 ];
 
 /** The command that checks a downloaded ISO against the published sums. */
