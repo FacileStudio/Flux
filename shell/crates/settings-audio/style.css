@@ -1,0 +1,275 @@
+.fx-audio,
+.fx-audio scrolledwindow,
+.fx-audio viewport {
+  background-color: transparent;
+}
+
+.fx-sound .fx-page {
+  padding: 32px 24px 40px 24px;
+}
+
+.fx-sound .fx-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: @fc_fg;
+  margin-left: 4px;
+}
+
+.fx-sound .fx-card {
+  background-color: @fc_component;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.fx-sound .fx-row {
+  padding: 12px 16px;
+}
+
+.fx-sound .fx-title,
+.fx-sound .fx-row-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.fx-sound .fx-subtitle {
+  font-size: 12px;
+  color: @fc_fg_muted;
+}
+
+.fx-sound .fx-value {
+  font-size: 12px;
+  font-weight: 500;
+  font-feature-settings: "tnum";
+  color: @fc_fg_muted;
+}
+
+.fx-sound .fx-empty {
+  padding: 64px 24px;
+}
+
+.fx-sound list.fx-choices {
+  background-color: transparent;
+}
+
+.fx-sound list.fx-choices row {
+  min-height: 32px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  outline: 0 solid transparent;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.fx-sound list.fx-choices row:hover {
+  background-color: @fc_surface;
+}
+
+.fx-sound list.fx-choices row:selected {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+.fx-sound list.fx-choices row:selected .fx-row-title {
+  color: @fc_accent_fg;
+}
+
+.fx-sound list.fx-choices row:selected .dim {
+  color: alpha(@fc_accent_fg, 0.72);
+}
+
+.fx-sound list.fx-choices row:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: -2px;
+}
+
+.fx-sound list.fx-choices row .fx-check {
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.fx-sound list.fx-choices row:selected .fx-check {
+  opacity: 1;
+}
+
+.fx-sound button.fx-icon-button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.fx-sound button.fx-icon-button:hover {
+  background-color: @fc_surface;
+}
+
+.fx-sound button.fx-icon-button:checked {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+.fx-sound button.fx-button {
+  min-height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+  color: @fc_fg;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-sound button.fx-button:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+.fx-sound button.fx-button:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+.fx-sound scale {
+  padding: 8px 0;
+}
+
+.fx-sound scale trough {
+  min-height: 6px;
+  border-radius: 999px;
+  background-color: @fc_surface;
+}
+
+.fx-sound scale highlight {
+  border-radius: 999px;
+  background-color: @fc_accent;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-sound scale slider {
+  min-width: 16px;
+  min-height: 16px;
+  margin: -6px;
+  border-radius: 999px;
+  background-color: @fc_accent;
+  background-image: none;
+  box-shadow: none;
+  outline: 0 solid transparent;
+  transition: transform 160ms ease-out, background-color 160ms ease-out;
+}
+
+.fx-sound scale slider:hover {
+  transform: scale(1.15);
+}
+
+.fx-sound scale:focus-visible slider {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+.fx-sound scale marks indicator {
+  min-height: 4px;
+  min-width: 1px;
+  color: @fc_fg_muted;
+}
+
+.fx-sound .fx-volume.muted scale highlight,
+.fx-sound .fx-volume.muted scale slider {
+  background-color: @fc_fg_muted;
+}
+
+.fx-sound .fx-volume.muted .fx-value {
+  text-decoration: line-through;
+}
+
+.fx-sound levelbar.fx-meter trough {
+  min-height: 3px;
+  padding: 0;
+  border-radius: 999px;
+  background-color: @fc_surface;
+}
+
+.fx-sound levelbar.fx-meter block {
+  min-height: 3px;
+  border-radius: 999px;
+}
+
+.fx-sound levelbar.fx-meter block.filled {
+  background-color: @fc_success;
+}
+
+.fx-sound levelbar.fx-meter block.empty {
+  background-color: transparent;
+}
+
+.fx-sound switch {
+  min-width: 40px;
+  min-height: 22px;
+  border-radius: 999px;
+  background-color: mix(@fc_surface, @fc_fg, 0.12);
+  transition: background-color 160ms ease-out;
+}
+
+.fx-sound switch:checked {
+  background-color: @fc_accent;
+}
+
+.fx-sound switch slider {
+  min-width: 18px;
+  min-height: 18px;
+  margin: 2px;
+  border-radius: 999px;
+  background-color: @fc_page;
+}
+
+.fx-sound switch:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+.fx-sound dropdown > button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+  color: @fc_fg;
+  font-size: 13px;
+}
+
+.fx-sound dropdown popover contents {
+  background-color: @fc_component;
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 8px 24px alpha(black, 0.18);
+}
+
+.fx-sound dropdown popover listview row {
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+
+.fx-sound dropdown popover listview row:hover {
+  background-color: @fc_surface;
+}
+
+.fx-quick {
+  padding: 12px;
+  min-width: 320px;
+}
+
+.fx-quick .fx-row {
+  padding: 4px 8px;
+}
+
+.fx-sound button.fx-link {
+  background-color: transparent;
+  color: @fc_fg_muted;
+  font-size: 13px;
+  min-height: 32px;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.fx-sound button.fx-link:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}

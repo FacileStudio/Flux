@@ -1,0 +1,35 @@
+{
+  "default_sink": "gone",
+  "sinks": [
+    {
+      "index": 0,
+      "name": "speakers",
+      "description": "Null Output",
+      "properties": { "device.class": "abstract" },
+      "volume": 98304,
+      "monitor": "speakers.monitor"
+    },
+    {
+      "index": 1,
+      "name": "alsa_output.platform-snd_aloop.0.analog-stereo",
+      "description": "Loopback Analog Stereo",
+      "properties": {},
+      "volume": 0,
+      "muted": true
+    }
+  ],
+  "sources": [
+    {
+      "index": 0,
+      "name": "speakers.monitor",
+      "description": "Monitor of Null Output",
+      "properties": { "device.class": "monitor" },
+      "volume": 65536,
+      "is_monitor": true
+    }
+  ],
+  "streams": [
+    { "index": 3, "sink": 0, "volume": 65536, "properties": {} },
+    { "index": 4, "sink": 0, "volume": 30000, "properties": { "media.name": "Playback" } }
+  ]
+}
