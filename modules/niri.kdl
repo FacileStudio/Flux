@@ -1,0 +1,53 @@
+input {
+    keyboard {
+        xkb {
+        }
+    }
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+layout {
+    gaps 10
+    center-focused-column "never"
+    default-column-width { proportion 0.5; }
+    focus-ring {
+        width 2
+        active-color "#111111"
+        inactive-color "#d4d4d4"
+    }
+    border {
+        off
+    }
+}
+
+prefer-no-csd
+
+spawn-at-startup "xwayland-satellite"
+
+environment {
+    DISPLAY ":0"
+}
+
+binds {
+    Mod+Return { spawn "ghostty"; }
+    Mod+D { spawn "fuzzel"; }
+    Mod+Q { close-window; }
+    Mod+H { focus-column-left; }
+    Mod+L { focus-column-right; }
+    Mod+J { focus-window-down; }
+    Mod+K { focus-window-up; }
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+L { move-column-right; }
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+Shift+E { quit; }
+}
