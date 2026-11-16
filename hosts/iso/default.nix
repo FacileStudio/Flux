@@ -16,7 +16,7 @@ in
   users.users.flux = {
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
-    initialHashedPassword = "";
+    initialPassword = "flux";
   };
   services.getty.autologinUser = lib.mkForce "flux";
 
