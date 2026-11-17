@@ -47,31 +47,76 @@ window.flux-lock.backdrop {
   color: @fc_fg;
 }
 
-passwordentry.secret {
-  min-height: 48px;
-  padding: 0 16px;
-  border-radius: 8px;
-  background-color: alpha(@fc_component, 0.92);
-  color: @fc_fg;
-  font-size: 16px;
+.secret-row {
+  min-height: 52px;
+  padding: 4px 4px 4px 22px;
+  border-radius: 999px;
+  background-color: alpha(@fc_fg, 0.1);
   outline: 0 solid transparent;
   transition: background-color 150ms ease-out;
 }
 
-passwordentry.secret:focus-within {
+.secret-row:focus-within {
+  background-color: alpha(@fc_fg, 0.14);
   outline: 2px solid @fc_ring;
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
-passwordentry.secret.error {
-  background-color: mix(@fc_component, @fc_danger, 0.12);
+.secret-row.error {
+  background-color: alpha(@fc_danger, 0.18);
 }
 
-passwordentry.secret:disabled {
+entry.secret,
+entry.secret:focus,
+entry.secret:focus-within,
+entry.secret.error {
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: none;
+  color: @fc_fg;
+  font-size: 18px;
+}
+
+entry.secret text {
+  background: none;
+  letter-spacing: 0.12em;
+}
+
+entry.secret text placeholder {
+  color: @fc_fg_muted;
+  letter-spacing: 0;
+}
+
+entry.secret > image {
+  min-width: 0;
+  margin: 0;
+  opacity: 0;
+  -gtk-icon-size: 1px;
+}
+
+entry.secret:disabled {
   color: @fc_fg_muted;
 }
 
-passwordentry.secret text placeholder {
+button.go {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  background-color: @fc_fg;
+  color: @fc_page;
+  transition: background-color 150ms ease-out;
+}
+
+button.go:hover {
+  background-color: mix(@fc_fg, @fc_page, 0.14);
+}
+
+button.go:disabled {
+  background-color: alpha(@fc_fg, 0.2);
   color: @fc_fg_muted;
 }
 
@@ -81,7 +126,7 @@ passwordentry.secret text placeholder {
   color: @fc_fg_muted;
 }
 
-passwordentry.error ~ .message {
+.secret-row.error ~ .message {
   color: @fc_danger;
 }
 

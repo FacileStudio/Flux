@@ -91,7 +91,8 @@ impl Lock {
         self.busy.set(true);
         self.each(|each| {
             each.entry.set_sensitive(false);
-            each.entry.remove_css_class("error");
+            each.go.set_sensitive(false);
+            each.set_error(false);
             each.message.set_text(self.text.checking);
         });
         let lock = self.clone();
@@ -125,7 +126,8 @@ impl Lock {
         };
         self.each(|each| {
             each.entry.set_sensitive(true);
-            each.entry.add_css_class("error");
+            each.go.set_sensitive(true);
+            each.set_error(true);
             each.message.set_text(&message);
         });
         if let Some(first) = self.surfaces.borrow().first() {
@@ -169,7 +171,7 @@ fn wire_keys(lock: &Rc<Lock>, window: &gtk4::Window, surface: &Surface) {
             target.conceal();
             return glib::Propagation::Stop;
         }
-        if target.revealer.reveals_child() && target.entry.has_focus() {
+        if target.revealer.is_child_revealed() && target.typing() {
             return glib::Propagation::Proceed;
         }
         let typed = key.to_unicode().filter(|character| !character.is_control());
@@ -185,8 +187,15 @@ fn wire_keys(lock: &Rc<Lock>, window: &gtk4::Window, surface: &Surface) {
             lock.submit(&target);
         }
     });
-    let entry = surface.entry.clone();
-    surface.entry.connect_changed(move |_| entry.remove_css_class("error"));
+    let weak = Rc::downgrade(lock);
+    let target = surface.clone();
+    surface.go.connect_clicked(move |_| {
+        if let Some(lock) = weak.upgrade() {
+            lock.submit(&target);
+        }
+    });
+    let target = surface.clone();
+    surface.entry.connect_changed(move |_| target.set_error(false));
 }
 
 fn now() -> glib::DateTime {

@@ -15,7 +15,9 @@ pub struct Surface {
     pub date: gtk4::Label,
     pub hint: gtk4::Label,
     pub revealer: gtk4::Revealer,
+    pub row: gtk4::Box,
     pub entry: gtk4::PasswordEntry,
+    pub go: gtk4::Button,
     pub message: gtk4::Label,
     pub caps: gtk4::Label,
     pub layout: gtk4::Label,
@@ -28,7 +30,19 @@ fn label(text: &str, class: &str) -> gtk4::Label {
     label
 }
 
-fn field(text: &Text, name: &str) -> (gtk4::Box, gtk4::PasswordEntry, gtk4::Label) {
+/// The password pill: the dots and the round arrow that submits them.
+struct Field {
+    column: gtk4::Box,
+    row: gtk4::Box,
+    entry: gtk4::PasswordEntry,
+    go: gtk4::Button,
+    message: gtk4::Label,
+}
+
+fn field(text: &Text, name: &str) -> Field {
+    if let Some(settings) = gtk4::Settings::default() {
+        settings.set_gtk_entry_select_on_focus(false);
+    }
     let column = gtk4::Box::new(Orientation::Vertical, 12);
     column.set_halign(Align::Center);
     column.append(&label(name, "name"));
@@ -36,14 +50,23 @@ fn field(text: &Text, name: &str) -> (gtk4::Box, gtk4::PasswordEntry, gtk4::Labe
     entry.set_placeholder_text(Some(text.placeholder));
     entry.set_show_peek_icon(false);
     entry.add_css_class("secret");
-    entry.set_width_request(320);
-    column.append(&entry);
+    entry.set_hexpand(true);
+    let go = gtk4::Button::from_icon_name("go-next-symbolic");
+    go.add_css_class("go");
+    go.set_valign(Align::Center);
+    go.set_tooltip_text(Some(text.unlock));
+    let row = gtk4::Box::new(Orientation::Horizontal, 8);
+    row.add_css_class("secret-row");
+    row.set_width_request(340);
+    row.append(&entry);
+    row.append(&go);
+    column.append(&row);
     let message = label("", "message");
     message.set_wrap(true);
     message.set_max_width_chars(40);
     message.set_justify(gtk4::Justification::Center);
     column.append(&message);
-    (column, entry, message)
+    Field { column, row, entry, go, message }
 }
 
 /// Build the surface for `name`, the user's display name.
@@ -70,7 +93,7 @@ pub fn build(text: &Text, name: &str) -> Surface {
     center.append(&date);
     let hint = label(text.hint, "hint");
     center.append(&hint);
-    let (column, entry, message) = field(text, name);
+    let Field { column, row, entry, go, message } = field(text, name);
     let revealer = gtk4::Revealer::new();
     revealer.set_transition_type(gtk4::RevealerTransitionType::SlideUp);
     revealer.set_transition_duration(180);
@@ -94,28 +117,46 @@ pub fn build(text: &Text, name: &str) -> Surface {
     content.append(&footer);
     root.add_overlay(&content);
 
-    Surface { root, content, background, clock, date, hint, revealer, entry, message, caps, layout, battery }
+    Surface { root, content, background, clock, date, hint, revealer, row, entry, go, message, caps, layout, battery }
 }
 
 impl Surface {
-    /// Show the password field, and put `first` in it when the key that
-    /// revealed it typed a character.
+    /// Show the password field, and add `first` to it when the key that
+    /// revealed it typed a character. Keys pressed while the field slides in
+    /// land here too, so they append rather than replace.
     pub fn reveal(&self, first: Option<char>) {
         self.revealer.set_reveal_child(true);
         self.hint.set_visible(false);
         self.entry.grab_focus();
         if let Some(character) = first {
-            let mut buffer = [0u8; 4];
-            self.entry.set_text(character.encode_utf8(&mut buffer));
+            let mut typed = zeroize::Zeroizing::new(self.entry.text().to_string());
+            typed.push(character);
+            self.entry.set_text(&typed);
             self.entry.set_position(-1);
         }
+    }
+
+    /// Mark the field as refused, or clear that mark.
+    pub fn set_error(&self, error: bool) {
+        for widget in [self.entry.upcast_ref::<gtk4::Widget>(), self.row.upcast_ref()] {
+            if error {
+                widget.add_css_class("error");
+            } else {
+                widget.remove_css_class("error");
+            }
+        }
+    }
+
+    /// Whether keyboard focus is in the password field, which is a text widget inside the entry.
+    pub fn typing(&self) -> bool {
+        self.entry.root().and_then(|root| root.focus()).is_some_and(|focus| focus.is_ancestor(&self.entry))
     }
 
     /// Hide the field again and forget what was typed.
     pub fn conceal(&self) {
         self.entry.set_text("");
         self.message.set_text("");
-        self.entry.remove_css_class("error");
+        self.set_error(false);
         self.revealer.set_reveal_child(false);
         self.hint.set_visible(true);
     }
