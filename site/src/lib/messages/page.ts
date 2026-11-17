@@ -53,10 +53,10 @@ export const page = {
 	'nav.issues': ['Report a bug', 'Signaler un bug', 'Informar de un error', 'Fehler melden'],
 	'nav.suite': ['The Facile suite', 'La suite Facile', 'La suite Facile', 'Die Facile-Suite'],
 	'surfaces.title': [
-		'Screens we made ourselves',
-		'Des écrans faits maison',
-		'Pantallas hechas en casa',
-		'Hausgemachte Bildschirme'
+		'Easy on the eyes, too',
+		'Facile pour les yeux aussi',
+		'Fácil a la vista, también',
+		'Auch fürs Auge angenehm'
 	],
 	'surfaces.line': [
 		'Settings, the installer and the login screen are written for Flux, in the style of the Facile apps. They start in dark mode. Light is one click away.',
