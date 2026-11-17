@@ -44,9 +44,7 @@ button.choice image {
   color: @fc_fg;
 }
 
-button.choice:hover,
-button.choice:focus-visible,
-button.choice:focus {
+button.choice:hover {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
 }
 
@@ -54,7 +52,7 @@ button.choice:active {
   background-color: mix(@fc_surface, @fc_fg, 0.14);
 }
 
-button.choice:focus {
+button.choice:focus-visible {
   outline: 2px solid @fc_ring;
   outline-offset: 2px;
 }
@@ -64,15 +62,18 @@ button.choice.poweroff label {
   color: @fc_danger;
 }
 
-button.choice.poweroff:hover,
-button.choice.poweroff:focus {
+button.choice.poweroff:hover {
   background-color: @fc_danger;
+}
+
+button.choice.poweroff:active {
+  background-color: mix(@fc_danger, @fc_danger_fg, 0.14);
 }
 
 button.choice.poweroff:hover image,
 button.choice.poweroff:hover label,
-button.choice.poweroff:focus image,
-button.choice.poweroff:focus label {
+button.choice.poweroff:active image,
+button.choice.poweroff:active label {
   color: @fc_danger_fg;
 }
 
@@ -84,13 +85,17 @@ button.cancel {
   color: @fc_fg_muted;
 }
 
-button.cancel:hover,
-button.cancel:focus {
+button.cancel:hover {
   background-color: @fc_surface;
   color: @fc_fg;
 }
 
-button.cancel:focus {
+button.cancel:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+  color: @fc_fg;
+}
+
+button.cancel:focus-visible {
   outline: 2px solid @fc_ring;
   outline-offset: 2px;
 }

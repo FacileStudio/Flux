@@ -75,6 +75,7 @@ fn activate(application: &Application) {
     if let Some(first) = parts.buttons.first() {
         first.grab_focus();
     }
+    window.set_focus_visible(true);
 }
 
 /// The pieces the handlers reach back into.
@@ -124,6 +125,7 @@ fn dialog() -> (Box, Vec<Button>) {
 /// One choice: its icon over its label.
 fn tile(action: Action) -> Button {
     let content = Box::new(Orientation::Vertical, 8);
+    content.set_valign(gtk4::Align::Center);
     let icon = Image::from_icon_name(action.icon());
     icon.set_pixel_size(24);
     content.append(&icon);
