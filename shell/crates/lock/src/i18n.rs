@@ -3,6 +3,7 @@
 pub struct Text {
     pub hint: &'static str,
     pub placeholder: &'static str,
+    pub unlock: &'static str,
     pub checking: &'static str,
     pub wrong: &'static str,
     pub unavailable: &'static str,
@@ -15,6 +16,7 @@ pub struct Text {
 pub const EN: Text = Text {
     hint: "Press any key to unlock",
     placeholder: "Password",
+    unlock: "Unlock",
     checking: "Checking",
     wrong: "That password is not right. Try again.",
     unavailable: "Flux cannot check passwords right now. The session stays locked.",
@@ -27,6 +29,7 @@ pub const EN: Text = Text {
 pub const FR: Text = Text {
     hint: "Appuyez sur une touche pour déverrouiller",
     placeholder: "Mot de passe",
+    unlock: "Déverrouiller",
     checking: "Vérification",
     wrong: "Ce mot de passe n'est pas le bon. Réessayez.",
     unavailable: "Flux ne peut pas vérifier les mots de passe pour l'instant. La session reste verrouillée.",

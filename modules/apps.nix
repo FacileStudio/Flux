@@ -62,7 +62,13 @@ let
     printf '[Desktop Entry]\nType=Application\nName=${name}\nNoDisplay=true\nHidden=true\n' > $out/share/applications/${name}
   '') hidden);
 in
-lib.mkIf (config.flux.profile == "desktop") {
+lib.mkIf (config.flux.profile == "desktop") (lib.mkMerge [ {
+  xdg.terminal-exec = {
+    enable = true;
+    settings.default = [ terminal ];
+  };
+  environment.systemPackages = [ pkgs.cliphist ];
+} (lib.mkIf config.flux.software.apps {
   programs.firefox = {
     enable = true;
     preferencesStatus = "default";
@@ -91,7 +97,6 @@ lib.mkIf (config.flux.profile == "desktop") {
     file-roller
     gnome-system-monitor
     baobab
-    cliphist
     ffmpegthumbnailer
   ]) ++ [ (lib.hiPrio hiddenEntries) ];
 
@@ -99,9 +104,5 @@ lib.mkIf (config.flux.profile == "desktop") {
     enable = true;
     defaultApplications = defaults;
   };
-
-  xdg.terminal-exec = {
-    enable = true;
-    settings.default = [ terminal ];
-  };
-}
+})
+])

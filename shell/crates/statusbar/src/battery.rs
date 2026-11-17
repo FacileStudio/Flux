@@ -6,22 +6,129 @@ mod power;
 #[cfg(test)]
 mod tests;
 
-use gtk4::prelude::*;
+use std::collections::HashMap;
+use std::time::Duration;
 
+use gtk4::prelude::*;
+use gtk4::{gio, glib};
+
+use crate::control::{self, Changes};
+use crate::icons::Icon;
 use crate::popup::{self, FillBar, Popup};
 use crate::{text, work};
 use power::{Battery, State};
 
-/// The pill's label, or `None` to hide the pill: the level and a `+` while
-/// the battery charges, or nothing beside the icon unless Settings turned the
-/// percentage on.
-pub fn label() -> Option<String> {
+/// At or under this level, on battery, the pill turns red and shows its level.
+const LOW: u8 = 20;
+
+/// The levels that send a notification when the battery drains past them.
+const WARNINGS: [u8; 2] = [5, 15];
+
+/// A level no battery reports, standing for "not draining when last read".
+const NOT_DRAINING: u8 = u8::MAX;
+
+/// How often the low-battery watch reads the level.
+const WATCH: Duration = Duration::from_secs(30);
+
+/// The pill's reading, or `None` to hide the pill.
+pub fn pill() -> Option<control::Reading> {
     let battery = Battery::read()?;
-    if !shows_percentage() {
-        return Some(String::new());
+    let state = battery.state();
+    Some(control::Reading {
+        text: pill_text(battery.pct, state, shows_percentage()),
+        icon: glyph(battery.pct, state),
+        low: is_low(battery.pct, state),
+    })
+}
+
+/// Watch the level for the whole process, on a thread of its own, and send one
+/// notification each time the battery drains past a warning level. `changes`
+/// gets a tick with it, so the pills turn red at the same moment. Ends when
+/// nobody listens.
+pub fn follow(changes: Changes) {
+    std::thread::spawn(move || {
+        let mut last = NOT_DRAINING;
+        while !changes.is_closed() {
+            if let Some(battery) = Battery::read() {
+                let (level, warning) = watch_step(last, battery.pct, battery.state());
+                last = level;
+                if warning {
+                    let strings = text::get();
+                    let body = strings.battery_low_body.replace("{n}", &battery.pct.to_string());
+                    notify(strings.battery, strings.battery_low, &body);
+                    let _ = changes.try_send(());
+                }
+            }
+            std::thread::sleep(WATCH);
+        }
+    });
+}
+
+/// One step of the watch: the level to remember, and whether this read is the
+/// one that drains past a warning level. Plugging in forgets the level, so
+/// unplugging a battery that is still low warns again.
+fn watch_step(last: u8, pct: u8, state: State) -> (u8, bool) {
+    if state != State::Discharging {
+        return (NOT_DRAINING, false);
     }
-    let charging = battery.state() == State::Charging;
-    Some(format!("{}%{}", battery.pct, if charging { "+" } else { "" }))
+    (pct, crossed(last, pct).is_some())
+}
+
+/// Whether the battery is running out: low, and nothing is feeding it.
+fn is_low(pct: u8, state: State) -> bool {
+    pct <= LOW && state == State::Discharging
+}
+
+/// The words beside the icon: the level and a `+` while the battery charges,
+/// when Settings turned the percentage on or the battery is running out, and
+/// nothing otherwise.
+fn pill_text(pct: u8, state: State, always: bool) -> String {
+    if !always && !is_low(pct, state) {
+        return String::new();
+    }
+    format!("{pct}%{}", if state == State::Charging { "+" } else { "" })
+}
+
+/// The battery glyph for a level: the bolt while charging, then one, two or
+/// three bars, cut at the same levels as the Flux icon theme.
+fn glyph(pct: u8, state: State) -> Icon {
+    match (state, pct) {
+        (State::Charging, _) => Icon::BatteryCharge,
+        (_, 0..=20) => Icon::BatteryLow,
+        (_, 21..=60) => Icon::BatteryHalf,
+        _ => Icon::Battery,
+    }
+}
+
+/// The warning level the battery just drained past, going from `previous` to
+/// `now`. A first read while draining counts as coming from above every level.
+fn crossed(previous: u8, now: u8) -> Option<u8> {
+    WARNINGS.into_iter().find(|level| now <= *level && previous > *level)
+}
+
+/// Show a critical notification through the session's notification service.
+/// A critical one stays on screen until it is dismissed.
+fn notify(app: &str, summary: &str, body: &str) {
+    const CRITICAL: u8 = 2;
+    const SERVER_DECIDES: i32 = -1;
+    let hints: HashMap<&str, glib::Variant> = HashMap::from([("urgency", CRITICAL.to_variant())]);
+    let message = (app, 0u32, "", summary, body, Vec::<String>::new(), hints, SERVER_DECIDES).to_variant();
+    let sent = gio::bus_get_sync(gio::BusType::Session, gio::Cancellable::NONE).and_then(|bus| {
+        bus.call_sync(
+            Some("org.freedesktop.Notifications"),
+            "/org/freedesktop/Notifications",
+            "org.freedesktop.Notifications",
+            "Notify",
+            Some(&message),
+            None,
+            gio::DBusCallFlags::NONE,
+            5000,
+            gio::Cancellable::NONE,
+        )
+    });
+    if let Err(error) = sent {
+        eprintln!("statusbar: low battery notification: {error}");
+    }
 }
 
 /// Whether `~/.config/flux/shell.json` turns the percentage on. A missing file or key means off.

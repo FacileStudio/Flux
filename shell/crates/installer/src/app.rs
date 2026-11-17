@@ -23,6 +23,7 @@ pub enum Screen {
     Confirm,
     Account,
     TimeZone,
+    Software,
     Summary,
     Progress,
     Error,
@@ -30,7 +31,7 @@ pub enum Screen {
 }
 
 /// How many numbered steps the person walks through before the install starts.
-pub const STEPS: u8 = 5;
+pub const STEPS: u8 = 6;
 
 impl Screen {
     /// The numbered step this screen belongs to, for the screens that have one.
@@ -40,7 +41,8 @@ impl Screen {
             Screen::Disk | Screen::Confirm => Some(2),
             Screen::Account => Some(3),
             Screen::TimeZone => Some(4),
-            Screen::Summary => Some(5),
+            Screen::Software => Some(5),
+            Screen::Summary => Some(6),
             _ => None,
         }
     }
@@ -67,6 +69,11 @@ pub struct State {
     pub timezone: String,
     pub timezone_chosen: bool,
     pub zones: Vec<String>,
+    pub points: Vec<model::ZonePoint>,
+    pub software: model::Software,
+    pub nvidia_gpu: bool,
+    pub uefi: bool,
+    pub online: bool,
     pub error: String,
     pub error_log: String,
     pub preview: bool,
@@ -75,11 +82,16 @@ pub struct State {
 impl State {
     fn new() -> Self {
         let language = &LANGUAGES[0];
+        let nvidia_gpu = model::X86 && crate::system::nvidia_gpu();
         State {
             keymap: language.keymap.to_string(),
             timezone: language.timezone.to_string(),
             hostname: "flux".to_string(),
             zones: crate::system::zones(),
+            points: crate::system::zone_points(),
+            nvidia_gpu,
+            uefi: crate::system::uefi(),
+            software: model::Software { nvidia: nvidia_gpu, ..model::Software::default() },
             ..State::default()
         }
     }
@@ -108,7 +120,31 @@ impl State {
             timezone: self.timezone.clone(),
             keymap: self.keymap.clone(),
             locale: LANGUAGES[self.language].locale.to_string(),
+            software: model::Software {
+                gaming: self.software.gaming && model::X86,
+                nvidia: self.software.nvidia && self.nvidia_gpu,
+                ..self.software
+            },
         }
+    }
+
+    /// Whether the choices download something while the machine has no internet: Install waits.
+    pub fn waits_for_network(&self) -> bool {
+        !self.online && !self.choices().software.downloads().is_empty()
+    }
+
+    /// Ask the system again whether the internet is reachable. A preview keeps its sample answer.
+    pub fn check_network(&mut self) {
+        if !self.preview {
+            self.online = crate::system::online();
+        }
+    }
+
+    /// Whether every choice the backend needs is made: a disk, a valid account and a zone.
+    pub fn ready(&self) -> bool {
+        self.disk.as_ref().is_some_and(|disk| !disk.path.is_empty() && disk.usable())
+            && self.account_ready()
+            && !self.timezone.is_empty()
     }
 
     /// Whether the account screen holds values the backend accepts.
@@ -245,30 +281,40 @@ pub fn preview_disks() -> Vec<Disk> {
     let lsblk = r#"{"blockdevices":[
         {"name":"nvme0n1","path":"/dev/nvme0n1","size":512110190592,"model":"Samsung SSD 980 PRO","type":"disk","rm":false,"tran":"nvme"},
         {"name":"sdb","path":"/dev/sdb","size":2000398934016,"model":"WD Elements","type":"disk","rm":true,"tran":"usb"},
+        {"name":"sdc","path":"/dev/sdc","size":15931539456,"model":"Kingston DataTraveler","type":"disk","rm":true,"tran":"usb"},
         {"name":"sda","path":"/dev/sda","size":31914983424,"model":"SanDisk Ultra","type":"disk","rm":true,"tran":"usb"}
     ]}"#;
     model::parse_disks(lsblk, &["sda".to_string()])
 }
 
 /// Open a screen with sample choices, without running anything, for design checks:
-/// `FLUX_INSTALLER_PREVIEW=fr:summary flux-installer`.
+/// `FLUX_INSTALLER_PREVIEW=fr:summary flux-installer`. Three names show a state instead of a
+/// screen: `bios` (welcome on a legacy BIOS boot), `offline` and `blocked` (software and summary
+/// with gaming picked and no internet).
 fn preview(app: &Rc<App>, name: &str) -> Option<Screen> {
     let (language, screen) = name.split_once(':').unwrap_or(("en", name));
     let screen = match screen {
-        "welcome" => Screen::Welcome,
+        "welcome" | "bios" => Screen::Welcome,
         "language" => Screen::Language,
         "disk" => Screen::Disk,
         "confirm" => Screen::Confirm,
         "account" => Screen::Account,
         "timezone" => Screen::TimeZone,
-        "summary" => Screen::Summary,
+        "software" | "offline" => Screen::Software,
+        "summary" | "blocked" => Screen::Summary,
         "progress" => Screen::Progress,
         "error" => Screen::Error,
         "done" => Screen::Done,
         _ => return None,
     };
+    let offline = matches!(name.rsplit(':').next(), Some("offline" | "blocked"));
     let mut state = app.state.borrow_mut();
     state.preview = true;
+    state.uefi = !name.ends_with("bios");
+    state.online = !offline;
+    state.nvidia_gpu = model::X86;
+    state.software.nvidia = model::X86;
+    state.software.gaming = offline;
     state.set_language(LANGUAGES.iter().position(|item| item.code == language).unwrap_or(0));
     state.full_name = "Ada Lovelace".to_string();
     state.username = "ada".to_string();
@@ -290,3 +336,6 @@ fn preview(app: &Rc<App>, name: &str) -> Option<Screen> {
     app.history.borrow_mut().push(Screen::Welcome);
     Some(screen)
 }
+
+#[cfg(test)]
+mod tests;

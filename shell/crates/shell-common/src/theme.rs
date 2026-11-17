@@ -137,7 +137,6 @@ button:focus-visible {
 }
 
 button:disabled {
-  background-color: transparent;
   color: @fc_fg_muted;
 }
 "#;
@@ -215,4 +214,4 @@ fn notify_reload() {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

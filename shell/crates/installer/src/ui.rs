@@ -4,7 +4,10 @@ mod account;
 mod disk;
 mod finish;
 mod language;
+mod map;
+mod network;
 mod progress;
+mod software;
 mod summary;
 mod timezone;
 mod welcome;
@@ -28,6 +31,7 @@ pub fn build(app: &Rc<App>, screen: Screen) -> Widget {
         Screen::Confirm => disk::confirm(app),
         Screen::Account => account::build(app),
         Screen::TimeZone => timezone::build(app),
+        Screen::Software => software::build(app),
         Screen::Summary => summary::build(app),
         Screen::Progress => progress::build(app),
         Screen::Error => finish::error(app),
@@ -45,47 +49,88 @@ pub fn label(text: &str, class: &str) -> Label {
     label
 }
 
-/// A button with `label` and the emphasis `class`: primary, secondary, ghost or danger.
-pub fn button(text: &str, class: &str) -> Button {
-    let button = Button::with_label(text);
+/// A button's inside: the themed `glyph` before `text`, or after it when `trailing`.
+pub fn content(glyph: &str, text: &str, trailing: bool) -> Box {
+    let line = Box::new(Orientation::Horizontal, 8);
+    line.set_halign(Align::Center);
+    let image = icon(glyph, 16);
+    let words = Label::new(Some(text));
+    if trailing {
+        line.append(&words);
+        line.append(&image);
+    } else {
+        line.append(&image);
+        line.append(&words);
+    }
+    line
+}
+
+/// A button with `glyph`, `text` and the emphasis `class`: primary, secondary, ghost or danger.
+pub fn button(glyph: &str, text: &str, class: &str) -> Button {
+    let button = Button::new();
+    button.set_child(Some(&content(glyph, text, false)));
     button.add_css_class("action");
     button.add_css_class(class);
     button
 }
 
-/// A list in a filled panel that scrolls on its own.
+/// The primary Continue button, its arrow after the word.
+pub fn next(text: &str) -> Button {
+    let button = Button::new();
+    button.set_child(Some(&content("go-next-symbolic", text, true)));
+    button.add_css_class("action");
+    button.add_css_class("primary");
+    button
+}
+
+/// A list in a filled panel that scrolls on its own, its scrollbar on show whenever rows are hidden.
 pub fn list_panel(list: &ListBox, height: i32) -> ScrolledWindow {
     list.add_css_class("choices");
     let scroll = ScrolledWindow::new();
     scroll.add_css_class("panel");
     scroll.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
+    scroll.set_overlay_scrolling(false);
     scroll.set_min_content_height(height);
     scroll.set_vexpand(true);
     scroll.set_child(Some(list));
     scroll
 }
 
-/// A screen: title, subtitle, body, then Back and the actions with the primary one last.
+fn centred(child: &Box) -> shell_common::ui::Clamp {
+    child.set_halign(Align::Center);
+    child.set_width_request(WIDTH);
+    let clamp = shell_common::ui::Clamp::new(WIDTH);
+    clamp.set_child(Some(child));
+    clamp
+}
+
+/// A screen: title, subtitle and body, which scroll when the display is short, then Back and
+/// the actions with the primary one last, which always stay on show. The step counter keeps
+/// its line on the screens without a step, so every title sits at the same height.
 pub fn page(app: &Rc<App>, title: &str, subtitle: &str, body: &impl IsA<Widget>, actions: &[&Button]) -> Widget {
     let column = Box::new(Orientation::Vertical, 24);
     column.add_css_class("page");
-    column.set_halign(Align::Center);
-    column.set_width_request(WIDTH);
     let header = Box::new(Orientation::Vertical, 8);
-    if let Some(step) = app.current().step() {
-        let counter = app.text().step.replace("{n}", &step.to_string()).replace("{total}", &STEPS.to_string());
-        header.append(&label(&counter, "step"));
-    }
+    let counter = app
+        .current()
+        .step()
+        .map(|step| app.text().step.replace("{n}", &step.to_string()).replace("{total}", &STEPS.to_string()))
+        .unwrap_or_default();
+    header.append(&label(&counter, "step"));
     header.append(&label(title, "title"));
     header.append(&label(subtitle, "subtitle"));
     column.append(&header);
     body.set_vexpand(true);
     column.append(body);
-    column.append(&footer(app, actions));
     let scroll = ScrolledWindow::new();
     scroll.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
-    scroll.set_child(Some(&column));
-    scroll.upcast()
+    scroll.set_overlay_scrolling(false);
+    scroll.set_vexpand(true);
+    scroll.set_child(Some(&centred(&column)));
+    let screen = Box::new(Orientation::Vertical, 0);
+    screen.append(&scroll);
+    screen.append(&centred(&footer(app, actions)));
+    screen.upcast()
 }
 
 /// A centred screen led by the Flux mark: the welcome and the finish line.
@@ -108,7 +153,7 @@ pub fn hero(title: &str, subtitle: &str, content: &impl IsA<Widget>) -> Widget {
 fn footer(app: &Rc<App>, actions: &[&Button]) -> Box {
     let row = Box::new(Orientation::Horizontal, 8);
     row.add_css_class("footer");
-    let back = button(app.text().back, "ghost");
+    let back = button("go-previous-symbolic", app.text().back, "ghost");
     let weak = Rc::downgrade(app);
     back.connect_clicked(move |_| {
         if let Some(app) = weak.upgrade() {
@@ -189,6 +234,9 @@ pub fn row(glyph: Option<&str>, title: &str, detail: Option<&str>, tags: &[&str]
         line.append(&tag);
     }
     let row = gtk4::ListBoxRow::new();
+    if detail.is_some() {
+        row.add_css_class("detailed");
+    }
     row.set_child(Some(&line));
     row
 }

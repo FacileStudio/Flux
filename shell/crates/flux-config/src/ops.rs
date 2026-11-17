@@ -17,10 +17,21 @@ use flux_config::validate;
 use crate::exec::{self, Mode, Reporter};
 use crate::Args;
 
-/// Why a command stopped.
+/// Why a command stopped. `main` gives each its own exit code.
 pub enum Failure {
     Usage(String),
     Failed(String),
+    Denied(String),
+    Busy(String),
+}
+
+impl From<exec::LockError> for Failure {
+    fn from(error: exec::LockError) -> Self {
+        match error {
+            exec::LockError::Busy => Failure::Busy("another change is already running; wait for it to finish".to_string()),
+            exec::LockError::Other(error) => Failure::Failed(error),
+        }
+    }
 }
 
 impl From<String> for Failure {
@@ -69,7 +80,7 @@ fn current(mode: &Mode) -> Result<(Settings, bool), Failure> {
 
 fn get(mode: &Mode) -> Outcome {
     let (settings, exists) = current(mode)?;
-    print(&json!({ "exists": exists, "settings": settings }))
+    print(&json!({ "exists": exists, "settings": settings.resolved(), "unset": settings.unset_choices() }))
 }
 
 fn link(path: &std::path::Path) -> Option<String> {
@@ -143,7 +154,7 @@ fn require_root(mode: &Mode) -> Outcome {
     if !mode.paths.is_system() || mode.dry_run || exec::euid() == Some(0) {
         Ok(())
     } else {
-        Err(Failure::Failed("this change needs administrator rights: run it through pkexec flux-config".to_string()))
+        Err(Failure::Denied("this change needs administrator rights: run it through pkexec flux-config".to_string()))
     }
 }
 
@@ -202,7 +213,15 @@ fn modify(mode: &Mode, settings: &mut Settings, key: &str, value: &str) -> Resul
             settings.updates.automatic = on_off(value)?;
             return Ok(false);
         }
-        _ => return usage("set takes hostname, timezone, locale, formats, keymap or auto-update"),
+        "software.facile" => settings.software.facile = Some(on_off(value)?),
+        "software.apps" => settings.software.apps = Some(on_off(value)?),
+        "software.gaming" => settings.software.gaming = Some(on_off(value)?),
+        "hardware.nvidia" => settings.hardware.nvidia = Some(on_off(value)?),
+        _ => {
+            return usage(
+                "set takes hostname, timezone, locale, formats, keymap, auto-update, software.facile, software.apps, software.gaming or hardware.nvidia",
+            )
+        }
     }
     Ok(true)
 }
@@ -306,12 +325,103 @@ fn write(mode: &Mode, settings: &Settings) -> Result<(), String> {
     }
 }
 
-fn restore(mode: &Mode, existed: bool) {
+fn restore(mode: &Mode, reporter: &mut Reporter, existed: bool) {
     if !mode.writes_files() {
         return;
     }
     let path = mode.paths.settings();
-    let _ = if existed { fs::copy(mode.paths.backup(), &path).map(|_| ()) } else { fs::remove_file(&path) };
+    let result = if existed {
+        settings::copy_atomic(&mode.paths.backup(), &path)
+    } else {
+        fs::remove_file(&path).map_err(|error| format!("cannot remove {}: {error}", path.display()))
+    };
+    if let Err(error) = result {
+        reporter.log(&format!("could not put the previous settings back: {error}"));
+    }
+}
+
+fn generation_name(mode: &Mode, number: Option<u32>) -> Option<String> {
+    let number = number.or_else(|| generations::current_number(&mode.paths.system_profile()))?;
+    generations::store_name(&mode.paths.profiles(), number)
+}
+
+fn remember_lock(mode: &Mode, reporter: &mut Reporter) {
+    let lock_file = mode.paths.lock_file();
+    let Some(generation) = generation_name(mode, None).filter(|_| mode.writes_files() && lock_file.is_file()) else {
+        return;
+    };
+    let locks = mode.paths.locks();
+    if let Err(error) = flake::remember(&locks, &generation, &lock_file) {
+        reporter.log(&format!("could not keep the lock of this version: {error}"));
+    }
+    forget_dead_locks(mode);
+}
+
+fn forget_dead_locks(mode: &Mode) {
+    let profiles = mode.paths.profiles();
+    let alive: Vec<String> = generations::list(&profiles, &mode.paths.system_profile())
+        .iter()
+        .filter_map(|generation| generations::store_name(&profiles, generation.number))
+        .collect();
+    if mode.writes_files() && !alive.is_empty() {
+        flake::forget_except(&mode.paths.locks(), &alive);
+    }
+}
+
+fn back_up_lock(mode: &Mode) -> Result<(), String> {
+    let lock_file = mode.paths.lock_file();
+    if !mode.writes_files() || !lock_file.is_file() {
+        return Ok(());
+    }
+    fs::copy(&lock_file, mode.paths.lock_backup()).map_err(|error| format!("cannot back up {}: {error}", lock_file.display()))?;
+    let locks = mode.paths.locks();
+    match generation_name(mode, None) {
+        Some(generation) if !flake::remembers(&locks, &generation) => flake::remember(&locks, &generation, &lock_file),
+        _ => Ok(()),
+    }
+}
+
+fn restore_lock(mode: &Mode, reporter: &mut Reporter) {
+    let backup = mode.paths.lock_backup();
+    if !mode.writes_files() || !backup.is_file() {
+        return;
+    }
+    if let Err(error) = settings::copy_atomic(&backup, &mode.paths.lock_file()) {
+        reporter.log(&format!("could not put the previous flake.lock back: {error}"));
+    }
+}
+
+fn recall_lock(mode: &Mode, reporter: &mut Reporter, number: u32) {
+    let Some(generation) = generation_name(mode, Some(number)).filter(|_| mode.writes_files()) else {
+        return;
+    };
+    match flake::recall(&mode.paths.locks(), &generation, &mode.paths.lock_file()) {
+        Ok(true) => reporter.log(&format!("flake.lock is the one version {number} was built from")),
+        Ok(false) => reporter.log(&format!("no flake.lock was kept for version {number}; it stays as it is")),
+        Err(error) => reporter.log(&format!("could not put the flake.lock of version {number} back: {error}")),
+    }
+}
+
+/// What a rebuild came to: an error after the system moved to the new version
+/// is a warning, because the change is live and is what the machine boots.
+fn settle(result: Result<(), String>, before: Option<&str>, after: Option<&str>) -> Result<Option<String>, String> {
+    match result {
+        Ok(()) => Ok(None),
+        Err(error) if after.is_some() && before != after => Ok(Some(error)),
+        Err(error) => Err(error),
+    }
+}
+
+fn applied(mode: &Mode, reporter: &mut Reporter, work: impl FnOnce(&mut Reporter) -> Result<(), String>) -> Result<(), String> {
+    let before = link(&mode.paths.current());
+    let result = work(reporter);
+    let after = link(&mode.paths.current());
+    if let Some(warning) = settle(result, before.as_deref(), after.as_deref())? {
+        reporter.log(&format!("the new version is in use, but: {warning}"));
+        eprintln!("flux-config: warning: the new version is in use, but: {warning}");
+    }
+    remember_lock(mode, reporter);
+    Ok(())
 }
 
 fn commit(
@@ -327,9 +437,9 @@ fn commit(
         return print(&json!({ "step": "done", "percent": 100, "message": "Saved" }));
     }
     let mut reporter = Reporter::new(mode, operation);
-    let result = rebuild(mode, &mut reporter, 0);
+    let result = applied(mode, &mut reporter, |reporter| rebuild(mode, reporter, 0));
     if result.is_err() {
-        restore(mode, existed);
+        restore(mode, &mut reporter, existed);
     }
     let result = result.and_then(|()| after(&mut reporter));
     finish(mode, &mut reporter, result)
@@ -339,7 +449,7 @@ fn apply(mode: &Mode) -> Outcome {
     require_root(mode)?;
     let _lock = exec::lock(mode)?;
     let mut reporter = Reporter::new(mode, "apply");
-    let result = rebuild(mode, &mut reporter, 0);
+    let result = applied(mode, &mut reporter, |reporter| rebuild(mode, reporter, 0));
     finish(mode, &mut reporter, result)
 }
 
@@ -377,8 +487,15 @@ fn update(mode: &Mode, scheduled: bool) -> Outcome {
     reporter.step(Step::Fetch, 2, "Looking for the new version");
     let dir = mode.paths.flake_dir().display().to_string();
     let args = ["flake", "update", flake::INPUT, "--flake", dir.as_str()].map(String::from);
-    let mut tracker = Tracker::new(2);
-    let result = exec::streamed(&mut reporter, "nix", &args, &mut tracker).and_then(|()| rebuild(mode, &mut reporter, 20));
+    let result = back_up_lock(mode).and_then(|()| {
+        let result = applied(mode, &mut reporter, |reporter| {
+            exec::streamed(reporter, "nix", &args, &mut Tracker::new(2)).and_then(|()| rebuild(mode, reporter, 20))
+        });
+        if result.is_err() {
+            restore_lock(mode, &mut reporter);
+        }
+        result
+    });
     finish(mode, &mut reporter, result)
 }
 
@@ -412,6 +529,7 @@ fn rollback(mode: &Mode, number: Option<&str>) -> Outcome {
     let switch = format!("{profile}/bin/switch-to-configuration");
     let result = exec::quiet(&mut reporter, "nix-env", &["-p".into(), profile, "--switch-generation".into(), wanted.to_string()], None)
         .and_then(|_| {
+            recall_lock(mode, &mut reporter, wanted);
             reporter.step(Step::Bootloader, 60, "Switching and updating the boot menu");
             exec::streamed(&mut reporter, &switch, &["switch".to_string()], &mut Tracker::new(60))
         });
@@ -438,7 +556,7 @@ fn gc(mode: &Mode, keep: Option<&str>) -> Outcome {
             reporter.step(Step::Bootloader, 90, "Updating the boot menu");
             exec::quiet(&mut reporter, &switch, &["boot".to_string()], None)
         })
-        .map(|_| ());
+        .map(|_| forget_dead_locks(mode));
     finish(mode, &mut reporter, result)
 }
 
@@ -459,5 +577,52 @@ mod tests {
         assert!(matches!(target(&list, Some("9")), Err(Failure::Failed(_))));
         assert!(matches!(target(&list, Some("x")), Err(Failure::Usage(_))));
         assert!(matches!(target(&[generation(1, true)], None), Err(Failure::Failed(_))));
+    }
+
+    #[test]
+    fn an_error_after_the_switch_is_a_warning() {
+        let failed = || Err("nixos-rebuild failed (exit status: 4)".to_string());
+        assert_eq!(settle(Ok(()), Some("/nix/store/a"), Some("/nix/store/b")), Ok(None));
+        assert_eq!(settle(failed(), Some("/nix/store/a"), Some("/nix/store/a")), failed().map(|()| None));
+        assert_eq!(settle(failed(), None, None), failed().map(|()| None));
+        assert_eq!(
+            settle(failed(), Some("/nix/store/a"), Some("/nix/store/b")),
+            Ok(Some("nixos-rebuild failed (exit status: 4)".to_string()))
+        );
+    }
+
+    fn mode(name: &str) -> Mode {
+        let root = std::env::temp_dir().join(format!("flux-config-ops-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let _ = fs::create_dir_all(root.join("etc/flux"));
+        Mode { paths: flux_config::paths::Paths { root }, dry_run: false }
+    }
+
+    #[test]
+    fn a_failed_update_gets_its_lock_back() {
+        let mode = mode("lock");
+        let lock_file = mode.paths.lock_file();
+        let _ = fs::write(&lock_file, "before");
+        assert_eq!(back_up_lock(&mode), Ok(()));
+        let _ = fs::write(&lock_file, "after");
+        let mut reporter = Reporter::new(&mode, "update");
+        restore_lock(&mode, &mut reporter);
+        assert_eq!(fs::read_to_string(&lock_file).unwrap_or_default(), "before");
+        let _ = fs::remove_dir_all(&mode.paths.root);
+    }
+
+    #[test]
+    fn a_failed_change_gets_its_settings_back() {
+        let mode = mode("settings");
+        let first = Settings::default();
+        let second = Settings { hostname: "lab".to_string(), ..Settings::default() };
+        let mut reporter = Reporter::new(&mode, "set-hostname");
+        assert_eq!(write(&mode, &second), Ok(()));
+        restore(&mode, &mut reporter, false);
+        assert!(!mode.paths.settings().exists());
+        assert_eq!(write(&mode, &first).and_then(|()| write(&mode, &second)), Ok(()));
+        restore(&mode, &mut reporter, true);
+        assert_eq!(settings::load(&mode.paths.settings(), None), Ok(Some(first)));
+        let _ = fs::remove_dir_all(&mode.paths.root);
     }
 }

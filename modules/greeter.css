@@ -19,7 +19,7 @@ overlay > picture + frame {
   background-color: @fc_bg;
   color: @fc_fg;
   border: none;
-  border-radius: 24px;
+  border-radius: 12px;
   box-shadow: 0 24px 64px alpha(@fc_scrim, 0.18);
   padding: 24px 28px 20px;
 }
@@ -85,9 +85,9 @@ grid > entry {
   color: @fc_fg;
   border: none;
   box-shadow: none;
-  border-radius: 12px;
+  border-radius: 8px;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 12px;
 }
 
 combobox button.combo:hover {
@@ -99,9 +99,14 @@ combobox arrow {
   -gtk-icon-size: 14px;
 }
 
-grid > entry,
+grid > entry {
+  outline: 0 solid transparent;
+  transition: outline-color 160ms ease-out;
+}
+
 grid > entry:focus-within {
-  outline: none;
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
 }
 
 grid > entry > image {
@@ -157,11 +162,17 @@ grid > button.toggle + button.toggle + box {
 grid > box > button {
   border: none;
   box-shadow: none;
-  border-radius: 12px;
+  border-radius: 8px;
   min-height: 44px;
   padding: 0;
-  font-weight: 600;
+  font-weight: 500;
   background-image: none;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+grid > box > button:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
 }
 
 grid > box > button.suggested-action {
@@ -171,7 +182,16 @@ grid > box > button.suggested-action {
 }
 
 grid > box > button.suggested-action:hover {
-  background-color: alpha(@fc_accent, 0.88);
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.08);
+}
+
+grid > box > button.suggested-action:active {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.14);
+}
+
+grid > box > button.suggested-action:disabled {
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
 }
 
 grid > box > button:not(.suggested-action) {
@@ -181,7 +201,12 @@ grid > box > button:not(.suggested-action) {
 }
 
 grid > box > button:not(.suggested-action):hover {
-  background-color: @fc_component;
+  background-color: alpha(@fc_fg, 0.08);
+  color: @fc_fg;
+}
+
+grid > box > button:not(.suggested-action):active {
+  background-color: alpha(@fc_fg, 0.14);
   color: @fc_fg;
 }
 

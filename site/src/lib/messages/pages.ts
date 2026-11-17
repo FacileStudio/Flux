@@ -10,6 +10,12 @@ export const pages = {
 		'Un sistema live en una memoria USB. Pruebe Flux sin tocar su disco y luego instálelo si le convence.',
 		'Ein Live-System auf dem USB-Stick. Testen Sie Flux, ohne Ihre Festplatte anzurühren, und installieren Sie es, wenn es passt.'
 	],
+	'downloads.before': [
+		'Before you switch: what will not run, and what Flux does to your disk',
+		'Avant de changer : ce qui ne fonctionnera pas, et ce que Flux fait à votre disque',
+		'Antes de cambiar: lo que no funcionará y lo que Flux hace con su disco',
+		'Vor dem Umstieg: was nicht läuft und was Flux mit Ihrer Festplatte macht'
+	],
 	'downloads.version': ['Version', 'Version', 'Versión', 'Version'],
 	'downloads.notes': ['Release notes', 'Notes de version', 'Notas de la versión', 'Versionshinweise'],
 	'downloads.all': ['All versions', 'Toutes les versions', 'Todas las versiones', 'Alle Versionen'],

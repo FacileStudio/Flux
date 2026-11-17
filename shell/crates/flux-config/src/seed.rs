@@ -4,7 +4,7 @@
 use std::fs;
 
 use crate::paths::Paths;
-use crate::settings::{default_groups, Settings, User};
+use crate::settings::{Settings, User};
 use crate::validate;
 
 /// An account in `/etc/passwd`.
@@ -45,6 +45,15 @@ pub fn group_members(document: &str, group: &str) -> Vec<String> {
         })
         .map(|members| members.split(',').filter(|m| !m.is_empty()).map(String::from).collect())
         .unwrap_or_default()
+}
+
+/// The groups of [`validate::ALLOWED_GROUPS`] that list `user` as a member in a group document.
+pub fn allowed_groups_of(document: &str, user: &str) -> Vec<String> {
+    validate::ALLOWED_GROUPS
+        .iter()
+        .filter(|group| group_members(document, group).iter().any(|member| member == user))
+        .map(|group| group.to_string())
+        .collect()
 }
 
 /// The xkb layout an `00-keyboard.conf` names.
@@ -89,7 +98,8 @@ pub fn from_system(paths: &Paths) -> Settings {
             settings.keymap = layout;
         }
     }
-    let wheel = group_members(&read(paths, "etc/group"), "wheel");
+    let groups = read(paths, "etc/group");
+    let wheel = group_members(&groups, "wheel");
     let accounts = parse_passwd(&read(paths, "etc/passwd"));
     settings.users = people(&accounts)
         .into_iter()
@@ -98,7 +108,12 @@ pub fn from_system(paths: &Paths) -> Settings {
             let full_name = Some(account.gecos.trim().to_string())
                 .filter(|name| validate::full_name(name).is_ok())
                 .unwrap_or_else(|| account.name.clone());
-            User { name: account.name.clone(), full_name, admin: wheel.contains(&account.name), groups: default_groups() }
+            User {
+                name: account.name.clone(),
+                full_name,
+                admin: wheel.contains(&account.name),
+                groups: allowed_groups_of(&groups, &account.name),
+            }
         })
         .collect();
     if !settings.users.is_empty() && !settings.users.iter().any(|user| user.admin) {
@@ -142,7 +157,7 @@ mod tests {
         let _ = fs::create_dir_all(root.join("etc"));
         let _ = fs::write(root.join("etc/hostname"), "lab\n");
         let _ = fs::write(root.join("etc/passwd"), PASSWD);
-        let _ = fs::write(root.join("etc/group"), "wheel:x:1:bob\n");
+        let _ = fs::write(root.join("etc/group"), "wheel:x:1:bob\nlp:x:20:ada\ndocker:x:131:ada\naudio:x:17:ada,bob\n");
         let _ = fs::write(root.join("etc/locale.conf"), "LANG=fr_FR.UTF-8\n");
         let settings = from_system(&Paths { root: root.clone() });
         assert_eq!(settings.hostname, "lab");
@@ -151,6 +166,8 @@ mod tests {
         let users: Vec<(&str, &str, bool)> =
             settings.users.iter().map(|u| (u.name.as_str(), u.full_name.as_str(), u.admin)).collect();
         assert_eq!(users, [("ada", "Ada Lovelace", false), ("bob", "bob", true)]);
+        assert_eq!(settings.users[0].groups, ["audio", "lp"]);
+        assert_eq!(settings.users[1].groups, ["audio"]);
         assert!(settings.check(None).is_ok());
         let _ = fs::remove_dir_all(&root);
     }

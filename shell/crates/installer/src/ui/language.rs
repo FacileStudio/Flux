@@ -3,7 +3,7 @@ use std::rc::Rc;
 use gtk4::prelude::*;
 use gtk4::{Box, Entry, ListBox, Orientation, Widget};
 
-use super::{button, label, list_panel, page, row, row_at};
+use super::{label, list_panel, page, row, row_at};
 use crate::app::{App, Screen};
 use crate::model::{KEYMAPS, LANGUAGES};
 use crate::system;
@@ -83,7 +83,7 @@ pub fn build(app: &Rc<App>) -> Widget {
     test.set_placeholder_text(Some(text.keyboard_test));
     keyboard.append(&test);
     body.append(&column(text.keyboard_heading, &keyboard));
-    let next = button(text.next, "primary");
+    let next = super::next(text.next);
     let weak = Rc::downgrade(app);
     next.connect_clicked(move |_| {
         if let Some(app) = weak.upgrade() {

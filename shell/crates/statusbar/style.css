@@ -40,6 +40,30 @@ button.ws.urgent:hover {
   color: @fc_danger;
 }
 
+button.icon {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 8px;
+}
+
+button.icon:hover {
+  background-color: @fc_surface;
+}
+
+button.icon:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+button.icon.close:hover {
+  background-color: alpha(@fc_danger, 0.1);
+}
+
+button.icon.close:active {
+  background-color: alpha(@fc_danger, 0.18);
+}
+
 .title {
   font-size: 13px;
   font-weight: 500;
@@ -83,6 +107,12 @@ button.clock:active {
   background-color: mix(@fc_surface, @fc_fg, 0.14);
 }
 
+.pill.low,
+.pill.low:hover {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
 .pill.session {
   padding: 0 4px;
 }
@@ -118,8 +148,8 @@ button.clock:active {
 }
 
 .popup button.step {
-  min-width: 28px;
-  min-height: 28px;
+  min-width: 32px;
+  min-height: 32px;
   padding: 0;
   font-size: 14px;
   font-weight: 600;

@@ -2,9 +2,9 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use gtk4::prelude::*;
-use gtk4::{Box, Button, Entry, Expander, Label, Orientation, PasswordEntry, Widget};
+use gtk4::{Box, Button, Entry, Label, Orientation, PasswordEntry, Widget};
 
-use super::{button, label, page};
+use super::{label, page};
 use crate::app::{App, Screen};
 use crate::model;
 
@@ -139,21 +139,22 @@ pub fn build(app: &Rc<App>) -> Widget {
         username_error,
         hostname_error,
         password_error,
-        next: button(text.next, "primary"),
+        next: super::next(text.next),
         syncing: Cell::new(false),
     });
     let passwords = Box::new(Orientation::Horizontal, 16);
     passwords.set_homogeneous(true);
     passwords.append(&first_field);
     passwords.append(&again_field);
-    let advanced = Expander::new(Some(text.advanced));
-    advanced.add_css_class("advanced");
-    advanced.set_child(Some(&host_field));
+    host_field.append(&label(text.hostname_hint, "field-hint"));
+    let names = Box::new(Orientation::Horizontal, 16);
+    names.set_homogeneous(true);
+    names.append(&user_field);
+    names.append(&host_field);
     let body = Box::new(Orientation::Vertical, 16);
     body.append(&name_field);
-    body.append(&user_field);
+    body.append(&names);
     body.append(&passwords);
-    body.append(&advanced);
     wire(app, &fields);
     refresh(app, &fields);
     let weak = Rc::downgrade(app);

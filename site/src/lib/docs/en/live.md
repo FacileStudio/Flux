@@ -2,7 +2,7 @@
 
 1. Plug in the stick and restart the computer.
 2. Open the boot menu (often F12, F10 or Esc at startup) and pick the USB stick.
-3. Flux starts on the desktop, with nothing installed.
+3. Flux starts and the installer opens. Choose **Try Flux** to look around without changing anything.
 
 If a login screen shows up:
 

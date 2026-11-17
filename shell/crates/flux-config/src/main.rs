@@ -14,7 +14,7 @@ use flux_config::paths::Paths;
 const USAGE: &str = "usage: flux-config [--dry-run] <command>
 
 read-only:
-  get                              settings.json (or what the system says) as JSON
+  get                              settings.json (or what the system says) as JSON, defaults filled in
   status                           the running or last operation, restart needed, version
   check                            whether a newer Flux exists on the followed branch
   generations                      the system versions, newest first
@@ -26,6 +26,10 @@ changes (root, through pkexec; each applies unless --no-apply is given):
   set formats <locale|same>
   set keymap <layout>
   set auto-update <on|off>         no rebuild needed
+  set software.facile <true|false> the Facile command line tools
+  set software.apps <true|false>   Firefox, Files and the everyday apps
+  set software.gaming <true|false> Steam and the gaming tools
+  set hardware.nvidia <true|false> the NVIDIA driver
   set <key> <value> [<key> <value>]...   several at once, one rebuild
   user add <name> --full-name <text> [--admin]   password on stdin
   user remove <name>
@@ -36,6 +40,10 @@ changes (root, through pkexec; each applies unless --no-apply is given):
   update [--scheduled]             move the flux input to its latest revision, then apply
   rollback [generation]            switch to an older generation
   gc [--keep N]                    delete all but the N newest generations (default 3)
+
+exit codes: 0 done, 1 the change failed, 2 wrong usage, 3 needs administrator
+rights, 4 another change is running. 126 and 127 come from pkexec: 126 when
+the password prompt was dismissed, 127 when the password was wrong or refused.
 
 FLUX_CONFIG_ROOT=<dir> moves every path under <dir> and never runs a program.
 --dry-run prints the programs instead of running them and writes nothing to /.";
@@ -97,6 +105,14 @@ fn main() -> ExitCode {
         Err(ops::Failure::Failed(error)) => {
             eprintln!("flux-config: {error}");
             ExitCode::FAILURE
+        }
+        Err(ops::Failure::Denied(error)) => {
+            eprintln!("flux-config: {error}");
+            ExitCode::from(3)
+        }
+        Err(ops::Failure::Busy(error)) => {
+            eprintln!("flux-config: {error}");
+            ExitCode::from(4)
         }
     }
 }

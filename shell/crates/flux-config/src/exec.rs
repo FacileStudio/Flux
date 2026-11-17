@@ -49,8 +49,20 @@ pub fn euid() -> Option<u32> {
     line.split_whitespace().nth(2)?.parse().ok()
 }
 
+/// Why the run lock was not taken.
+pub enum LockError {
+    Busy,
+    Other(String),
+}
+
+impl From<String> for LockError {
+    fn from(error: String) -> Self {
+        LockError::Other(error)
+    }
+}
+
 /// Hold `/run/flux-config/lock` for as long as the returned file lives.
-pub fn lock(mode: &Mode) -> Result<Option<File>, String> {
+pub fn lock(mode: &Mode) -> Result<Option<File>, LockError> {
     if !mode.writes_files() {
         return Ok(None);
     }
@@ -67,8 +79,8 @@ pub fn lock(mode: &Mode) -> Result<Option<File>, String> {
         .map_err(|error| format!("cannot open {}: {error}", path.display()))?;
     match file.try_lock() {
         Ok(()) => Ok(Some(file)),
-        Err(std::fs::TryLockError::WouldBlock) => Err("another change is already running; wait for it to finish".to_string()),
-        Err(std::fs::TryLockError::Error(error)) => Err(format!("cannot lock {}: {error}", path.display())),
+        Err(std::fs::TryLockError::WouldBlock) => Err(LockError::Busy),
+        Err(std::fs::TryLockError::Error(error)) => Err(format!("cannot lock {}: {error}", path.display()).into()),
     }
 }
 

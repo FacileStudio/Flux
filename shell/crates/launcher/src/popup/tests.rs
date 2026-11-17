@@ -5,7 +5,7 @@
 
 use gtk4::prelude::*;
 
-use super::{build, fill, move_selection};
+use super::{build, fill, move_selection, scrolled_to_show};
 use crate::apps::App;
 
 fn apps() -> Vec<App> {
@@ -13,6 +13,7 @@ fn apps() -> Vec<App> {
         App {
             name: "Firefox".into(),
             generic: Some("Web Browser".into()),
+            keywords: Vec::new(),
             exec: "firefox".into(),
             icon: Some("firefox".into()),
             terminal: false,
@@ -20,6 +21,7 @@ fn apps() -> Vec<App> {
         App {
             name: "Files".into(),
             generic: None,
+            keywords: Vec::new(),
             exec: "nautilus".into(),
             icon: None,
             terminal: false,
@@ -61,13 +63,22 @@ fn the_surface_follows_the_query() {
     assert_eq!(rows(list), 1);
     assert_eq!(selected(list), Some(0));
 
-    move_selection(list, 1, 1);
+    move_selection(&results, 1, 1);
     assert_eq!(selected(list), Some(0), "down at the end stays put");
-    move_selection(list, 1, -1);
+    move_selection(&results, 1, -1);
     assert_eq!(selected(list), Some(0), "up at the top stays put");
 
     assert_eq!(fill(&results, &apps, "zzz"), Vec::<usize>::new());
     assert_eq!(rows(list), 0);
     assert_eq!(selected(list), None, "nothing matches, so nothing is selected");
     assert!(results.empty.is_visible(), "the empty line says so");
+}
+
+#[test]
+fn the_view_scrolls_only_as_far_as_the_selection_needs() {
+    assert_eq!(scrolled_to_show(0.0, 480.0, 40.0, 40.0), 0.0, "already in view");
+    assert_eq!(scrolled_to_show(0.0, 480.0, 480.0, 40.0), 40.0, "below: bottom edges meet");
+    assert_eq!(scrolled_to_show(200.0, 480.0, 120.0, 40.0), 120.0, "above: top edges meet");
+    assert_eq!(scrolled_to_show(200.0, 480.0, 640.0, 40.0), 200.0, "the last row in view stays");
+    assert_eq!(scrolled_to_show(200.0, 480.0, 660.0, 40.0), 220.0);
 }

@@ -60,15 +60,60 @@ fn zoneinfo() -> Option<PathBuf> {
         .find(|dir| dir.is_dir())
 }
 
+fn zone_tab() -> String {
+    zoneinfo()
+        .and_then(|dir| {
+            std::fs::read_to_string(dir.join("zone1970.tab"))
+                .or_else(|_| std::fs::read_to_string(dir.join("zone.tab")))
+                .ok()
+        })
+        .unwrap_or_default()
+}
+
 /// Every canonical time zone the system knows, `UTC` first.
 pub fn zones() -> Vec<String> {
-    let Some(dir) = zoneinfo() else {
-        return vec!["UTC".to_string()];
+    model::parse_zone_tab(&zone_tab())
+}
+
+/// Every zone with the coordinates of its main city, for the map.
+pub fn zone_points() -> Vec<model::ZonePoint> {
+    model::parse_zone_points(&zone_tab())
+}
+
+/// Whether the machine has an NVIDIA card the open driver supports.
+pub fn nvidia_gpu() -> bool {
+    let Ok(devices) = std::fs::read_dir("/sys/bus/pci/devices") else {
+        return false;
     };
-    let tab = std::fs::read_to_string(dir.join("zone1970.tab"))
-        .or_else(|_| std::fs::read_to_string(dir.join("zone.tab")))
-        .unwrap_or_default();
-    model::parse_zone_tab(&tab)
+    devices.flatten().any(|device| {
+        let read = |name: &str| std::fs::read_to_string(device.path().join(name)).unwrap_or_default();
+        model::nvidia_display(&read("vendor"), &read("device"), &read("class"))
+    })
+}
+
+/// Whether the machine booted through UEFI, the only mode the backend installs in.
+pub fn uefi() -> bool {
+    Path::new("/sys/firmware/efi").is_dir()
+}
+
+/// What `disk` holds right now, for the erase confirmation.
+pub fn contents(disk: &str) -> model::Contents {
+    let output = Command::new("lsblk").args(["-J", "-l", "-o", "TYPE,FSTYPE,PARTTYPE", disk]).output();
+    model::parse_contents(&output.map(|out| String::from_utf8_lossy(&out.stdout).into_owned()).unwrap_or_default())
+}
+
+/// Open the Network page of Settings, to join a network from the live session.
+pub fn network_settings() {
+    let _ = Command::new("flux-settings").arg("network").stdout(Stdio::null()).stderr(Stdio::null()).spawn();
+}
+
+/// Whether NetworkManager reports full internet access.
+pub fn online() -> bool {
+    Command::new("nmcli")
+        .args(["networking", "connectivity"])
+        .output()
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim() == "full")
+        .unwrap_or(false)
 }
 
 /// Try `layout` in the live niri session through a user config niri reloads.
@@ -141,6 +186,9 @@ fn relay(child: &mut Child, sender: &Sender<Message>) -> bool {
 }
 
 fn run(choices: &Choices, password: String, sender: &Sender<Message>) -> Result<(), Failure> {
+    if choices.disk.is_empty() {
+        return Err(Failure::Start("no disk was chosen".to_string()));
+    }
     let hash = hash(&password).map_err(Failure::Hash)?;
     drop(password);
     let mut child = Command::new("sudo")

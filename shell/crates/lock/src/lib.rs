@@ -9,6 +9,7 @@
 mod auth;
 mod background;
 mod i18n;
+mod keys;
 pub mod launch;
 mod pam;
 mod session;

@@ -4,6 +4,8 @@ locales="en_US.UTF-8 en_GB.UTF-8 fr_FR.UTF-8 fr_BE.UTF-8 fr_CH.UTF-8 fr_CA.UTF-8
 reserved_users=$(jq -r '.reservedUsers | join(" ")' "$FLUX_RULES")
 reserved_hosts="localhost localdomain"
 cache=https://cache.nixos.org
+min_disk=20000000000
+connections=/etc/NetworkManager/system-connections
 
 disk=""
 hostname=""
@@ -13,6 +15,10 @@ hashed=""
 timezone=""
 keymap=""
 locale=""
+facile=true
+apps=true
+gaming=false
+nvidia=false
 yes=0
 dry_run=0
 progress=text
@@ -33,8 +39,10 @@ usage: flux-install                      interactive install
        flux-install --disk DEV --hostname NAME --full-name NAME --user NAME
                     --password-hash HASH --timezone ZONE --keymap MAP
                     --locale LOCALE --yes [--progress json|text] [--dry-run]
+                    [--facile yes|no] [--apps yes|no] [--gaming yes|no] [--nvidia yes|no]
 
 --password-hash takes a yescrypt ($y$) or sha-512 ($6$) crypt hash.
+--facile and --apps default to yes, --gaming and --nvidia to no.
 EOF
 }
 
@@ -170,6 +178,14 @@ need_value() {
   [ "$#" -ge 2 ] || fail "$1 needs a value"
 }
 
+switch() {
+  case "$2" in
+    yes) printf -v "$1" true ;;
+    no) printf -v "$1" false ;;
+    *) fail "--$1 takes yes or no" ;;
+  esac
+}
+
 parse() {
   local previous="" arg
   for arg in "$@"; do
@@ -186,6 +202,10 @@ parse() {
       --timezone) need_value "$@"; timezone=$2; shift ;;
       --keymap) need_value "$@"; keymap=$2; shift ;;
       --locale) need_value "$@"; locale=$2; shift ;;
+      --facile) need_value "$@"; switch facile "$2"; shift ;;
+      --apps) need_value "$@"; switch apps "$2"; shift ;;
+      --gaming) need_value "$@"; switch gaming "$2"; shift ;;
+      --nvidia) need_value "$@"; switch nvidia "$2"; shift ;;
       --progress) need_value "$@"; progress=$2; shift ;;
       --yes) yes=1 ;;
       --dry-run) dry_run=1 ;;
@@ -230,7 +250,7 @@ prompt() {
 }
 
 validate_disk() {
-  local boot path type found=0 name mountpoint
+  local boot path type found=0 name mountpoint size
   [ -n "$disk" ] || fail "--disk is required"
   disk=$(realpath -m -- "$disk")
   while read -r path type; do
@@ -242,11 +262,15 @@ validate_disk() {
   esac
   boot=$(boot_disk)
   [ -z "$boot" ] || [ "$boot" != "$disk" ] || fail "$disk holds the Flux live system, pick another disk"
+  size=$(lsblk -bdno SIZE "$disk" 2>/dev/null | head -n1 | tr -d ' ' || true)
+  [[ "$size" =~ ^[0-9]+$ ]] || fail "could not read the size of $disk"
+  [ "$size" -ge "$min_disk" ] \
+    || fail "$disk is too small: Flux needs 20 GB and it has $((size / 1000000000)) GB; pick a larger disk"
   while read -r name type mountpoint; do
     case "$mountpoint" in
       "") ;;
       /iso|/iso/*) fail "$disk holds the Flux live system, pick another disk" ;;
-      /mnt|/mnt/*) ;;
+      /mnt|/mnt/*|/run/media/*) ;;
       *) fail "$name ($type) on $disk is in use at $mountpoint; unmount it or pick another disk" ;;
     esac
   done < <(children "$disk")
@@ -348,12 +372,36 @@ settings_json() {
   printf '  "formats": null,\n  "keymap": "%s",\n  "users": [\n' "$keymap"
   printf '    { "name": "%s", "fullName": "%s", "admin": true, "groups": ["networkmanager", "video", "audio", "lp"] }\n' \
     "$username" "$(json_escape "$full_name")"
-  printf '  ],\n  "updates": { "automatic": false }\n}\n'
+  printf '  ],\n  "updates": { "automatic": false },\n'
+  printf '  "software": { "facile": %s, "apps": %s, "gaming": %s },\n' "$facile" "$apps" "$gaming"
+  printf '  "hardware": { "nvidia": %s }\n}\n' "$nvidia"
 }
 
 drvs_to_build() {
   nix "${nix_flags[@]}" build --dry-run "path:$stage#nixosConfigurations.flux.config.system.build.toplevel" 2>&1 \
     | tee -a "$log" | grep -E '^[[:space:]]+/nix/store/[^[:space:]]+\.drv$' || true
+}
+
+changed_choices() {
+  local list=""
+  [ "$facile" = true ] || list+=", Facile tools off"
+  [ "$apps" = true ] || list+=", everyday apps off"
+  [ "$gaming" = false ] || list+=", gaming on"
+  [ "$nvidia" = false ] || list+=", the NVIDIA driver on"
+  printf '%s' "${list#, }"
+}
+
+offline_message() {
+  local changed
+  changed=$(changed_choices)
+  if [ -n "$changed" ]; then
+    printf 'no internet, and these choices are not on the install medium: %s (%s downloads). ' "$changed" "$1"
+    printf 'Connect to the internet, or install with Facile tools and everyday apps on, gaming and the NVIDIA driver off. '
+  else
+    printf 'no internet, and this machine needs %s downloads the install medium does not carry. ' "$1"
+    printf 'Connect to the internet and try again. '
+  fi
+  printf 'Nothing was touched.'
 }
 
 preflight() {
@@ -374,8 +422,7 @@ preflight() {
       sources=$(nix "${nix_flags[@]}" derivation show "${drvs[@]}" 2>>"$log" \
         | jq '[.. | objects | select(has("outputs")) | .outputs[] | objects | select(has("hash"))] | length')
     fi
-    [ "$sources" -eq 0 ] \
-      || fail "this machine needs $sources downloads the installer does not carry; connect to the internet and try again, nothing was touched"
+    [ "$sources" -eq 0 ] || fail "$(offline_message "$sources")"
     emit config 8 "Offline install: ${#drvs[@]} small builds, nothing to download"
   else
     emit config 8 "System checked"
@@ -385,6 +432,12 @@ preflight() {
 release_holders() {
   local name type mountpoint
   umount -R /mnt >>"$log" 2>&1 || true
+  while read -r name type mountpoint; do
+    case "$mountpoint" in
+      /run/media/*) umount "$name" >>"$log" 2>&1 \
+        || fail "$name is open at $mountpoint and could not be unmounted; close the files on it and try again" ;;
+    esac
+  done < <(children "$disk" | tac)
   while read -r name type mountpoint; do
     case "$type" in
       lvm|crypt|dm) dmsetup remove --retry "$name" >>"$log" 2>&1 || true ;;
@@ -476,6 +529,16 @@ install_system() {
   fi
 }
 
+keep_networks() {
+  local from=$1 to=$2 file
+  [ -d "$from" ] || return 0
+  install -d -m 0700 "$to"
+  for file in "$from"/*.nmconnection; do
+    [ -f "$file" ] || continue
+    install -m 0600 "$file" "$to/"
+  done
+}
+
 set_password() {
   step=bootloader
   emit bootloader 96 "Setting the password of $username"
@@ -494,7 +557,8 @@ main() {
     exit 0
   fi
   [ "$(id -u)" -eq 0 ] || fail "run me as root: sudo flux-install"
-  [ -d /sys/firmware/efi ] || fail "this machine booted in legacy BIOS mode; Flux installs on UEFI only"
+  [ -d /sys/firmware/efi ] \
+    || fail "this machine booted in legacy BIOS mode and Flux installs on UEFI only; restart and pick the UEFI entry of the install medium in the boot menu"
   [ "$interactive" -eq 0 ] || confirm
   : >"$log"
   logging=1
@@ -504,6 +568,8 @@ main() {
   format
   place
   install_system
+  keep_networks "$connections" "/mnt$connections" >>"$log" 2>&1 \
+    || printf 'could not copy the saved networks to %s\n' "$disk" >>"$log"
   set_password
   step="done"
   emit "done" 100 "Flux is installed. Your system flake lives in /etc/flux."

@@ -41,7 +41,18 @@ lib.mkIf (config.flux.profile == "desktop") {
     pulseaudio
     xwayland-satellite
     xdg-utils
+    xdg-user-dirs
   ];
+
+  systemd.user.services.flux-user-dirs = {
+    description = "Create Documents, Downloads, Pictures and the other home folders";
+    wantedBy = [ "graphical-session-pre.target" ];
+    before = [ "graphical-session-pre.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.xdg-user-dirs}/bin/xdg-user-dirs-update";
+    };
+  };
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
   services.gnome.at-spi2-core.enable = true;

@@ -32,6 +32,9 @@ const MAX_TOASTS: usize = 4;
 /// The toast width in logical pixels, the same measure the panel uses.
 const TOAST_WIDTH: i32 = 360;
 
+/// The most lines of body a toast shows; the panel keeps the whole text.
+const BODY_LINES: i32 = 4;
+
 /// Close reasons from the desktop notification specification.
 const REASON_EXPIRED: u32 = 1;
 const REASON_DISMISSED: u32 = 2;
@@ -214,20 +217,43 @@ fn fill_row(row: &gtk4::Box, notification: &Notification) {
     } else {
         row.remove_css_class("urgent");
     }
-    row.append(&label(&notification.app_name, "dim", false));
-    row.append(&label(&notification.summary, "summary", true));
+    row.append(&line(&notification.app_name, "dim"));
+    row.append(&wrapped(&notification.summary, "summary"));
     if !notification.body.is_empty() {
-        row.append(&label(&notification.body, "body", true));
+        let body = wrapped(&notification.body, "body");
+        body.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+        body.set_lines(BODY_LINES);
+        row.append(&body);
     }
 }
 
-/// One line of a toast. The class gives the line its place in the type scale.
-fn label(text: &str, class: &str, wrap: bool) -> gtk4::Label {
+/// How many characters a notification label asks for before it wraps or cuts.
+/// A label without this asks for the width of its whole text on one line, and
+/// a long message then stretches the surface instead of wrapping inside it.
+const NATURAL_CHARS: i32 = 30;
+
+fn text_label(text: &str, class: &str) -> gtk4::Label {
     let label = gtk4::Label::new(Some(text));
     label.add_css_class(class);
-    label.set_halign(gtk4::Align::Start);
     label.set_xalign(0.0);
-    label.set_wrap(wrap);
+    label.set_max_width_chars(NATURAL_CHARS);
+    label
+}
+
+/// One line of notification text, cut with an ellipsis when it is too long.
+/// The class gives the line its place in the type scale.
+pub(crate) fn line(text: &str, class: &str) -> gtk4::Label {
+    let label = text_label(text, class);
+    label.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+    label
+}
+
+/// Notification text that wraps inside the width it is given, breaking inside
+/// a word (a long link) when it has to.
+pub(crate) fn wrapped(text: &str, class: &str) -> gtk4::Label {
+    let label = text_label(text, class);
+    label.set_wrap(true);
+    label.set_wrap_mode(gtk4::pango::WrapMode::WordChar);
     label
 }
 

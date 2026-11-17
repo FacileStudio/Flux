@@ -46,14 +46,32 @@ pub fn parse(list: &str, current: Option<&str>) -> (Vec<PathBuf>, Option<PathBuf
     (paths, current)
 }
 
+/// Whether `target` already is `source`: the same file, or a copy with the same bytes.
+fn same_image(source: &Path, target: &Path) -> bool {
+    let resolved = |path: &Path| std::fs::canonicalize(path).ok();
+    let same_file = resolved(source).is_some() && resolved(source) == resolved(target);
+    same_file || std::fs::read(source).ok().zip(std::fs::read(target).ok()).is_some_and(|(new, old)| new == old)
+}
+
+/// Where in `dir` a copy of `source` called `name` goes without replacing a different image:
+/// `name` itself when it is free or already that image, otherwise `name-2`, `name-3` and so on.
+pub fn free_target(dir: &Path, name: &Path, source: &Path) -> PathBuf {
+    let stem = name.file_stem().unwrap_or_default().to_string_lossy().into_owned();
+    let extension = name.extension().map(|extension| format!(".{}", extension.to_string_lossy())).unwrap_or_default();
+    std::iter::once(dir.join(name))
+        .chain((2..).map(|count| dir.join(format!("{stem}-{count}{extension}"))))
+        .find(|target| !target.exists() || same_image(source, target))
+        .unwrap_or_else(|| dir.join(name))
+}
+
 /// Copy `source` into `~/Pictures/Wallpapers` and make it the wallpaper. Blocking.
 fn import(source: &Path) -> Result<PathBuf, String> {
     let home = std::env::var_os("HOME").ok_or("HOME is not set")?;
     let dir = PathBuf::from(home).join("Pictures/Wallpapers");
     let name = source.file_name().ok_or("the file has no name")?;
     std::fs::create_dir_all(&dir).map_err(|error| format!("{}: {error}", dir.display()))?;
-    let target = dir.join(name);
-    if std::fs::canonicalize(source).ok() != std::fs::canonicalize(&target).ok() {
+    let target = free_target(&dir, Path::new(name), source);
+    if !same_image(source, &target) {
         std::fs::copy(source, &target).map_err(|error| format!("{}: {error}", target.display()))?;
     }
     super::run(PROGRAM, &["set", &target.to_string_lossy()])?;
@@ -268,5 +286,21 @@ mod tests {
         );
         assert_eq!(current, Some(PathBuf::from("/b/two.png")));
         assert_eq!(parse("", Some("  ")), (Vec::new(), None));
+    }
+
+    #[test]
+    fn an_import_never_replaces_a_different_image() {
+        let dir = std::env::temp_dir().join(format!("flux-wallpaper-test-{}", std::process::id()));
+        let library = dir.join("library");
+        std::fs::create_dir_all(&library).expect("test directory");
+        let source = dir.join("sea.jpg");
+        std::fs::write(&source, b"new").expect("source");
+        let name = Path::new("sea.jpg");
+        assert_eq!(free_target(&library, name, &source), library.join("sea.jpg"));
+        std::fs::write(library.join("sea.jpg"), b"old").expect("existing");
+        assert_eq!(free_target(&library, name, &source), library.join("sea-2.jpg"));
+        std::fs::write(library.join("sea-2.jpg"), b"new").expect("copy");
+        assert_eq!(free_target(&library, name, &source), library.join("sea-2.jpg"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

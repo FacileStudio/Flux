@@ -17,7 +17,7 @@ in
 {
   options.flux = {
     hardware.nvidia = {
-      enable = lib.mkEnableOption "the proprietary NVIDIA driver with the settings niri needs (untested on real hardware)";
+      enable = lib.mkEnableOption "the proprietary NVIDIA driver with the settings niri needs";
       open = lib.mkOption {
         type = lib.types.bool;
         default = true;
@@ -51,7 +51,8 @@ in
 
       hardware.graphics = {
         enable = true;
-        enable32Bit = false;
+        enable32Bit = lib.mkDefault false;
+        extraPackages = lib.optional x86 pkgs.intel-media-driver;
       };
       hardware.enableRedistributableFirmware = lib.mkDefault true;
       hardware.cpu.intel.updateMicrocode = lib.mkIf x86 (lib.mkDefault true);
@@ -87,6 +88,7 @@ in
     }
 
     (lib.mkIf cfg.hardware.nvidia.enable {
+      flux.unfree = [ "nvidia-x11" "nvidia-settings" "nvidia-persistenced" ];
       services.xserver.videoDrivers = [ "nvidia" ];
       hardware.nvidia = {
         modesetting.enable = true;

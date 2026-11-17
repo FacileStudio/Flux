@@ -157,6 +157,11 @@ STATUSBAR = {
     "VOLUME": "volume-loud",
     "NETWORK": "wi-fi",
     "LOGOUT": "power",
+    "APPS": "widget",
+    "CLOSE": "close-circle",
+    "BATTERY_LOW": "battery-low",
+    "BATTERY_HALF": "battery-half",
+    "BATTERY_CHARGE": "battery-charge",
 }
 
 

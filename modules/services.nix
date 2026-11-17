@@ -35,6 +35,9 @@ in
         options = "--delete-older-than 30d";
         persistent = true;
       };
+      systemd.services.nix-gc.serviceConfig.ExecStartPost = lib.mkIf
+        (config.boot.loader.grub.enable || config.boot.loader.systemd-boot.enable)
+        "/run/current-system/bin/switch-to-configuration boot";
       nix.optimise.automatic = true;
       services.fstrim.enable = true;
       services.timesyncd.enable = lib.mkDefault true;

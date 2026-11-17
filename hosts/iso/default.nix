@@ -115,6 +115,15 @@ in
 
   networking.networkmanager.enable = true;
 
+  flux.power.lock = false;
+  systemd.user.services.flux-idle.enable = false;
+  systemd.user.services.kit-sync.enable = false;
+  systemd.user.timers.kit-sync.enable = false;
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
+  };
+
   isoImage.storeContents = [
     fluxFlake.outPath
     nixpkgs.outPath

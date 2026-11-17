@@ -8,6 +8,7 @@ export const marks = {
 	sablier: 'solar:hourglass-bold-duotone',
 	nuage: 'solar:cloud-bold-duotone',
 	boite: 'solar:box-minimalistic-bold-duotone',
+	kit: 'solar:checklist-minimalistic-bold-duotone',
 	terminal: 'solar:command-bold-duotone',
 	cpu: 'solar:cpu-bolt-bold-duotone'
 } as const;

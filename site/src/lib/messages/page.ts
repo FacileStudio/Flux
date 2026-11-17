@@ -53,10 +53,10 @@ export const page = {
 	'nav.issues': ['Report a bug', 'Signaler un bug', 'Informar de un error', 'Fehler melden'],
 	'nav.suite': ['The Facile suite', 'La suite Facile', 'La suite Facile', 'Die Facile-Suite'],
 	'surfaces.title': [
-		'Screens we made ourselves',
-		'Des écrans faits maison',
-		'Pantallas hechas en casa',
-		'Hausgemachte Bildschirme'
+		'Easy on the eyes, too',
+		'Facile pour les yeux aussi',
+		'Fácil a la vista, también',
+		'Auch fürs Auge angenehm'
 	],
 	'surfaces.line': [
 		'Settings, the installer and the login screen are written for Flux, in the style of the Facile apps. They start in dark mode. Light is one click away.',
@@ -125,6 +125,20 @@ export const page = {
 		'Flux para su teléfono: un sistema Android privado, sin Google, con las apps de Facile ya instaladas. Basado en LineageOS.',
 		'Flux für Ihr Smartphone: ein privates Android-System ohne Google, mit den Facile-Apps vorinstalliert. Gebaut auf LineageOS.'
 	],
+	'kit.title': [
+		'kit installs your apps and remembers them',
+		'kit installe vos apps et s’en souvient',
+		'kit instala sus apps y las recuerda',
+		'kit installiert Ihre Apps und merkt sie sich'
+	],
+	'kit.line': [
+		'One list holds your Facile tools, Flathub apps and Nix packages. On a new machine, kit sync puts them all back. A small package manager written in Rust.',
+		'Une seule liste garde vos outils Facile, vos apps Flathub et vos paquets Nix. Sur une nouvelle machine, kit sync remet tout en place. Un petit gestionnaire de paquets écrit en Rust.',
+		'Una sola lista guarda sus herramientas Facile, sus apps de Flathub y sus paquetes Nix. En una máquina nueva, kit sync lo devuelve todo. Un pequeño gestor de paquetes escrito en Rust.',
+		'Eine Liste enthält Ihre Facile-Werkzeuge, Flathub-Apps und Nix-Pakete. Auf einem neuen Rechner stellt kit sync alles wieder her. Ein kleiner Paketmanager in Rust.'
+	],
+	'kit.builtin': ['Built into Flux', 'Intégré à Flux', 'Integrado en Flux', 'In Flux eingebaut'],
+	'kit.link': ['kit on GitHub', 'kit sur GitHub', 'kit en GitHub', 'kit auf GitHub'],
 	'dev.title': ['Try it in a VM', 'Essayez-le dans une VM', 'Pruébelo en una VM', 'In einer VM ausprobieren'],
 	'dev.line': [
 		'Have Nix with flakes? One command boots the Flux desktop in QEMU. Log in as flux, password flux.',

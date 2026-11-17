@@ -23,6 +23,25 @@ need_space() {
   [ "$free" -ge "$needed_kib" ] || die "less than 20 GiB free under $dir; not downloading"
 }
 
+move_stable() {
+  local commit
+  commit=$(gh api "repos/$repo/commits/$tag" -q .sha)
+  if ! gh api "repos/$repo/git/ref/heads/stable" > /dev/null 2>&1; then
+    gh api -X POST "repos/$repo/git/refs" -f ref=refs/heads/stable -f sha="$commit" > /dev/null
+    echo "created stable at $tag"
+    return
+  fi
+  case "$(gh api "repos/$repo/compare/stable...$commit" -q .status)" in
+    identical) echo "stable is already at $tag" ;;
+    ahead)
+      gh api -X PATCH "repos/$repo/git/refs/heads/stable" -f sha="$commit" -F force=false > /dev/null
+      echo "stable moved to $tag: installed machines now update to it"
+      ;;
+    behind) echo "stable is already past $tag; left where it is" ;;
+    *) die "stable and $tag have diverged; move stable by hand" ;;
+  esac
+}
+
 case "$tag" in
   v[0-9]*) ;;
   *) die "$tag is not a v<version> tag" ;;
@@ -86,3 +105,4 @@ done
 
 gh release edit "$tag" -R "$repo" --draft=false
 echo "release $tag is public: https://github.com/$repo/releases/tag/$tag"
+move_stable

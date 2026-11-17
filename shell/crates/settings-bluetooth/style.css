@@ -9,18 +9,26 @@
 }
 
 .bt-enter {
-  animation: bt-fade 180ms ease-out;
+  animation: bt-fade 160ms ease-out;
+}
+
+.fx-card > box > .bt-device:first-child {
+  margin-top: 4px;
+}
+
+.fx-card > box > .bt-device:last-child {
+  margin-bottom: 4px;
 }
 
 button.bt-head {
   margin: 0 -12px;
-  min-height: 40px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 12px;
   border-radius: 8px;
   background-color: transparent;
   color: @fc_fg;
   font-size: 14px;
-  transition: background-color 150ms ease-out;
+  transition: background-color 160ms ease-out;
 }
 
 button.bt-head:hover {
@@ -29,6 +37,10 @@ button.bt-head:hover {
 
 button.bt-head:active {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+button.bt-head:focus-visible {
+  outline-offset: -2px;
 }
 
 .bt-icon {
@@ -52,16 +64,21 @@ button.bt-expand {
   border-radius: 8px;
   background-color: transparent;
   color: @fc_fg_muted;
-  transition: background-color 150ms ease-out;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
 button.bt-expand:hover {
-  background-color: @fc_surface;
+  background-color: alpha(@fc_fg, 0.08);
+  color: @fc_fg;
+}
+
+button.bt-expand:active {
+  background-color: alpha(@fc_fg, 0.14);
   color: @fc_fg;
 }
 
 button.bt-expand image {
-  transition: -gtk-icon-transform 180ms ease-out;
+  transition: -gtk-icon-transform 160ms ease-out;
 }
 
 button.bt-expand.bt-open image {
@@ -69,14 +86,15 @@ button.bt-expand.bt-open image {
 }
 
 .bt-details {
-  margin: 0 8px 8px 44px;
-  padding: 4px 0;
+  margin: 0 0 8px 32px;
+  padding: 4px 12px;
   border-radius: 8px;
   background-color: @fc_page;
 }
 
 .bt-details .fx-row {
-  padding: 8px 12px;
+  padding: 8px 0;
+  min-height: 20px;
 }
 
 .bt-scrim {
@@ -86,8 +104,9 @@ button.bt-expand.bt-open image {
 .bt-sheet {
   padding: 24px;
   border-radius: 12px;
-  background-color: @fc_bg;
+  background-color: @fc_component;
   color: @fc_fg;
+  box-shadow: 0 8px 24px alpha(black, 0.32);
 }
 
 .bt-sheet-icon {
@@ -104,7 +123,7 @@ button.bt-expand.bt-open image {
   margin: 8px 0;
   padding: 16px;
   border-radius: 8px;
-  background-color: @fc_component;
+  background-color: @fc_surface;
   font-family: monospace;
   font-size: 32px;
   font-weight: 600;
@@ -112,23 +131,15 @@ button.bt-expand.bt-open image {
   color: @fc_fg;
 }
 
-entry.bt-entry {
+.bt-sheet entry {
   min-height: 44px;
-  padding: 0 12px;
-  border-radius: 8px;
-  background-color: @fc_surface;
-  color: @fc_fg;
   font-size: 16px;
-  outline: 0 solid transparent;
 }
 
-entry.bt-entry:focus-within {
-  outline: 2px solid @fc_ring;
-  outline-offset: 2px;
-}
-
-entry.bt-entry text placeholder {
-  color: @fc_fg_muted;
+.bt-sheet button.fx-button {
+  min-height: 44px;
+  padding: 0 24px;
+  font-size: 16px;
 }
 
 .bt-quick {

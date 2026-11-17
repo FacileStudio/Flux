@@ -32,7 +32,7 @@ systemd user units bound to `graphical-session.target`. The units get
 | `Mod+N` | `sidebar toggle` |
 | `Mod+Escape` | `exit` |
 | `Mod+Comma` | `flux-settings` |
-| `Super+Alt+L` | `flux-lock` |
+| `Super+L` | `flux-lock` |
 
 The statusbar reads niri through `$NIRI_SOCKET` directly. The sidebar and the
 statusbar each keep one copy per session through a pid file in

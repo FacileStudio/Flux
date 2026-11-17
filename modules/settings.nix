@@ -17,7 +17,9 @@ let
   zoneRe = "[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)*";
   fullNameRe = "[^[:space:]:,[:cntrl:]]([^:,[:cntrl:]]*[^[:space:]:,[:cntrl:]])?";
 
-  topKeys = [ "version" "hostname" "timezone" "locale" "formats" "keymap" "users" "updates" ];
+  topKeys = [ "version" "hostname" "timezone" "locale" "formats" "keymap" "users" "updates" "software" "hardware" ];
+  softwareKeys = [ "facile" "apps" "gaming" ];
+  hardwareKeys = [ "nvidia" ];
   userKeys = [ "name" "fullName" "admin" "groups" ];
 
   get = name: default: raw.${name} or default;
@@ -64,6 +66,12 @@ let
   formats = get "formats" null;
   keymap = get "keymap" null;
   updates = get "updates" { };
+  software = get "software" { };
+  hardware = get "hardware" { };
+  bools = keys: value: builtins.isAttrs value && unknownKeys keys value == [ ] && lib.all isBool (builtins.attrValues value);
+  known = keys: value: if builtins.isAttrs value then lib.getAttrs (lib.intersectLists keys (builtins.attrNames value)) value else { };
+  validSoftware = bools softwareKeys software;
+  validHardware = bools hardwareKeys hardware;
 
   validHostname = matches hostnameRe hostname;
   validTimezone = timezone == null || (matches zoneRe timezone && builtins.stringLength timezone <= 64);
@@ -89,6 +97,10 @@ let
     (check (people == [ ] || lib.any (u: u.admin == true) people) "at least one user must be an administrator (admin: true)")
     (check (builtins.isAttrs updates && unknownKeys [ "automatic" ] updates == [ ] && isBool (updates.automatic or false))
       "updates must be { \"automatic\": true|false }")
+    (check validSoftware
+      "software must be an object of true|false among: ${lib.concatStringsSep " " softwareKeys}")
+    (check validHardware
+      "hardware must be an object of true|false among: ${lib.concatStringsSep " " hardwareKeys}")
     (check (people == [ ] || config.users.mutableUsers)
       "users.mutableUsers must stay true: passwords of settings.json users live in /etc/shadow")
   ] ++ lib.concatMap userChecks people;
@@ -158,6 +170,9 @@ in
         "LC_ADDRESS" "LC_MEASUREMENT" "LC_MONETARY" "LC_NUMERIC" "LC_PAPER" "LC_TELEPHONE" "LC_TIME"
       ] (_: formats)));
 
+      flux.software = lib.mkIf validSoftware (lib.mapAttrs (_: set) (known softwareKeys software));
+      flux.hardware.nvidia.enable = lib.mkIf (validHardware && hardware ? nvidia) (set hardware.nvidia);
+
       services.xserver.xkb.layout = lib.mkIf validKeymap (set keymap);
       console.useXkbConfig = lib.mkIf validKeymap (set true);
       environment.sessionVariables.XKB_DEFAULT_LAYOUT = lib.mkIf validKeymap (set keymap);
@@ -167,7 +182,7 @@ in
         (u: lib.nameValuePair u.name {
           isNormalUser = set true;
           description = set u.fullName;
-          extraGroups = set (u.groups ++ lib.optional u.admin "wheel");
+          extraGroups = u.groups ++ lib.optional u.admin "wheel";
           shell = set pkgs.zsh;
           hashedPassword = set null;
         })

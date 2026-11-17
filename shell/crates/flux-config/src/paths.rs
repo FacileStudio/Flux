@@ -56,6 +56,16 @@ impl Paths {
         self.at("/etc/flux/flake.lock")
     }
 
+    /// `/etc/flux/flake.lock.bak`, the lock as it was before the running update.
+    pub fn lock_backup(&self) -> PathBuf {
+        self.at("/etc/flux/flake.lock.bak")
+    }
+
+    /// `/var/lib/flux-config/locks`, one `flake.lock` per system generation still on disk.
+    pub fn locks(&self) -> PathBuf {
+        self.at("/var/lib/flux-config/locks")
+    }
+
     /// `/run/flux-config`, the operation state that lives until the next boot.
     pub fn run_dir(&self) -> PathBuf {
         self.at("/run/flux-config")

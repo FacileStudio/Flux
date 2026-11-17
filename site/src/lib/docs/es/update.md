@@ -1,13 +1,25 @@
 # Actualizar
 
-Flux se actualiza desde su configuración en `/etc/flux`:
+Abra los Ajustes con **Mod+Coma** y luego Updates.
+
+1. **Check for updates** busca una versión más reciente de Flux.
+2. **Update now** la descarga y la instala. Puede cerrar los Ajustes: la actualización sigue.
+3. Cuando los Ajustes digan **Restart to finish**, reinicie el ordenador.
+
+Algunas partes de Flux se compilan en su ordenador durante una actualización, así que puede tardar. Mantenga el ordenador enchufado.
+
+**Update automatically** hace todo esto una vez por semana, con el ordenador enchufado. Está desactivado hasta que usted lo active.
+
+Cada actualización conserva la versión anterior. Si algo falla, [vuelva atrás](/docs/rollback).
+
+## Desde un terminal
 
 ```sh
-cd /etc/flux
-nix flake update
-sudo nixos-rebuild switch --flake /etc/flux#flux
+pkexec flux-config update
 ```
 
-`nix flake update` trae la última versión de Flux y de NixOS. `nixos-rebuild switch` construye el nuevo sistema y lo activa.
+## Qué hace una actualización
 
-Cada actualización crea una nueva generación. La anterior se conserva: si algo falla, [vuelva atrás](/docs/rollback).
+La configuración de su equipo es un flake en `/etc/flux`. Su entrada `flux` sigue la rama `stable` de Flux, que solo avanza a versiones probadas. Una actualización mueve esa entrada a la última versión, la registra en `flake.lock`, construye el nuevo sistema y cambia a él.
+
+`/etc/flux` pertenece a root. Un simple `nix flake update` ahí falla con un error de permisos: use la orden de arriba.

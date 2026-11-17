@@ -17,3 +17,17 @@ pub fn system_page(title: &str, description: &str) -> (gtk4::ScrolledWindow, Box
 pub fn nothing() -> Box {
     Box::new(Orientation::Horizontal, 0)
 }
+
+/// The one banner a page shows when `/etc/flux/settings.json` cannot be read: what is wrong, what it means, and the parser's own words.
+pub fn problem_banner(text: &crate::i18n::Text, problem: &str) -> Box {
+    let banner = Box::new(Orientation::Vertical, 4);
+    banner.add_css_class("fx-banner");
+    banner.add_css_class("fx-danger");
+    banner.append(&label(text.problem_title, "fx-title"));
+    for line in [text.problem_body, problem] {
+        let line = label(line, "fx-subtitle");
+        line.set_selectable(true);
+        banner.append(&line);
+    }
+    banner
+}
