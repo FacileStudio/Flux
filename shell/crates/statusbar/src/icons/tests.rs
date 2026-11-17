@@ -27,10 +27,11 @@ fn every_icon_decodes_to_a_full_frame_of_its_own() {
             (SIDE * SIDE * 4) as usize,
             "{icon:?} is not a 24×24 frame"
         );
-        let inked = pixels.chunks(4).filter(|pixel| pixel[3] == 255).count();
+        let inked = pixels.chunks(4).filter(|pixel| pixel[3] > 0).count();
         assert!(inked > 0, "{icon:?} paints nothing");
+        let solid = pixels.chunks(4).filter(|pixel| pixel[3] == 255).count();
         assert!(
-            inked < (SIDE * SIDE) as usize,
+            solid < (SIDE * SIDE) as usize,
             "{icon:?} paints a solid block"
         );
         assert!(
@@ -41,21 +42,20 @@ fn every_icon_decodes_to_a_full_frame_of_its_own() {
     }
 }
 
-/// The tint has to reach the pixels the mask inks: if it did not, the icons would
-/// paint in whatever the bytes happened to hold, which is nothing on a palette
-/// the bar was not built for.
+/// The tint has to reach every pixel the mask covers, scaled by its coverage: if
+/// it did not, the icons would paint in whatever the bytes happened to hold,
+/// which is nothing on a palette the bar was not built for.
 #[test]
 fn the_tint_reaches_the_inked_pixels() {
     let pixels = rgba(Icon::Battery, &RGBA::new(1.0, 0.0, 0.0, 1.0));
-    let ink: &[u8] = &[0xff, 0x00, 0x00, 0xff];
-    let blank: &[u8] = &[0x00, 0x00, 0x00, 0x00];
     let mut inked = 0;
     for pixel in pixels.chunks(4) {
-        assert!(
-            pixel == ink || pixel == blank,
-            "a pixel is neither the tint nor transparent: {pixel:?}"
+        assert_eq!(
+            [pixel[0], pixel[1], pixel[2]],
+            [pixel[3], 0, 0],
+            "a pixel is not the tint at its own coverage: {pixel:?}"
         );
-        if pixel == ink {
+        if pixel[3] == 255 {
             inked += 1;
         }
     }

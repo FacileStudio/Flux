@@ -34,7 +34,7 @@ lib.mkIf (config.flux.profile == "desktop") {
   services.displayManager.regreet = {
     enable = true;
     theme.name = if dark then "Adwaita-dark" else "Adwaita";
-    iconTheme = { package = pkgs.adwaita-icon-theme; name = "Adwaita"; };
+    iconTheme = { package = pkgs.flux-icons; name = "Flux"; };
     cursorTheme = { package = pkgs.adwaita-icon-theme; name = config.flux.cursor.theme; };
     font = { package = pkgs.inter; name = cfg.font; size = 11; };
     extraCss = css;

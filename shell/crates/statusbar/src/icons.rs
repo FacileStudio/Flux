@@ -1,7 +1,7 @@
-//! Pixel-art icons for the right-hand control pills.
+//! Solar icons for the right-hand control pills.
 //!
-//! The bodies are the [pixelarticons](https://icon-sets.iconify.design/pixelarticons/)
-//! set by Gerrit Halfmann (MIT), compiled in as the 24×24 masks in [`masks`] and
+//! The bodies are the Solar set by 480 Design (CC BY 4.0), the same set as the
+//! Flux icon theme, compiled in as the 24×24 alpha masks in [`masks`] and
 //! painted from those into a texture. Nothing is rasterized at run time: the SVG
 //! loader (librsvg) is a separate package on most distributions, and a machine
 //! without it drew a pill's label and nothing beside it, silently.
@@ -117,34 +117,29 @@ pub(crate) fn texture(icon: Icon, tint: &RGBA) -> Texture {
     .upcast()
 }
 
-/// The mask's pixels as RGBA bytes, in reading order: `tint` on every pixel the
-/// mask inks, fully transparent everywhere else.
-///
-/// The alpha is either 0 or 255, so premultiplied and straight alpha are the same
-/// bytes and the format the texture is built with does not change the result.
+/// The mask's pixels as premultiplied RGBA bytes, in reading order: `tint`
+/// scaled by each pixel's coverage, so the anti-aliased edges and the duotone
+/// half-tones keep their weight.
 fn rgba(icon: Icon, tint: &RGBA) -> Vec<u8> {
-    let ink = [
-        (tint.red() * 255.0).round() as u8,
-        (tint.green() * 255.0).round() as u8,
-        (tint.blue() * 255.0).round() as u8,
-    ];
+    let ink = [tint.red(), tint.green(), tint.blue()].map(|channel| f32::from(channel_byte(channel)));
     let mut pixels = Vec::with_capacity((SIDE * SIDE * 4) as usize);
     for row in icon.mask().lines() {
-        for inked in row.as_bytes().iter().flat_map(|digit| nibble_bits(*digit)) {
-            let pixel = match inked {
-                true => [ink[0], ink[1], ink[2], 255],
-                false => [0, 0, 0, 0],
-            };
-            pixels.extend_from_slice(&pixel);
+        for alpha in row.as_bytes().chunks(2).map(alpha_byte) {
+            let scale = f32::from(alpha) / 255.0;
+            let [red, green, blue] = ink.map(|channel| (channel * scale).round() as u8);
+            pixels.extend_from_slice(&[red, green, blue, alpha]);
         }
     }
     pixels
 }
 
-/// The four pixels one hex digit of a mask stands for, leftmost first.
-fn nibble_bits(digit: u8) -> [bool; 4] {
-    let value = (digit as char).to_digit(16).unwrap_or(0);
-    [3, 2, 1, 0].map(|bit| value & (1 << bit) != 0)
+fn channel_byte(channel: f32) -> u8 {
+    (channel.clamp(0.0, 1.0) * 255.0).round() as u8
+}
+
+/// The coverage one pair of hex digits of a mask stands for.
+fn alpha_byte(pair: &[u8]) -> u8 {
+    std::str::from_utf8(pair).ok().and_then(|hex| u8::from_str_radix(hex, 16).ok()).unwrap_or(0)
 }
 
 #[cfg(test)]

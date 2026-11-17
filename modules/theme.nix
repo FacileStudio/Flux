@@ -43,7 +43,7 @@ in
   };
 
   config = lib.mkIf (config.flux.profile == "desktop") {
-    environment.systemPackages = [ theme fluxScheme ];
+    environment.systemPackages = [ theme fluxScheme pkgs.flux-icons ];
     environment.pathsToLink = [ "/share/themes" ];
 
     environment.etc = {
@@ -75,6 +75,7 @@ in
       "xdg/gtk-3.0/settings.ini".text = ''
         [Settings]
         gtk-theme-name=${gtkTheme}
+        gtk-icon-theme-name=Flux
         gtk-font-name=${cfg.font} 11
         gtk-application-prefer-dark-theme=${if dark then "1" else "0"}
       '';
@@ -86,6 +87,7 @@ in
         settings."org/gnome/desktop/interface" = {
           color-scheme = if dark then "prefer-dark" else "prefer-light";
           gtk-theme = gtkTheme;
+          icon-theme = "Flux";
           font-name = "${cfg.font} 11";
           document-font-name = "${cfg.font} 11";
           monospace-font-name = "${monoFont} 11";
