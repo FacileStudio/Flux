@@ -65,6 +65,7 @@ pub struct Text {
     pub done_subtitle: &'static str,
     pub restart: &'static str,
     pub close: &'static str,
+    pub step: &'static str,
 }
 
 pub const EN: Text = Text {
@@ -132,6 +133,7 @@ pub const EN: Text = Text {
     done_subtitle: "Remove the USB stick, then restart to start using Flux.",
     restart: "Restart now",
     close: "Keep trying Flux",
+    step: "Step {n} of {total}",
 };
 
 pub const FR: Text = Text {
@@ -199,6 +201,7 @@ pub const FR: Text = Text {
     done_subtitle: "Retirez la clé USB, puis redémarrez pour utiliser Flux.",
     restart: "Redémarrer maintenant",
     close: "Continuer l'essai",
+    step: "Étape {n} sur {total}",
 };
 
 /// The strings for a language code such as `fr`.

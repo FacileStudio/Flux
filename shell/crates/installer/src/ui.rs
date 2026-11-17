@@ -13,8 +13,9 @@ use std::rc::Rc;
 
 use gtk4::prelude::*;
 use gtk4::{Align, Box, Button, DrawingArea, Label, ListBox, Orientation, ScrolledWindow, Widget};
+use shell_common::ui::icon;
 
-use crate::app::{App, Screen};
+use crate::app::{App, Screen, STEPS};
 
 pub const WIDTH: i32 = 720;
 
@@ -71,6 +72,10 @@ pub fn page(app: &Rc<App>, title: &str, subtitle: &str, body: &impl IsA<Widget>,
     column.set_halign(Align::Center);
     column.set_width_request(WIDTH);
     let header = Box::new(Orientation::Vertical, 8);
+    if let Some(step) = app.current().step() {
+        let counter = app.text().step.replace("{n}", &step.to_string()).replace("{total}", &STEPS.to_string());
+        header.append(&label(&counter, "step"));
+    }
     header.append(&label(title, "title"));
     header.append(&label(subtitle, "subtitle"));
     column.append(&header);
@@ -157,9 +162,15 @@ pub fn row_at(list: &ListBox, index: usize) -> Option<gtk4::ListBoxRow> {
     list.row_at_index(i32::try_from(index).ok()?)
 }
 
-/// A row with a main label, an optional muted line and trailing tags.
-pub fn row(title: &str, detail: Option<&str>, tags: &[&str]) -> gtk4::ListBoxRow {
+/// A row with an optional leading icon, a main label, an optional muted line and trailing tags.
+pub fn row(glyph: Option<&str>, title: &str, detail: Option<&str>, tags: &[&str]) -> gtk4::ListBoxRow {
     let line = Box::new(Orientation::Horizontal, 8);
+    if let Some(name) = glyph {
+        let image = icon(name, 24);
+        image.add_css_class("row-icon");
+        image.set_valign(Align::Center);
+        line.append(&image);
+    }
     let text = Box::new(Orientation::Vertical, 2);
     text.set_hexpand(true);
     text.set_valign(Align::Center);

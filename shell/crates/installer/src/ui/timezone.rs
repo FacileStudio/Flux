@@ -15,7 +15,7 @@ fn zone_list(app: &Rc<App>) -> ListBox {
     let list = ListBox::new();
     let state = app.state.borrow();
     for zone in &state.zones {
-        let item = row(&readable(zone), None, &[]);
+        let item = row(None, &readable(zone), None, &[]);
         item.set_widget_name(zone);
         list.append(&item);
     }

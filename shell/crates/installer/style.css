@@ -71,6 +71,25 @@ button.choice.primary:hover {
   background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
 }
 
+.choice-icon {
+  margin-bottom: 8px;
+}
+
+.step {
+  font-size: 13px;
+  font-weight: 500;
+  color: @fc_fg_muted;
+}
+
+.row-icon {
+  margin-right: 4px;
+  color: @fc_fg_muted;
+}
+
+list.choices row:selected .row-icon {
+  color: @fc_accent_fg;
+}
+
 .choice-title {
   font-size: 22px;
   font-weight: 600;

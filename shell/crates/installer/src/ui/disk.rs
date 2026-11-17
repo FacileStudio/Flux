@@ -23,7 +23,8 @@ fn disk_row(app: &Rc<App>, disk: &Disk) -> gtk4::ListBoxRow {
         .filter(|part| !part.is_empty())
         .collect::<Vec<_>>()
         .join(" · ");
-    let item = row(title, Some(&detail), &tags);
+    let glyph = if disk.removable { "drive-removable-media-symbolic" } else { "drive-harddisk-symbolic" };
+    let item = row(Some(glyph), title, Some(&detail), &tags);
     if disk.live {
         item.set_selectable(false);
         item.set_activatable(false);

@@ -11,7 +11,7 @@ use crate::system;
 fn languages(app: &Rc<App>) -> ListBox {
     let list = ListBox::new();
     for language in LANGUAGES {
-        list.append(&row(language.name, None, &[]));
+        list.append(&row(None, language.name, None, &[]));
     }
     let selected = app.state.borrow().language;
     if let Some(current) = row_at(&list, selected) {
@@ -41,7 +41,7 @@ fn languages(app: &Rc<App>) -> ListBox {
 fn keymaps(app: &Rc<App>) -> ListBox {
     let list = ListBox::new();
     for (code, name) in KEYMAPS {
-        let item = row(name, None, &[]);
+        let item = row(None, name, None, &[]);
         item.set_widget_name(code);
         list.append(&item);
     }
