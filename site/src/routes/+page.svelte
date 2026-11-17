@@ -41,10 +41,9 @@
 <LandingShell>
 	<div class="flex flex-col gap-24 pb-24 md:gap-32 md:pb-32">
 		<section class="{width} flex flex-col items-start pt-12 sm:pt-20" aria-labelledby="hero-title">
-			<Badge tone="accent">{t('landing.badge')}</Badge>
 			<h1
 				id="hero-title"
-				class="mt-6 max-w-4xl font-fc-title text-fc-3xl leading-[1.08] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl"
+				class="max-w-4xl font-fc-title text-fc-3xl leading-[1.08] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl"
 			>
 				{t('landing.slogan')}
 			</h1>
