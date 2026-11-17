@@ -52,6 +52,7 @@ in
       hardware.graphics = {
         enable = true;
         enable32Bit = lib.mkDefault false;
+        extraPackages = lib.optional x86 pkgs.intel-media-driver;
       };
       hardware.enableRedistributableFirmware = lib.mkDefault true;
       hardware.cpu.intel.updateMicrocode = lib.mkIf x86 (lib.mkDefault true);
