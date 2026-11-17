@@ -31,7 +31,21 @@ export const glyphs = {
 	disk: 'solar:ssd-round-linear',
 	keyboard: 'solar:keyboard-linear',
 	headphones: 'solar:headphones-round-linear',
-	phone: 'solar:smartphone-linear'
+	phone: 'solar:smartphone-linear',
+	folder: 'solar:folder-linear',
+	document: 'solar:document-text-linear',
+	file: 'solar:file-linear',
+	sheet: 'solar:chart-linear',
+	image: 'solar:gallery-linear',
+	home: 'solar:home-2-linear',
+	download: 'solar:download-minimalistic-linear',
+	recent: 'solar:clock-circle-linear',
+	cloud: 'solar:cloud-linear',
+	code: 'solar:code-linear',
+	back: 'solar:alt-arrow-left-linear',
+	forward: 'solar:alt-arrow-right-linear',
+	grid: 'solar:widget-linear',
+	list: 'solar:list-linear'
 } as const;
 
 registerIcons({

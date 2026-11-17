@@ -3,22 +3,22 @@
 	import { Bar } from '@facile/mise-en-scene';
 	import { t } from '$lib/i18n';
 	import { glyphs } from '$lib/marks';
-	import type { SettingsPage, WifiState } from '../scene.svelte';
+	import { WALLPAPERS, type SettingsPage, type Wallpaper, type WifiState } from '../scene.svelte';
 	import Signal from './Signal.svelte';
 
 	let {
 		page,
 		wifi = 'connected',
 		compact = false,
-		siteDark = false,
-		deskDark = false,
+		deskDark = true,
+		wallpaper = WALLPAPERS[0],
 		nav = ['wifi', 'bluetooth', 'sound', 'displays', 'appearance']
 	}: {
 		page: SettingsPage;
 		wifi?: WifiState;
 		compact?: boolean;
-		siteDark?: boolean;
 		deskDark?: boolean;
+		wallpaper?: Wallpaper;
 		nav?: SettingsPage[];
 	} = $props();
 
@@ -50,8 +50,8 @@
 	]);
 
 	const themes = $derived([
-		{ id: 'light', label: t('demo.theme.light'), swap: siteDark, on: !deskDark },
-		{ id: 'dark', label: t('demo.theme.dark'), swap: !siteDark, on: deskDark }
+		{ id: 'light', label: t('demo.theme.light'), swap: true, on: !deskDark },
+		{ id: 'dark', label: t('demo.theme.dark'), swap: false, on: deskDark }
 	]);
 </script>
 
@@ -192,9 +192,14 @@ time. Compact swaps the sidebar for a row of page icons. Elements a script point
 			</div>
 			<div class="label">{t('demo.wallpaper')}</div>
 			<div class="card walls">
-				<span class="wall on"></span>
-				<span class="wall"></span>
-				<span class="wall"></span>
+				{#each WALLPAPERS as wall (wall)}
+					<span
+						class="wall"
+						class:on={wall === wallpaper}
+						style:background-image="url('/wallpapers/{wall}.jpg')"
+						data-hit="wall-{wall}"
+					></span>
+				{/each}
 			</div>
 			{#if !compact}
 				<div class="label">{t('demo.motion')}</div>
@@ -270,6 +275,11 @@ time. Compact swaps the sidebar for a row of page icons. Elements a script point
 		min-width: 0;
 		padding: 22px 26px;
 		overflow: hidden;
+	}
+	.main > :global(*) {
+		width: 100%;
+		max-width: 620px;
+		margin-inline: auto;
 	}
 	.compact .main {
 		padding: 14px 14px;
@@ -519,17 +529,22 @@ time. Compact swaps the sidebar for a row of page icons. Elements a script point
 	}
 	.walls {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(6, 1fr);
 		gap: 10px;
 		padding: 14px;
+	}
+	.compact .walls {
+		grid-template-columns: repeat(3, 1fr);
 	}
 	.wall {
 		aspect-ratio: 16 / 10;
 		border-radius: 8px;
-		background: var(--fx-field);
+		background-color: var(--fx-field);
+		background-position: center;
+		background-size: cover;
+		transition: box-shadow 160ms ease-out;
 	}
 	.wall.on {
-		background: var(--flux-wallpaper);
 		box-shadow:
 			0 0 0 2px var(--fx-c),
 			0 0 0 4px var(--fx-f);

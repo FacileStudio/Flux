@@ -1,20 +1,19 @@
 <script lang="ts">
 	import { Icon, icons } from '@facile/muse';
-	import { Bar, Caret, grow } from '@facile/mise-en-scene';
+	import { Caret, grow } from '@facile/mise-en-scene';
 	import { t } from '$lib/i18n';
 	import { glyphs, marks } from '$lib/marks';
+	import FluxFiles from './desk/FluxFiles.svelte';
 	import FluxSettings from './desk/FluxSettings.svelte';
-	import type { DesktopScene } from './scene.svelte';
+	import { ALTERNATE, type DesktopScene } from './scene.svelte';
 
-	let { scene, compact, siteDark }: { scene: DesktopScene; compact: boolean; siteDark: boolean } = $props();
+	let { scene, compact }: { scene: DesktopScene; compact: boolean } = $props();
 
 	const gap = $derived(compact ? 12 : 14);
-	const term = $derived(compact ? 334 : 480);
-	const panel = $derived(compact ? 334 : 720);
-	const files = $derived(compact ? 334 : 440);
 	const view = $derived(compact ? 358 : 1104);
-	const offset = $derived(scene.opened ? Math.max(0, gap + term + gap + panel + gap - view) : 0);
-	const deskDark = $derived(siteDark !== scene.swapped);
+	const half = $derived(compact ? view - 2 * gap : (view - 3 * gap) / 2);
+	const full = $derived(view - 2 * gap);
+	const offset = $derived(scene.opened ? half + gap : 0);
 
 	const settingsName = $derived(t('demo.app.settings'));
 	const apps = $derived([
@@ -25,16 +24,20 @@
 		{ name: 'Sablier', icon: marks.sablier, line: t('demo.app.sablier') }
 	]);
 	const hits = $derived(apps.filter((app) => app.name.toLowerCase().includes(scene.query.toLowerCase())));
-	const title = $derived(scene.opened ? settingsName : 'ghostty');
+	const title = $derived(scene.workspace !== 2 ? '' : scene.opened ? settingsName : 'ghostty');
+	const hintKey = $derived(scene.hintKey === 'space' ? t('demo.space') : scene.hintKey);
 </script>
 
 <div class="desk flux-pal" class:swap={scene.swapped} class:compact data-hit="screen">
+	<div class="wall base"></div>
+	<div class="wall alt" class:show={scene.wallpaper === ALTERNATE} style:background-image="url('/wallpapers/{ALTERNATE}-large.jpg')"></div>
+
 	<div class="bar">
 		<div class="left">
 			{#each compact ? [1, 2, 3] : [1, 2, 3, 4] as ws (ws)}
-				<span class="ws" class:on={ws === 2}>{ws}</span>
+				<span class="ws" class:on={ws === scene.workspace}>{ws}</span>
 			{/each}
-			{#if !compact}<span class="wtitle">{title}</span>{/if}
+			{#if !compact && title}<span class="wtitle">{title}</span>{/if}
 		</div>
 		<span class="clock">{#if !compact}<span>{t('demo.date')}</span>{/if}<span>09:41</span></span>
 		<div class="right">
@@ -48,13 +51,13 @@
 		</div>
 	</div>
 
-	<div class="cols">
+	<div class="cols" class:away={scene.workspace !== 2}>
 		<div class="strip" style:gap="{gap}px" style:padding-left="{gap}px" style:transform="translateX({-offset}px)">
-			<div class="col term" class:dim={scene.opened} style:width="{term}px">
+			<div class="col term" style:width="{half}px">
 				<div class="tline"><span class="mute">~</span> <span class="ok">❯</span> ls</div>
 				<div class="tline mute">Code&nbsp;&nbsp;Documents&nbsp;&nbsp;Nuage&nbsp;&nbsp;Photos</div>
 				<div class="tline"><span class="mute">~</span> <span class="ok">❯</span> nuage status</div>
-				<div class="tline"><span class="ok">✓</span> <span class="mute">~/Nuage · {t('demo.synced')}</span></div>
+				<div class="tline"><span class="mute">○ ~/Nuage · {t('demo.offline')}</span></div>
 				<div class="tline">
 					<span class="mute">~</span> <span class="ok">❯</span>
 					{scene.command}{#if !scene.done}<Caret />{/if}
@@ -65,33 +68,20 @@
 				{/if}
 			</div>
 
-			<div class="col grower" class:open={scene.opened} style:width="{scene.opened ? panel : 0}px">
-				<div class="inner" style:width="{panel}px">
-					<FluxSettings page={scene.page} wifi={scene.wifi} {compact} {siteDark} {deskDark} />
+			<div class="col grower" class:open={scene.opened} style:width="{scene.opened ? full : 0}px">
+				<div class="inner" style:width="{full}px">
+					<FluxSettings page={scene.page} wifi={scene.wifi} wallpaper={scene.wallpaper} {compact} deskDark={!scene.swapped} />
 				</div>
 			</div>
 
-			<div class="col win" style:width="{files}px">
-				<div class="fside">
-					{#each [70, 54, 62, 48] as w, i (i)}<Bar {w} h={6} />{/each}
-				</div>
-				<div class="fmain">
-					<div class="fhead">~/Nuage</div>
-					<div class="grid">
-						{#each [0, 1, 2, 3, 4, 5, 6, 7, 8] as i (i)}
-							<div class="folder">
-								<Icon icon={glyphs.files} size={30} />
-								{#if i === 0}<span class="fname">Documents</span>{:else}<Bar w={44 + ((i * 13) % 20)} h={6} />{/if}
-							</div>
-						{/each}
-					</div>
-				</div>
+			<div class="col" style:width="{half}px">
+				<FluxFiles {compact} online={scene.wifi === 'connected'} />
 			</div>
 		</div>
 	</div>
 
 	<div class="hint" class:show={scene.hint}>
-		<span class="key">Super</span><span class="plus">+</span><span class="key">{t('demo.space')}</span>
+		<span class="key">Super</span><span class="plus">+</span><span class="key">{hintKey}</span>
 	</div>
 
 	<div class="launcher" class:show={scene.launcher}>
@@ -119,12 +109,29 @@
 		inset: 0;
 		overflow: hidden;
 		border-radius: 18px;
-		background: var(--flux-wallpaper);
+		background: var(--fx-p);
 		font-family: var(--font-fc-body);
 		font-size: 13px;
 	}
+	.wall {
+		position: absolute;
+		inset: 0;
+		background-position: center;
+		background-size: cover;
+	}
+	.wall.base {
+		background: var(--flux-wallpaper);
+	}
+	.wall.alt {
+		opacity: 0;
+		transition: opacity 400ms ease-out;
+	}
+	.wall.alt.show {
+		opacity: 1;
+	}
 	.bar {
 		position: absolute;
+		z-index: 1;
 		top: 8px;
 		left: 8px;
 		right: 8px;
@@ -197,6 +204,13 @@
 		left: 0;
 		right: 0;
 		overflow: hidden;
+		transition:
+			transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 240ms ease-out;
+	}
+	.cols.away {
+		opacity: 0;
+		transform: translateY(-40px);
 	}
 	.compact .cols {
 		top: 46px;
@@ -216,25 +230,21 @@
 	}
 	.term {
 		padding: 16px 18px;
-		background: var(--color-fc-inverse);
-		color: var(--color-fc-on-inverse);
+		background: var(--fx-p);
+		color: var(--fx-f);
 		font-family: var(--font-fc-mono);
 		font-size: 13px;
 		line-height: 24px;
-		transition: opacity 200ms ease-out;
-	}
-	.term.dim {
-		opacity: 0.92;
 	}
 	.tline {
 		white-space: nowrap;
 		overflow: hidden;
 	}
 	.mute {
-		color: var(--color-fc-on-inverse-muted);
+		color: var(--fx-m);
 	}
 	.ok {
-		color: color-mix(in oklab, var(--color-fc-success), var(--color-fc-on-inverse) 35%);
+		color: color-mix(in oklab, var(--color-fc-success), var(--fx-f) 35%);
 	}
 	.grower {
 		opacity: 0;
@@ -248,48 +258,9 @@
 	.inner {
 		height: 100%;
 	}
-	.win {
-		display: flex;
-		background: var(--fx-p);
-	}
-	.fside {
-		display: flex;
-		flex: none;
-		flex-direction: column;
-		gap: 14px;
-		width: 120px;
-		padding: 18px 14px;
-		background: var(--fx-c);
-	}
-	.compact .fside {
-		display: none;
-	}
-	.fmain {
-		flex: 1;
-		padding: 18px;
-	}
-	.fhead {
-		margin-bottom: 16px;
-		font-weight: 600;
-	}
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 26px 12px;
-	}
-	.folder {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 8px;
-		color: var(--fx-m);
-	}
-	.fname {
-		color: var(--fx-f);
-		font-size: 12px;
-	}
 	.hint {
 		position: absolute;
+		z-index: 2;
 		bottom: 26px;
 		left: 50%;
 		display: flex;
@@ -321,6 +292,7 @@
 	}
 	.launcher {
 		position: absolute;
+		z-index: 2;
 		top: 132px;
 		left: 50%;
 		width: 460px;
@@ -391,7 +363,8 @@
 		.grower,
 		.launcher,
 		.hint,
-		.term {
+		.cols,
+		.wall.alt {
 			transition: none;
 		}
 	}

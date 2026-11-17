@@ -3,7 +3,7 @@
 	import { Cursor, Stage, cursorAt, type Act } from '@facile/mise-en-scene';
 	import { t } from '$lib/i18n';
 	import FluxDesktop from './FluxDesktop.svelte';
-	import { DesktopScene } from './scene.svelte';
+	import { ALTERNATE, DesktopScene } from './scene.svelte';
 
 	let { class: className = '' }: { class?: string } = $props();
 
@@ -11,14 +11,6 @@
 	const command = 'sablier start';
 	let cursor = $state(cursorAt());
 	let host = $state<HTMLElement>();
-	let siteDark = $state(false);
-
-	function readTheme(): boolean {
-		const root = document.documentElement.classList;
-		if (root.contains('dark')) return true;
-		if (root.contains('light')) return false;
-		return matchMedia('(prefers-color-scheme: dark)').matches;
-	}
 
 	function reset() {
 		scene.reset();
@@ -34,8 +26,16 @@
 		await act.click(cursor);
 	}
 
+	async function switchTo(act: Act, workspace: 2 | 3) {
+		scene.hintKey = workspace === 3 ? '3' : '2';
+		scene.hint = true;
+		await act.wait(450);
+		scene.workspace = workspace;
+		await act.wait(350);
+		scene.hint = false;
+	}
+
 	async function script(act: Act) {
-		siteDark = readTheme();
 		cursor = { ...act.point(hit('screen'), 0.6, 0.72), visible: false, down: false };
 		await act.wait(700);
 		await act.type(command, (value) => (scene.command = value), 60);
@@ -65,13 +65,20 @@
 		scene.page = 'appearance';
 		await tick();
 		await act.wait(500);
-		await press(act, siteDark ? 'theme-light' : 'theme-dark', 0.5, 0.45);
+		await press(act, 'theme-light', 0.5, 0.45);
 		scene.swapped = true;
-		await act.wait(2000);
-		await press(act, siteDark ? 'theme-dark' : 'theme-light', 0.5, 0.45);
+		await act.wait(1600);
+		await press(act, 'theme-dark', 0.5, 0.45);
 		scene.swapped = false;
-		await act.wait(1200);
+		await act.wait(900);
+		await press(act, `wall-${ALTERNATE}`, 0.5, 0.5, 500);
+		scene.wallpaper = ALTERNATE;
+		await act.wait(900);
 		cursor.visible = false;
+		await switchTo(act, 3);
+		await act.wait(1800);
+		await switchTo(act, 2);
+		await act.wait(900);
 		scene.reset();
 		await act.wait(900);
 	}
@@ -88,7 +95,7 @@
 		label={t('landing.demo.label')}
 	>
 		{#snippet children({ compact })}
-			<FluxDesktop {scene} {compact} {siteDark} />
+			<FluxDesktop {scene} {compact} />
 			<Cursor {cursor} />
 		{/snippet}
 	</Stage>

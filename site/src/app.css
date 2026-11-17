@@ -18,8 +18,8 @@
 }
 
 .flux-pal {
-	--fx-p: var(--color-fc-page);
-	--fx-f: var(--color-fc-fg);
+	--fx-p: var(--color-fc-fg);
+	--fx-f: var(--color-fc-page);
 	--fx-m: color-mix(in oklab, var(--fx-f) 56%, var(--fx-p));
 	--fx-c: color-mix(in oklab, var(--fx-f) 3.5%, var(--fx-p));
 	--fx-s: color-mix(in oklab, var(--fx-f) 7%, var(--fx-p));
@@ -30,9 +30,27 @@
 		--fx-f 200ms ease-out;
 }
 
-.flux-pal.swap {
+.flux-pal.swap,
+:root.dark .flux-pal {
+	--fx-p: var(--color-fc-page);
+	--fx-f: var(--color-fc-fg);
+}
+
+:root.dark .flux-pal.swap {
 	--fx-p: var(--color-fc-fg);
 	--fx-f: var(--color-fc-page);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not(.light) .flux-pal {
+		--fx-p: var(--color-fc-page);
+		--fx-f: var(--color-fc-fg);
+	}
+
+	:root:not(.light) .flux-pal.swap {
+		--fx-p: var(--color-fc-fg);
+		--fx-f: var(--color-fc-page);
+	}
 }
 
 .flux-pal .mes-bar.mes-bar {
