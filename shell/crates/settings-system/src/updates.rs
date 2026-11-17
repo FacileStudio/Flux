@@ -63,21 +63,28 @@ pub fn page() -> Widget {
     update.set_transition_type(gtk4::RevealerTransitionType::Crossfade);
     let body = Box::new(Orientation::Vertical, 24);
     body.append(&ui::spinner_row(text.updates_title));
+    task.guard(&body);
     let page = Rc::new(Page { text, body, task, status, spinner, check, update });
     column.append(page.task.widget());
     column.append(&page.body);
     let weak = Rc::downgrade(&page);
     page.task.on_finish(move |outcome| {
-        if let (Some(page), Outcome::Done { .. }) = (weak.upgrade(), outcome) {
-            ui::show(&page.update, false);
-            page.reload();
+        let Some(page) = weak.upgrade() else {
+            return;
+        };
+        match outcome {
+            Outcome::Done { restart } => {
+                ui::show(&page.update, false);
+                if restart {
+                    page.task.dismiss();
+                }
+            }
+            Outcome::Dismissed | Outcome::Failed => {}
         }
+        page.reload();
     });
     let start = page.clone();
-    update_button.connect_clicked(move |_| {
-        start.check.set_sensitive(false);
-        start.task.start(vec!["update".to_string()], None);
-    });
+    update_button.connect_clicked(move |_| start.task.start(vec!["update".to_string()], None));
     let checker = page.clone();
     page.check.connect_clicked(move |_| checker.run_check());
     page.reload();
@@ -95,15 +102,15 @@ impl Page {
     fn preview(self: &Rc<Self>) {
         match backend::preview_state(ID).as_deref() {
             Some("progress") => self.task.sample(Step::Build, 54),
-            Some("error") => self.task.sample_end(Outcome::Failed, "cannot reach the update server"),
+            Some("error") => self.task.sample_end(Outcome::Failed, 1, "flux-config: cannot reach the update server: fatal: unable to access 'https://github.com/FacileStudio/Flux/': Could not resolve host: github.com"),
             _ => {}
         }
     }
 
     fn reload(self: &Rc<Self>) {
         let page = self.clone();
-        backend::spawn(|| (backend::installed(), backend::generations()), move |(installed, generations)| {
-            page.fill(&installed, &generations);
+        backend::spawn(|| (backend::installed(), backend::generations(), backend::problem()), move |(installed, generations, problem)| {
+            page.fill(&installed, &generations, problem.as_deref());
         });
     }
 
@@ -127,8 +134,11 @@ impl Page {
         });
     }
 
-    fn fill(self: &Rc<Self>, installed: &Installed, generations: &[Generation]) {
+    fn fill(self: &Rc<Self>, installed: &Installed, generations: &[Generation], problem: Option<&str>) {
         ui::clear(&self.body);
+        if let Some(problem) = problem {
+            self.body.append(&ui::problem_banner(self.text, problem));
+        }
         self.body.append(&self.hero(installed));
         self.check.set_sensitive(!self.task.busy());
         if installed.restart && !self.task.busy() {
@@ -184,7 +194,15 @@ impl Page {
         let text = self.text;
         let (section, card) = ui::section("");
         let page = self.clone();
-        let (row, _) = ui::switch_row(text.auto_updates, text.auto_updates_hint, active, move |on| {
+        let hint = move |on: bool| if on { text.auto_updates_hint } else { text.auto_updates_off };
+        let switch = gtk4::Switch::new();
+        switch.set_active(active);
+        switch.update_property(&[gtk4::accessible::Property::Label(text.auto_updates)]);
+        let row = ui::row_with(text.auto_updates, hint(active), Some(switch.upcast_ref()));
+        let subtitle = row.subtitle.clone();
+        switch.connect_active_notify(move |switch| {
+            let on = switch.is_active();
+            subtitle.set_text(hint(on));
             let page = page.clone();
             let value = if on { "on" } else { "off" };
             backend::spawn(move || backend::run_quick(&["set", "auto-update", value]), move |ok| {
@@ -193,7 +211,7 @@ impl Page {
                 }
             });
         });
-        card.append(&row);
+        card.append(&row.root);
         section
     }
 

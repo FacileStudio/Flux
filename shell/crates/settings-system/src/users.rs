@@ -11,7 +11,7 @@ use gtk4::{Align, Box, Button, Entry, Label, Orientation, PasswordEntry, Reveale
 
 use crate::backend;
 use crate::i18n::{self, fill, Text};
-use crate::task::{self, Outcome, Task};
+use crate::task::{self, Task};
 use crate::ui;
 
 pub const ID: &str = "users";
@@ -72,10 +72,11 @@ pub fn page() -> Widget {
     let body = Box::new(Orientation::Vertical, 24);
     body.append(&ui::spinner_row(text.users_title));
     column.append(&body);
+    task.guard(&body);
     let page = Rc::new(Page { text, body, task });
     let weak = Rc::downgrade(&page);
-    page.task.on_finish(move |outcome| {
-        if let (Some(page), Outcome::Done { .. }) = (weak.upgrade(), outcome) {
+    page.task.on_finish(move |_| {
+        if let Some(page) = weak.upgrade() {
             page.reload();
         }
     });
@@ -106,12 +107,17 @@ fn password_entry() -> PasswordEntry {
 impl Page {
     fn reload(self: &Rc<Self>) {
         let page = self.clone();
-        backend::spawn(|| (backend::settings(), backend::me()), move |(settings, me)| page.fill(&settings, &me));
+        backend::spawn(|| (backend::settings(), backend::me(), backend::problem()), move |(settings, me, problem)| {
+            page.fill(&settings, &me, problem.as_deref());
+        });
     }
 
-    fn fill(self: &Rc<Self>, settings: &Settings, me: &str) {
+    fn fill(self: &Rc<Self>, settings: &Settings, me: &str, problem: Option<&str>) {
         ui::clear(&self.body);
         let text = self.text;
+        if let Some(problem) = problem {
+            self.body.append(&ui::problem_banner(text, problem));
+        }
         let (section, card) = ui::section("");
         let header = Box::new(Orientation::Horizontal, 12);
         header.add_css_class("fx-section-header");
@@ -194,9 +200,43 @@ impl Page {
         });
         admin_switch.set_sensitive(!me && !last_admin);
         panel.append(&admin_row);
+        panel.append(&self.name_box(user));
         panel.append(&self.password_box(user));
         panel.append(&self.remove_box(user, me, last_admin));
         panel
+    }
+
+    fn name_box(self: &Rc<Self>, user: &User) -> Box {
+        let text = self.text;
+        let entry = Entry::new();
+        entry.set_text(&user.full_name);
+        entry.set_max_length(64);
+        entry.set_hexpand(true);
+        let save = ui::secondary_button(text.save);
+        save.set_sensitive(false);
+        let line = Box::new(Orientation::Horizontal, 8);
+        line.append(&entry);
+        line.append(&save);
+        let (field, error) = ui::field(text.full_name, &line);
+        let current = user.full_name.clone();
+        let button = save.clone();
+        entry.connect_changed(move |entry| {
+            let name = entry.text().trim().to_string();
+            let valid = validate::full_name(&name).is_ok();
+            ui::set_error(&error, if valid { "" } else { text.name_invalid });
+            button.set_sensitive(valid && name != current);
+        });
+        let page = self.clone();
+        let login = user.name.clone();
+        let input = entry.clone();
+        save.connect_clicked(move |_| page.change(&["user", "rename", &login, input.text().trim()], None));
+        let button = save.clone();
+        entry.connect_activate(move |_| {
+            if button.is_sensitive() {
+                button.emit_clicked();
+            }
+        });
+        field
     }
 
     fn password_box(self: &Rc<Self>, user: &User) -> Box {

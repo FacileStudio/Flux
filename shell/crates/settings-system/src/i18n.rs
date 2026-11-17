@@ -32,6 +32,20 @@ pub struct Text {
     pub formats_hint: &'static str,
     pub formats_same: &'static str,
     pub next_login: &'static str,
+    pub login_keyboard: &'static str,
+    pub login_keyboard_hint: &'static str,
+    pub software_section: &'static str,
+    pub software_facile: &'static str,
+    pub software_facile_body: &'static str,
+    pub software_apps: &'static str,
+    pub software_apps_body: &'static str,
+    pub software_gaming: &'static str,
+    pub software_gaming_body: &'static str,
+    pub software_nvidia: &'static str,
+    pub software_nvidia_body: &'static str,
+    pub software_note: &'static str,
+    pub problem_title: &'static str,
+    pub problem_body: &'static str,
 
     pub users_title: &'static str,
     pub users_subtitle: &'static str,
@@ -74,6 +88,7 @@ pub struct Text {
     pub restart_hint: &'static str,
     pub auto_updates: &'static str,
     pub auto_updates_hint: &'static str,
+    pub auto_updates_off: &'static str,
     pub previous: &'static str,
     pub previous_hint: &'static str,
     pub current: &'static str,
@@ -98,6 +113,14 @@ pub struct Text {
     pub details: &'static str,
     pub failed: &'static str,
     pub failed_hint: &'static str,
+    pub failed_unknown: &'static str,
+    pub failed_auth: &'static str,
+    pub failed_admin: &'static str,
+    pub failed_unsupported: &'static str,
+    pub failed_busy: &'static str,
+    pub failed_settings: &'static str,
+    pub failed_space: &'static str,
+    pub failed_network: &'static str,
     pub dismiss: &'static str,
     pub keep_going: &'static str,
 }
@@ -133,7 +156,21 @@ pub const EN: Text = Text {
     formats: "Formats",
     formats_hint: "Dates, numbers and currency",
     formats_same: "Same as language",
-    next_login: "Language and formats apply the next time you sign in.",
+    next_login: "These apply the next time you sign in.",
+    login_keyboard: "Keyboard at the login screen",
+    login_keyboard_hint: "Used to type your password. The layouts of your session are in Keyboard and mouse.",
+    software_section: "Software",
+    software_facile: "Facile tools",
+    software_facile_body: "kit, the Facile package manager, with Sablier, Nuage, Casier, Bulle and the other Facile tools.",
+    software_apps: "Everyday apps",
+    software_apps_body: "Firefox, Files, a text editor, a calculator and viewers for images, PDFs and videos. Turn off for a minimal desktop.",
+    software_gaming: "Gaming",
+    software_gaming_body: "Steam with Proton, GameMode, Gamescope and MangoHud. Some online games block Linux with their anti-cheat.",
+    software_nvidia: "NVIDIA driver",
+    software_nvidia_body: "This computer has an NVIDIA graphics card. Its own driver is much faster than the free one.",
+    software_note: "Gaming and the NVIDIA driver download from the internet. This can take a while.",
+    problem_title: "The settings file has an error",
+    problem_body: "Flux cannot read /etc/flux/settings.json. Changes made here will fail until the file is fixed.",
 
     users_title: "Users",
     users_subtitle: "Who can sign in to this device.",
@@ -176,6 +213,7 @@ pub const EN: Text = Text {
     restart_hint: "The new version is installed. Restart to start using it.",
     auto_updates: "Update automatically",
     auto_updates_hint: "Once a week, while plugged in",
+    auto_updates_off: "Off. Flux only updates when you choose Update now on this page.",
     previous: "Previous versions",
     previous_hint: "Each update keeps the version before it, so you can always go back.",
     current: "In use",
@@ -200,6 +238,14 @@ pub const EN: Text = Text {
     details: "Details",
     failed: "That did not work",
     failed_hint: "Your system was not changed.",
+    failed_unknown: "Your system was not changed. Details shows the technical message.",
+    failed_auth: "The password was wrong, or this account may not change system settings.",
+    failed_admin: "Only an administrator can make this change.",
+    failed_unsupported: "This version of Flux cannot make this change. Update Flux, then try again.",
+    failed_busy: "Another change is still running. Wait for it to finish, then try again.",
+    failed_settings: "The settings file /etc/flux/settings.json has an error, so Flux cannot save changes.",
+    failed_space: "The disk is full. Free some space, for example with Clean up in Updates, then try again.",
+    failed_network: "Flux could not reach the internet. Check your connection, then try again.",
     dismiss: "Close",
     keep_going: "You can close Settings. The change keeps going and shows here when you come back.",
 };
@@ -235,7 +281,21 @@ pub const FR: Text = Text {
     formats: "Formats",
     formats_hint: "Dates, nombres et devises",
     formats_same: "Comme la langue",
-    next_login: "La langue et les formats s'appliquent à la prochaine connexion.",
+    next_login: "Ces réglages s'appliquent à la prochaine connexion.",
+    login_keyboard: "Clavier de l'écran de connexion",
+    login_keyboard_hint: "Sert à saisir votre mot de passe. Les dispositions de votre session sont dans Clavier et souris.",
+    software_section: "Logiciels",
+    software_facile: "Outils Facile",
+    software_facile_body: "kit, le gestionnaire de paquets Facile, avec Sablier, Nuage, Casier, Bulle et les autres outils Facile.",
+    software_apps: "Apps du quotidien",
+    software_apps_body: "Firefox, Fichiers, un éditeur de texte, une calculatrice et des visionneuses d'images, de PDF et de vidéos. Désactivez pour un bureau minimal.",
+    software_gaming: "Jeux",
+    software_gaming_body: "Steam avec Proton, GameMode, Gamescope et MangoHud. Certains jeux en ligne bloquent Linux avec leur anti-triche.",
+    software_nvidia: "Pilote NVIDIA",
+    software_nvidia_body: "Cet ordinateur a une carte graphique NVIDIA. Son propre pilote est bien plus rapide que le pilote libre.",
+    software_note: "Les jeux et le pilote NVIDIA se téléchargent depuis internet. Cela peut prendre un moment.",
+    problem_title: "Le fichier de réglages contient une erreur",
+    problem_body: "Flux ne peut pas lire /etc/flux/settings.json. Les changements faits ici échoueront tant que le fichier n'est pas corrigé.",
 
     users_title: "Utilisateurs",
     users_subtitle: "Qui peut se connecter à cet appareil.",
@@ -278,6 +338,7 @@ pub const FR: Text = Text {
     restart_hint: "La nouvelle version est installée. Redémarrez pour l'utiliser.",
     auto_updates: "Mettre à jour automatiquement",
     auto_updates_hint: "Une fois par semaine, sur secteur",
+    auto_updates_off: "Désactivé. Flux ne se met à jour que si vous choisissez Mettre à jour sur cette page.",
     previous: "Versions précédentes",
     previous_hint: "Chaque mise à jour garde la version d'avant : vous pouvez toujours y revenir.",
     current: "En cours",
@@ -302,6 +363,14 @@ pub const FR: Text = Text {
     details: "Détails",
     failed: "Cela n'a pas fonctionné",
     failed_hint: "Votre système n'a pas été modifié.",
+    failed_unknown: "Votre système n'a pas été modifié. Détails affiche le message technique.",
+    failed_auth: "Le mot de passe est incorrect, ou ce compte ne peut pas modifier les réglages du système.",
+    failed_admin: "Seul un administrateur peut faire ce changement.",
+    failed_unsupported: "Cette version de Flux ne peut pas faire ce changement. Mettez Flux à jour, puis réessayez.",
+    failed_busy: "Un autre changement est encore en cours. Attendez qu'il se termine, puis réessayez.",
+    failed_settings: "Le fichier de réglages /etc/flux/settings.json contient une erreur. Flux ne peut pas enregistrer les changements.",
+    failed_space: "Le disque est plein. Libérez de l'espace, par exemple avec Nettoyer dans Mises à jour, puis réessayez.",
+    failed_network: "Flux n'a pas pu joindre internet. Vérifiez la connexion, puis réessayez.",
     dismiss: "Fermer",
     keep_going: "Vous pouvez fermer les Réglages. Le changement continue et s'affiche ici à votre retour.",
 };
@@ -345,6 +414,32 @@ pub fn locale_name(locale: &str) -> &'static str {
     }
 }
 
+/// The name a login keyboard layout goes by, in its own language.
+pub fn keymap_name(keymap: &str) -> &'static str {
+    match keymap {
+        "us" => "English (US)",
+        "gb" => "English (UK)",
+        "fr" => "Français (AZERTY)",
+        "de" => "Deutsch",
+        "es" => "Español",
+        "it" => "Italiano",
+        "pt" => "Português",
+        "br" => "Português (Brasil)",
+        "be" => "Belge",
+        "ch" => "Schweiz, Suisse",
+        "ca" => "Canadien",
+        "nl" => "Nederlands",
+        "se" => "Svenska",
+        "no" => "Norsk",
+        "dk" => "Dansk",
+        "fi" => "Suomi",
+        "pl" => "Polski",
+        "cz" => "Čeština",
+        "latam" => "Español (Latinoamérica)",
+        _ => "",
+    }
+}
+
 /// `template` with each `{key}` replaced.
 pub fn fill(template: &str, pairs: &[(&str, &str)]) -> String {
     pairs.iter().fold(template.to_string(), |text, (key, value)| text.replace(&format!("{{{key}}}"), value))
@@ -384,6 +479,9 @@ mod tests {
         assert_eq!(fill("Remove {name}? /home/{user}", &[("name", "Bob"), ("user", "bob")]), "Remove Bob? /home/bob");
         for locale in flux_config::validate::LOCALES {
             assert!(!locale_name(locale).is_empty(), "{locale}");
+        }
+        for keymap in flux_config::validate::KEYMAPS {
+            assert!(!keymap_name(keymap).is_empty(), "{keymap}");
         }
     }
 }

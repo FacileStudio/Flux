@@ -65,6 +65,64 @@ pub fn settings() -> Settings {
     }
 }
 
+/// Why the settings file cannot be read, or `None` when it is fine or not there yet.
+/// While this is set, `flux-config` refuses every change.
+pub fn problem() -> Option<String> {
+    if preview() {
+        let invalid = std::env::var(PREVIEW_VAR).is_ok_and(|value| value.ends_with(":invalid"));
+        return invalid.then(|| "settings.json: unknown field `hostnme`, expected one of `version`, `hostname` at line 3 column 12".to_string());
+    }
+    settings::load(&paths().settings(), None).err()
+}
+
+/// The optional software groups and drivers of the machine.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Software {
+    pub facile: bool,
+    pub apps: bool,
+    pub gaming: bool,
+    pub nvidia: bool,
+}
+
+/// Read the software choices from the settings document. A key the file leaves out
+/// takes the value Flux installs by default: Facile tools and apps on, gaming and NVIDIA off.
+pub fn software_of(document: &serde_json::Value) -> Software {
+    let flag = |pointer: &str, default: bool| document.pointer(pointer).and_then(serde_json::Value::as_bool).unwrap_or(default);
+    Software {
+        facile: flag("/software/facile", true),
+        apps: flag("/software/apps", true),
+        gaming: flag("/software/gaming", false),
+        nvidia: flag("/hardware/nvidia", false),
+    }
+}
+
+/// The software choices in `settings`.
+pub fn software(settings: &Settings) -> Software {
+    software_of(&serde_json::to_value(settings).unwrap_or_default())
+}
+
+/// Whether a PCI device's `vendor`, `device` and `class` files describe an NVIDIA display
+/// controller of the Turing generation or newer (device id 0x1e00 and up), the cards the
+/// Flux NVIDIA driver supports. The installer applies the same rule.
+pub fn nvidia_display(vendor: &str, device: &str, class: &str) -> bool {
+    let id = u32::from_str_radix(device.trim().trim_start_matches("0x"), 16).unwrap_or(0);
+    vendor.trim().eq_ignore_ascii_case("0x10de") && class.trim().to_ascii_lowercase().starts_with("0x03") && id >= 0x1e00
+}
+
+/// Whether the machine has an NVIDIA card the driver supports.
+pub fn nvidia_gpu() -> bool {
+    if preview() {
+        return true;
+    }
+    let Ok(devices) = std::fs::read_dir("/sys/bus/pci/devices") else {
+        return false;
+    };
+    devices.flatten().any(|device| {
+        let read = |name: &str| std::fs::read_to_string(device.path().join(name)).unwrap_or_default();
+        nvidia_display(&read("vendor"), &read("device"), &read("class"))
+    })
+}
+
 /// The login name of the person using Settings.
 pub fn me() -> String {
     if preview() {
@@ -259,6 +317,9 @@ pub enum Message {
 /// pkexec's exit code when the person dismissed the password prompt.
 pub const AUTH_DISMISSED: i32 = 126;
 
+/// pkexec's exit code when the password was wrong or the person may not make the change.
+pub const AUTH_REFUSED: i32 = 127;
+
 fn preview_run(sender: &Sender<Message>) {
     let steps = [
         (Step::Start, 0),
@@ -316,8 +377,7 @@ pub fn run(args: Vec<String>, input: Option<String>, sender: Sender<Message>) {
         }
         let code = child.wait().ok().and_then(|status| status.code()).unwrap_or(-1);
         let error = errors.and_then(|handle| handle.join().ok()).unwrap_or_default();
-        let error = error.lines().rev().find(|line| !line.trim().is_empty()).unwrap_or("").trim_start_matches("flux-config: ").to_string();
-        let _ = sender.send(Message::Exit { code, error });
+        let _ = sender.send(Message::Exit { code, error: error.trim().to_string() });
     });
 }
 
@@ -340,5 +400,27 @@ pub fn run_quick(args: &[&str]) -> bool {
 pub fn reboot() {
     if !preview() {
         let _ = Command::new("systemctl").arg("reboot").spawn();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn software_defaults_and_values() {
+        let absent = serde_json::json!({ "hostname": "flux" });
+        assert_eq!(software_of(&absent), Software { facile: true, apps: true, gaming: false, nvidia: false });
+        let set = serde_json::json!({ "software": { "facile": false, "gaming": true }, "hardware": { "nvidia": true } });
+        assert_eq!(software_of(&set), Software { facile: false, apps: true, gaming: true, nvidia: true });
+        assert_eq!(software(&Settings::default()), Software { facile: true, apps: true, gaming: false, nvidia: false });
+    }
+
+    #[test]
+    fn nvidia_cards() {
+        assert!(nvidia_display("0x10de\n", "0x2684\n", "0x030000\n"));
+        assert!(!nvidia_display("0x10de", "0x1c82", "0x030000"));
+        assert!(!nvidia_display("0x8086", "0x2684", "0x030000"));
+        assert!(!nvidia_display("0x10de", "0x2684", "0x040300"));
     }
 }
