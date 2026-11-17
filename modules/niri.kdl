@@ -60,22 +60,25 @@ window-rule {
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    Mod+Return { spawn "ghostty"; }
-    Mod+D { spawn "fuzzel"; }
-    Mod+Space { spawn "launcher"; }
-    Mod+N { spawn "sidebar" "toggle"; }
-    Mod+Comma { spawn "flux-settings"; }
-    Mod+Escape { spawn "exit"; }
-    Super+Alt+L { spawn "loginctl" "lock-session"; }
-    Mod+Shift+V { spawn "sh" "-c" "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
+    Mod+Space hotkey-overlay-title="Open an app" { spawn "launcher"; }
+    Mod+D hotkey-overlay-title=null { spawn "launcher"; }
+    Mod+Return hotkey-overlay-title="Open the terminal" { spawn "ghostty"; }
+    Mod+E hotkey-overlay-title="Open your files" { spawn "sh" "-c" "xdg-open \"$HOME\""; }
+    Mod+N hotkey-overlay-title="Notifications and quick settings" { spawn "sidebar" "toggle"; }
+    Mod+Comma hotkey-overlay-title="Open Settings" { spawn "flux-settings"; }
+    Mod+Shift+V hotkey-overlay-title="Clipboard history" { spawn "sh" "-c" "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
+    Super+L hotkey-overlay-title="Lock the screen" { spawn "loginctl" "lock-session"; }
+    Mod+Escape hotkey-overlay-title="Sign out, restart or shut down" { spawn "exit"; }
 
     Mod+Q { close-window; }
+    Alt+F4 { close-window; }
     Mod+O repeat=false { toggle-overview; }
+    Mod+Tab repeat=false { toggle-overview; }
 
-    Mod+H { focus-column-left; }
-    Mod+J { focus-window-down; }
-    Mod+K { focus-window-up; }
-    Mod+L { focus-column-right; }
+    Mod+Alt+H { focus-column-left; }
+    Mod+Alt+J { focus-window-down; }
+    Mod+Alt+K { focus-window-up; }
+    Mod+Alt+L { focus-column-right; }
     Mod+Left { focus-column-left; }
     Mod+Down { focus-window-down; }
     Mod+Up { focus-window-up; }
@@ -136,19 +139,20 @@ binds {
     Mod+W { toggle-column-tabbed-display; }
 
     Print { screenshot; }
+    Mod+Shift+S { screenshot; }
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
 
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "-l" "1.0" "@DEFAULT_AUDIO_SINK@" "5%+"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
-    XF86AudioMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    XF86AudioMicMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--quiet" "set" "5%+"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--quiet" "set" "5%-"; }
-    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
-    XF86AudioPause allow-when-locked=true { spawn "playerctl" "pause"; }
-    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
-    XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title=null { spawn "wpctl" "set-volume" "-l" "1.0" "@DEFAULT_AUDIO_SINK@" "5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title=null { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
+    XF86AudioMute allow-when-locked=true hotkey-overlay-title=null { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86AudioMicMute allow-when-locked=true hotkey-overlay-title=null { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+    XF86MonBrightnessUp allow-when-locked=true hotkey-overlay-title=null { spawn "brightnessctl" "--quiet" "set" "5%+"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title=null { spawn "brightnessctl" "--quiet" "set" "5%-"; }
+    XF86AudioPlay allow-when-locked=true hotkey-overlay-title=null { spawn "playerctl" "play-pause"; }
+    XF86AudioPause allow-when-locked=true hotkey-overlay-title=null { spawn "playerctl" "pause"; }
+    XF86AudioPrev allow-when-locked=true hotkey-overlay-title=null { spawn "playerctl" "previous"; }
+    XF86AudioNext allow-when-locked=true hotkey-overlay-title=null { spawn "playerctl" "next"; }
 
     Mod+Shift+P { power-off-monitors; }
     Mod+Shift+E { quit; }
@@ -156,3 +160,4 @@ binds {
 
 include optional=true "~/.config/flux/niri/input.kdl"
 include optional=true "~/.config/flux/niri/outputs.kdl"
+include optional=true "~/.config/flux/niri/appearance.kdl"

@@ -2,7 +2,7 @@
 
 1. Conecte la memoria y reinicie el ordenador.
 2. Abra el menú de arranque (a menudo F12, F10 o Esc al encender) y elija la memoria USB.
-3. Flux arranca en el escritorio, sin instalar nada.
+3. Flux arranca y el instalador se abre. Elija **Try Flux** para probar el sistema sin cambiar nada.
 
 Si aparece una pantalla de inicio de sesión:
 

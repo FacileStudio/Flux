@@ -594,7 +594,7 @@ class Run:
         m.key("ctrl", "u")
 
     def open_terminal(self, m, phase, command, marker, mode, login=None, attempts=4):
-        """Open a shell (niri: Mod+Return or fuzzel; vt: Ctrl+Alt+F2), type `command`, wait for `marker` on serial."""
+        """Open a shell (niri: Mod+Return or the launcher; vt: Ctrl+Alt+F2), type `command`, wait for `marker` on serial."""
         for attempt in range(1, attempts + 1):
             self.log(f"[{phase}] attempt {attempt}: open a {mode} terminal and type the test command")
             self.launch_terminal(m, mode, attempt, login if attempt == 1 or mode == "niri" else None)
