@@ -1,17 +1,29 @@
 # Roll back
 
-Each update keeps the previous version of the system, called a generation.
+Each update keeps the version of the system before it. Going back changes the system only: your files and settings stay where they are.
 
-## From the boot menu
+## Flux still starts
 
-Restart, then pick the previous generation in the menu. Flux starts exactly as it was before the update.
+Open Settings with **Mod+Comma**, then Updates. Under **Previous versions**, choose **Go back** next to the version you want.
 
-## From the terminal
+From a terminal:
 
 ```sh
-sudo nixos-rebuild switch --rollback
+pkexec flux-config rollback
 ```
 
-The system goes back to the previous generation without a restart.
+## Flux does not start, or the screen stays black
 
-Your personal files stay where they are: only the system changes version.
+1. Hold the power button until the computer turns off.
+2. Turn it on again. The boot menu shows by itself, because the last start did not end with a clean shutdown. It waits 30 seconds.
+3. Choose **Flux - All configurations**, then the line dated before the update.
+
+Flux starts as it was on that date. This choice lasts for one start. To keep it, open Settings, then Updates, and choose **Go back** next to the same version.
+
+## Open the boot menu yourself
+
+The boot menu is hidden on a normal start. To show it, turn the computer on and tap **Esc** right away, several times. On computers where Esc opens the firmware menu, hold **Shift** instead.
+
+## How long versions stay
+
+The boot menu lists the ten most recent versions. Once a week, Flux deletes the versions older than 30 days and removes them from the menu.

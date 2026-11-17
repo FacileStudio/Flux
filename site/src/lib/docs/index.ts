@@ -1,5 +1,6 @@
 /** The docs pages in reading order. Each one is `src/lib/docs/<locale>/<slug>.md`, starting with a `# Title` line. */
 export const SLUGS = [
+	'before-you-switch',
 	'requirements',
 	'download',
 	'usb',
