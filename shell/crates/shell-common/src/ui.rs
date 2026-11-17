@@ -285,6 +285,7 @@ pub fn spinner_row(title: &str) -> gtk4::Box {
     line.append(&spinner);
     let text = label(title, "fx-subtitle");
     text.set_valign(Align::Center);
+    text.set_hexpand(true);
     line.append(&text);
     line
 }
