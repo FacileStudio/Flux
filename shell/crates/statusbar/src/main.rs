@@ -121,6 +121,19 @@ fn sync(shell: &Rc<Shell>, monitors: &gio::ListModel) {
         }
         let bar = Bar::new(&shell.app, &monitor, &shell.painted);
         bar.render(&shell.state.borrow());
+        redraw_when_named(shell, &bar);
         bars.push(bar);
     }
+}
+
+/// Draw `bar` again once its monitor's connector is known. On hotplug the
+/// monitor is listed before its name arrives, and until then the bar cannot
+/// tell its own output's workspaces from the others.
+fn redraw_when_named(shell: &Rc<Shell>, bar: &Rc<Bar>) {
+    let (shell, target) = (Rc::downgrade(shell), Rc::downgrade(bar));
+    bar.monitor.connect_connector_notify(move |_| {
+        if let (Some(shell), Some(bar)) = (shell.upgrade(), target.upgrade()) {
+            bar.render(&shell.state.borrow());
+        }
+    });
 }

@@ -29,7 +29,6 @@ pub struct Bar {
     pub monitor: gdk::Monitor,
     window: gtk4::ApplicationWindow,
     popup: Popup,
-    connector: Option<String>,
     workspaces: Box,
     chips: RefCell<Vec<(u64, Button)>>,
     title: Label,
@@ -73,7 +72,6 @@ impl Bar {
             monitor: monitor.clone(),
             window: layer.window,
             popup,
-            connector: monitor.connector().map(|name| name.to_string()),
             workspaces,
             chips: RefCell::new(Vec::new()),
             title,
@@ -81,9 +79,12 @@ impl Bar {
         })
     }
 
-    /// Draw this bar's view of the niri state.
+    /// Draw this bar's view of the niri state. The connector is read on every
+    /// draw: a monitor plugged in after login joins the list before its name
+    /// arrives, and a name kept from that moment would be `None` for good.
     pub fn render(&self, state: &State) {
-        let view = state.view(self.connector.as_deref());
+        let connector = self.monitor.connector();
+        let view = state.view(connector.as_deref());
         self.render_chips(&view.chips);
         self.title.set_text(view.title.as_deref().unwrap_or_default());
         self.title.set_visible(view.title.is_some());
