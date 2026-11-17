@@ -116,6 +116,12 @@ impl Page {
         self.propose(&output, config);
     }
 
+    fn outputs_changed(self: &Rc<Self>) {
+        if self.pending.borrow().is_none() {
+            self.refresh();
+        }
+    }
+
     fn refresh_soon(self: &Rc<Self>) {
         if backend::preview() {
             return;
@@ -129,7 +135,10 @@ impl Page {
         backend::spawn(
             move || backend::save_outputs(move |state| state.outputs.extend(configs)),
             move |result| match result {
-                Ok(_) => this.refresh_soon(),
+                Ok(_) => {
+                    this.error.set_visible(false);
+                    this.refresh_soon();
+                }
                 Err(message) => this.show_error(this.text.save_failed, &message),
             },
         );
@@ -147,7 +156,10 @@ impl Page {
         self.content.set_sensitive(false);
         let this = self.clone();
         backend::spawn(move || backend::apply_live(&new), move |result| match result {
-            Ok(()) => this.start_countdown(generation),
+            Ok(()) => {
+                this.error.set_visible(false);
+                this.start_countdown(generation);
+            }
             Err(message) => {
                 this.show_error(this.text.apply_failed, &message);
                 this.revert();
@@ -480,6 +492,22 @@ pub fn page() -> gtk4::Widget {
         || (backend::load_state().night, backend::coordinates().is_some()),
         move |(night_light, located)| night_slot.append(&night::section(text, night_light, located)),
     );
-    page.refresh();
+    let weak = Rc::downgrade(&page);
+    scroller.connect_map(move |_| {
+        if let Some(page) = weak.upgrade() {
+            page.outputs_changed();
+        }
+    });
+    if let Some(display) = gtk4::gdk::Display::default() {
+        let weak = Rc::downgrade(&page);
+        display.monitors().connect_items_changed(move |_, _, _, _| {
+            let weak = weak.clone();
+            glib::timeout_add_local_once(Duration::from_millis(800), move || {
+                if let Some(page) = weak.upgrade() {
+                    page.outputs_changed();
+                }
+            });
+        });
+    }
     scroller.upcast()
 }
