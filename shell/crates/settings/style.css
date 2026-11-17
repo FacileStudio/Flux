@@ -14,86 +14,31 @@ window.fx-settings viewport {
   background-color: @fc_component;
 }
 
-entry.fx-search,
-searchentry.fx-search {
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: 8px;
-  background-color: @fc_surface;
-  color: @fc_fg;
-  font-size: 14px;
-  outline: 0 solid transparent;
-}
-
-searchentry.fx-search:focus-within {
-  outline: 2px solid @fc_ring;
-  outline-offset: 2px;
-}
-
-searchentry.fx-search text {
-  background-color: transparent;
-  color: @fc_fg;
-}
-
-searchentry.fx-search text placeholder,
-searchentry.fx-search image {
-  color: @fc_fg_muted;
-}
-
-list.fx-nav-list {
-  background-color: transparent;
-}
-
-list.fx-nav-list > row {
-  min-height: 40px;
-  margin-bottom: 2px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: @fc_fg;
-  background-color: transparent;
-  outline: 0 solid transparent;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
-}
-
-list.fx-nav-list > row:hover {
-  background-color: @fc_surface;
-}
-
-list.fx-nav-list > row:selected {
-  background-color: @fc_accent;
-  color: @fc_accent_fg;
-}
-
-list.fx-nav-list > row:focus-visible {
-  outline: 2px solid @fc_ring;
-  outline-offset: -2px;
-}
-
 .fx-nav > label.fx-subtitle {
   padding: 0 12px;
 }
 
 button.fx-theme {
+  margin: 16px 0;
   padding: 0;
   background-color: transparent;
   border-radius: 12px;
 }
 
-button.fx-theme:hover {
+button.fx-theme:hover,
+button.fx-theme:active {
   background-color: transparent;
 }
 
 .fx-theme-preview {
   border-radius: 12px;
   outline: 2px solid transparent;
-  outline-offset: 3px;
-  transition: outline-color 150ms ease-out;
+  outline-offset: 2px;
+  transition: outline-color 160ms ease-out;
 }
 
 button.fx-theme:hover .fx-theme-preview {
-  outline-color: alpha(@fc_fg, 0.16);
+  outline-color: alpha(@fc_fg, 0.24);
 }
 
 button.fx-theme.selected .fx-theme-preview {
@@ -120,12 +65,13 @@ button.fx-wallpaper {
   background-color: @fc_surface;
   outline: 2px solid transparent;
   outline-offset: 2px;
-  transition: outline-color 150ms ease-out;
+  transition: outline-color 160ms ease-out;
 }
 
-button.fx-wallpaper:hover {
+button.fx-wallpaper:hover,
+button.fx-wallpaper:active {
   background-color: @fc_surface;
-  outline-color: alpha(@fc_fg, 0.16);
+  outline-color: alpha(@fc_fg, 0.24);
 }
 
 button.fx-wallpaper.current {
@@ -148,23 +94,15 @@ flowbox.fx-wallpapers > flowboxchild {
   outline: 0 solid transparent;
 }
 
+flowbox.fx-wallpapers {
+  margin-top: 16px;
+}
+
+.fx-card > box:last-child:not(:first-child):not(.fx-row) > button.fx-secondary {
+  margin-bottom: 16px;
+}
+
 .fx-mark {
+  margin: 16px 0;
   color: @fc_fg;
-}
-
-.fx-hero-title {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: @fc_fg;
-}
-
-.fx-value {
-  font-size: 14px;
-  color: @fc_fg_muted;
-}
-
-.fx-error {
-  font-size: 12px;
-  color: @fc_danger;
 }

@@ -10,6 +10,15 @@
 //! classes. An app loads it after the palette, before its own sheet:
 //! `theme::init(&format!("{}{}", ui::CSS, OWN), ...)`. A page crate adds only
 //! rules scoped under its own root class, through [`page_style`].
+//!
+//! [`CSS`] is the one definition of every control: button, entry, switch,
+//! slider, drop-down, list row, tag, banner, card. An app sheet never restates
+//! them. Controls come in two sizes: regular (36 px high, 14 px text) and
+//! large (44 px, 16 px), which a full-screen surface gets by putting
+//! `fx-large` on the control or on any ancestor. A card's 20 px inset comes
+//! from its rows, so anything else placed straight in a card brings its own
+//! 16 px top and bottom margin. The details that open under a row go in a box
+//! with the `fx-inset` class, opened by an [`expand_button`].
 
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -285,6 +294,7 @@ pub fn spinner_row(title: &str) -> gtk4::Box {
     line.append(&spinner);
     let text = label(title, "fx-subtitle");
     text.set_valign(Align::Center);
+    text.set_hexpand(true);
     line.append(&text);
     line
 }
@@ -350,10 +360,55 @@ pub fn field(title: &str, input: &impl IsA<gtk4::Widget>) -> (gtk4::Box, gtk4::L
     (column, error)
 }
 
-/// Show `message` under a field, or hide the line when it is empty.
+/// Show `message` under a field, or hide the line when it is empty. The input just before the line takes the `error` look for as long as the message shows.
 pub fn set_error(error: &gtk4::Label, message: &str) {
     error.set_text(message);
     error.set_visible(!message.is_empty());
+    if let Some(input) = error.prev_sibling().and_then(|before| input_in(&before)) {
+        set_invalid(&input, !message.is_empty());
+    }
+}
+
+/// Give `input` the `error` look of the shared sheet, or take it away.
+pub fn set_invalid(input: &impl IsA<gtk4::Widget>, invalid: bool) {
+    if invalid {
+        input.add_css_class("error");
+    } else {
+        input.remove_css_class("error");
+    }
+}
+
+/// The first text input in `widget`, itself included, in the order the eye meets them.
+fn input_in(widget: &gtk4::Widget) -> Option<gtk4::Widget> {
+    if widget.is::<gtk4::Editable>() {
+        return Some(widget.clone());
+    }
+    let mut child = widget.first_child();
+    while let Some(current) = child {
+        if let Some(found) = input_in(&current) {
+            return Some(found);
+        }
+        child = current.next_sibling();
+    }
+    None
+}
+
+/// The button that opens the details under a row: a muted arrow, named `tooltip` on hover and for screen readers. Flip it with [`set_expanded`].
+pub fn expand_button(tooltip: &str) -> gtk4::Button {
+    let button = icon_button("pan-down-symbolic", tooltip);
+    button.add_css_class("fx-expander");
+    button.set_valign(Align::Center);
+    button
+}
+
+/// Point an [`expand_button`] up while its details are `open`, down otherwise.
+pub fn set_expanded(button: &gtk4::Button, open: bool) {
+    if open {
+        button.add_css_class("fx-open");
+    } else {
+        button.remove_css_class("fx-open");
+    }
+    button.update_state(&[gtk4::accessible::State::Expanded(Some(open))]);
 }
 
 /// A revealer that slides `child` down in [`MOTION_MS`] (instantly with animations off) and takes no space while closed.
@@ -392,3 +447,6 @@ pub fn icon(name: &str, size: i32) -> gtk4::Image {
     image.set_pixel_size(size);
     image
 }
+
+#[cfg(test)]
+mod tests;

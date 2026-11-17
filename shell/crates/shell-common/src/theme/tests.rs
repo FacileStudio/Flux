@@ -18,7 +18,7 @@ use super::*;
 /// Each test holds this for its length.
 static GTK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-fn gtk() -> std::sync::MutexGuard<'static, ()> {
+pub(crate) fn gtk() -> std::sync::MutexGuard<'static, ()> {
     GTK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
