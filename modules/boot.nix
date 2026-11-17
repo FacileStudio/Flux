@@ -4,6 +4,8 @@ let
   version = lib.fileContents ../version;
   inherit (config.flux.theme) scheme;
   plymouth = pkgs.flux-plymouth.override { inherit scheme; };
+  grub = config.boot.loader.grub;
+  editenv = "${if grub.efiSupport then pkgs.grub2_efi else pkgs.grub2}/bin/grub-editenv /boot/grub/grubenv";
 in
 {
   config = lib.mkMerge [
@@ -38,6 +40,28 @@ in
           splashImage = null;
           timeoutStyle = lib.mkDefault "hidden";
           configurationLimit = lib.mkDefault 10;
+          extraConfig = ''
+            if [ -s $prefix/grubenv ]; then
+              if [ "$flux_boot" = started ]; then
+                set timeout_style=menu
+                set timeout=30
+              fi
+              set flux_boot=started
+              save_env flux_boot
+            fi
+          '';
+        };
+      };
+
+      systemd.services.flux-boot-mark = lib.mkIf grub.enable {
+        description = "Show the boot menu after a start that did not end in a clean shutdown";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig.RequiresMountsFor = "/boot";
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${editenv} set flux_boot=started";
+          ExecStop = "${editenv} unset flux_boot";
         };
       };
 
