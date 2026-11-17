@@ -2,6 +2,15 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
+use std::sync::{Mutex, MutexGuard};
+
+static SERIAL: Mutex<()> = Mutex::new(());
+
+/// One test at a time: a lock a test holds must not be copied into a child that another test
+/// forks at the same moment, or `one_change_at_a_time` sees it still held.
+fn serial() -> MutexGuard<'static, ()> {
+    SERIAL.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
 
 fn root(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("flux-config-cli-{name}-{}", std::process::id()));
@@ -45,6 +54,7 @@ fn settings(root: &Path) -> serde_json::Value {
 
 #[test]
 fn edits_settings_and_reports_progress() {
+    let _serial = serial();
     let root = root("edit");
     let out = run(&root, &["set", "hostname", "ada-laptop"], "");
     assert!(out.status.success(), "{}", text(&out.stderr));
@@ -65,6 +75,7 @@ fn edits_settings_and_reports_progress() {
 
 #[test]
 fn several_values_and_accounts() {
+    let _serial = serial();
     let root = root("values");
     let out = run(&root, &["set", "timezone", "Europe/Paris", "locale", "fr_FR.UTF-8", "formats", "fr_BE.UTF-8"], "");
     assert!(out.status.success(), "{}", text(&out.stderr));
@@ -86,6 +97,7 @@ fn several_values_and_accounts() {
 
 #[test]
 fn refuses_bad_input_without_writing() {
+    let _serial = serial();
     let root = root("refuse");
     for args in [
         vec!["set", "hostname", "bad-"],
@@ -111,6 +123,7 @@ fn refuses_bad_input_without_writing() {
 
 #[test]
 fn one_change_at_a_time() {
+    let _serial = serial();
     let root = root("lock");
     let _ = fs::create_dir_all(root.join("run/flux-config"));
     let held = fs::OpenOptions::new().write(true).create(true).truncate(false).open(root.join("run/flux-config/lock"));
@@ -120,10 +133,6 @@ fn one_change_at_a_time() {
     assert!(!out.status.success());
     assert!(text(&out.stderr).contains("already running"), "{}", text(&out.stderr));
     drop(held);
-    let settle = fs::OpenOptions::new().write(true).open(root.join("run/flux-config/lock"));
-    if let Ok(settle) = settle {
-        let _ = settle.lock();
-    }
     let out = run(&root, &["apply"], "");
     assert!(out.status.success(), "{}", text(&out.stderr));
     let _ = fs::remove_dir_all(&root);
@@ -131,6 +140,7 @@ fn one_change_at_a_time() {
 
 #[test]
 fn read_only_commands() {
+    let _serial = serial();
     let root = root("read");
     let out = run(&root, &["get"], "");
     let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap_or(serde_json::Value::Null);
