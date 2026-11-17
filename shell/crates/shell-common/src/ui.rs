@@ -351,10 +351,37 @@ pub fn field(title: &str, input: &impl IsA<gtk4::Widget>) -> (gtk4::Box, gtk4::L
     (column, error)
 }
 
-/// Show `message` under a field, or hide the line when it is empty.
+/// Show `message` under a field, or hide the line when it is empty. The input just before the line takes the `error` look for as long as the message shows.
 pub fn set_error(error: &gtk4::Label, message: &str) {
     error.set_text(message);
     error.set_visible(!message.is_empty());
+    if let Some(input) = error.prev_sibling().and_then(|before| input_in(&before)) {
+        set_invalid(&input, !message.is_empty());
+    }
+}
+
+/// Give `input` the `error` look of the shared sheet, or take it away.
+pub fn set_invalid(input: &impl IsA<gtk4::Widget>, invalid: bool) {
+    if invalid {
+        input.add_css_class("error");
+    } else {
+        input.remove_css_class("error");
+    }
+}
+
+/// The first text input in `widget`, itself included, in the order the eye meets them.
+fn input_in(widget: &gtk4::Widget) -> Option<gtk4::Widget> {
+    if widget.is::<gtk4::Editable>() {
+        return Some(widget.clone());
+    }
+    let mut child = widget.first_child();
+    while let Some(current) = child {
+        if let Some(found) = input_in(&current) {
+            return Some(found);
+        }
+        child = current.next_sibling();
+    }
+    None
 }
 
 /// A revealer that slides `child` down in [`MOTION_MS`] (instantly with animations off) and takes no space while closed.
