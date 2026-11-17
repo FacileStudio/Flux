@@ -42,6 +42,18 @@ pub fn os_release(document: &str, key: &str) -> Option<String> {
     })
 }
 
+/// The number of the generation the `system` profile link points at.
+pub fn current_number(system: &Path) -> Option<u32> {
+    fs::read_link(system).ok().and_then(|target| target.file_name().and_then(|name| name.to_str()).and_then(link_number))
+}
+
+/// The store name of generation `number`, such as `<hash>-nixos-system-flux-25.11`: what tells two generations apart
+/// even after `nix-env` reuses a number.
+pub fn store_name(profiles: &Path, number: u32) -> Option<String> {
+    let target = fs::read_link(profiles.join(format!("system-{number}-link"))).ok()?;
+    target.file_name().and_then(|name| name.to_str()).map(String::from)
+}
+
 /// The name a generation is known by: `PRETTY_NAME` from its os-release, else its `nixos-version`.
 fn version_of(link: &Path) -> String {
     fs::read_to_string(link.join("etc/os-release"))
@@ -54,9 +66,7 @@ fn version_of(link: &Path) -> String {
 /// Every generation in `profiles`, newest first. `system` is the profile link
 /// whose target marks the current one.
 pub fn list(profiles: &Path, system: &Path) -> Vec<Generation> {
-    let current = fs::read_link(system)
-        .ok()
-        .and_then(|target| target.file_name().and_then(|name| name.to_str()).and_then(link_number));
+    let current = current_number(system);
     let Ok(entries) = fs::read_dir(profiles) else {
         return Vec::new();
     };
@@ -121,6 +131,9 @@ mod tests {
             .collect();
         assert_eq!(summary, [(2, "Flux 0.2.0", "6.13.0", false), (1, "Flux 0.1.0", "6.12.1", true)]);
         assert!(generations.iter().all(|g| g.date > 0));
+        assert_eq!(current_number(&profiles.join("system")), Some(1));
+        assert_eq!(store_name(&profiles, 2).as_deref(), Some("gen2"));
+        assert_eq!(store_name(&profiles, 9), None);
         assert!(list(&root.join("missing"), &profiles.join("system")).is_empty());
         let _ = fs::remove_dir_all(&root);
     }

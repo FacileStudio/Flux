@@ -1,7 +1,12 @@
 //! The `flux` input of the machine flake: which Flux revision is installed and
 //! where to look for a newer one.
 
+use std::fs;
+use std::path::{Path, PathBuf};
+
 use serde_json::Value;
+
+use crate::settings::copy_atomic;
 
 /// The input name the machine flake gives Flux.
 pub const INPUT: &str = "flux";
@@ -109,9 +114,63 @@ pub fn parse_metadata(output: &str) -> Option<String> {
         .map(String::from)
 }
 
+fn kept(locks: &Path, generation: &str) -> PathBuf {
+    locks.join(format!("{generation}.lock"))
+}
+
+/// Keep a copy of `lock_file` as the lock generation `generation` (its store name) was built from.
+pub fn remember(locks: &Path, generation: &str, lock_file: &Path) -> Result<(), String> {
+    copy_atomic(lock_file, &kept(locks, generation))
+}
+
+/// Whether a lock is kept for `generation`.
+pub fn remembers(locks: &Path, generation: &str) -> bool {
+    kept(locks, generation).is_file()
+}
+
+/// Put the lock kept for `generation` back as `lock_file`: `Ok(false)` when none was kept.
+pub fn recall(locks: &Path, generation: &str, lock_file: &Path) -> Result<bool, String> {
+    if !remembers(locks, generation) {
+        return Ok(false);
+    }
+    copy_atomic(&kept(locks, generation), lock_file).map(|()| true)
+}
+
+/// Delete the kept locks of every generation not named in `alive`.
+pub fn forget_except(locks: &Path, alive: &[String]) {
+    let Ok(entries) = fs::read_dir(locks) else {
+        return;
+    };
+    for entry in entries.filter_map(Result::ok) {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if !alive.iter().any(|generation| name == format!("{generation}.lock")) {
+            let _ = fs::remove_file(entry.path());
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn kept_locks() {
+        let dir = std::env::temp_dir().join(format!("flux-config-locks-{}", std::process::id()));
+        let locks = dir.join("locks");
+        let lock_file = dir.join("flake.lock");
+        let _ = fs::create_dir_all(&dir);
+        let _ = fs::write(&lock_file, "old");
+        assert_eq!(recall(&locks, "gen1", &lock_file), Ok(false));
+        assert_eq!(remember(&locks, "gen1", &lock_file), Ok(()));
+        let _ = fs::write(&lock_file, "new");
+        assert_eq!(remember(&locks, "gen2", &lock_file), Ok(()));
+        assert_eq!(recall(&locks, "gen1", &lock_file), Ok(true));
+        assert_eq!(fs::read_to_string(&lock_file).unwrap_or_default(), "old");
+        forget_except(&locks, &["gen2".to_string()]);
+        assert!(!remembers(&locks, "gen1") && remembers(&locks, "gen2"));
+        assert!(remember(&locks, "gen3", &dir.join("missing.lock")).is_err());
+        let _ = fs::remove_dir_all(&dir);
+    }
 
     const LOCK: &str = include_str!("../tests/fixtures/flake.lock");
 
