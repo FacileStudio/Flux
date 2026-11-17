@@ -41,6 +41,5 @@ container, on the external `dokploy-network`. The domain is set in Dokploy.
   (`logo/nix-snowflake-white.svg`), flattened to one monochrome path. It is licensed under
   CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
 - App marks and feature icons are from Solar by 480 Design, CC BY 4.0.
-- `static/monstera.jpg`, the default Flux wallpaper shown in the demos, is a photo by Gilles Lambert,
-  https://unsplash.com/photos/mSK5nNsAsLY, under the Unsplash License: https://unsplash.com/license.
-  It is resized from `pkgs/flux-wallpapers/images/monstera.jpg`.
+- `static/concrete-maze-courtyard.jpg`, the default Flux wallpaper shown in the demos, is resized from
+  `pkgs/flux-wallpapers/images/concrete-maze-courtyard.jpg`. Its credit is in that folder's `CREDITS.md`.
