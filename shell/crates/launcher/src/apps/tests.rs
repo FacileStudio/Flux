@@ -12,11 +12,27 @@ fn env() -> Env {
         data_dirs: None,
         desktops: vec!["niri".into()],
         path: Some("/bin:/usr/bin".into()),
+        locale: None,
     }
 }
 
 fn app(text: &str) -> Option<App> {
-    entry_from(text).into_app(&env())
+    entry_from(text, &[]).into_app(&env())
+}
+
+fn app_in(locale: &str, text: &str) -> Option<App> {
+    entry_from(text, &locale_tags(locale)).into_app(&env())
+}
+
+fn named(name: &str, generic: Option<&str>, keywords: &[&str]) -> App {
+    App {
+        name: name.into(),
+        generic: generic.map(str::to_string),
+        keywords: keywords.iter().map(|keyword| keyword.to_string()).collect(),
+        exec: "x".into(),
+        icon: None,
+        terminal: false,
+    }
 }
 
 fn scratch(name: &str) -> PathBuf {
@@ -39,8 +55,8 @@ fn parses_fields_and_skips_the_action_groups() {
     assert_eq!(app.icon.as_deref(), Some("firefox"));
     assert!(!app.terminal);
 
-    let localized = app_named("[Desktop Entry]\nName=Term\nName[fr]=Terminale\nExec=kitty\n");
-    assert_eq!(localized.as_deref(), Some("Term"));
+    let untranslated = app_named("[Desktop Entry]\nName=Term\nName[fr]=Terminale\nExec=kitty\n");
+    assert_eq!(untranslated.as_deref(), Some("Term"), "no locale, so the bare key");
 }
 
 fn app_named(text: &str) -> Option<String> {
@@ -115,25 +131,57 @@ fn the_first_directory_claims_a_name() {
 }
 
 #[test]
-fn matches_fuzzy_substrings_and_caps_results() {
+fn a_locale_reads_as_its_tags_best_first() {
+    assert_eq!(locale_tags("fr_FR.UTF-8"), vec!["fr_FR", "fr"]);
+    assert_eq!(locale_tags("sr_RS@latin"), vec!["sr_RS@latin", "sr_RS", "sr@latin", "sr"]);
+    assert_eq!(locale_tags("de"), vec!["de"]);
+    assert!(locale_tags("C.UTF-8").is_empty());
+    assert!(locale_tags("POSIX").is_empty());
+    assert!(locale_tags("").is_empty());
+}
+
+#[test]
+fn the_session_language_picks_the_translated_strings() {
+    let entry = "[Desktop Entry]\nName[fr]=Fichiers\nName=Files\nName[fr_CA]=Dossiers\nName[de]=Dateien\n\
+                 GenericName=File Manager\nGenericName[fr]=Gestionnaire de fichiers\n\
+                 Keywords=folder;manager;\nKeywords[fr]=dossier;gestionnaire;\nExec=nautilus\nExec[fr]=wrong\n";
+    let french = app_in("fr_FR.UTF-8", entry).expect("entry");
+    assert_eq!(french.name, "Fichiers");
+    assert_eq!(french.generic.as_deref(), Some("Gestionnaire de fichiers"));
+    assert_eq!(french.keywords, vec!["dossier", "gestionnaire"]);
+    assert_eq!(french.exec, "nautilus");
+
+    assert_eq!(app_in("fr_CA.UTF-8", entry).expect("entry").name, "Dossiers");
+    let english = app_in("en_US.UTF-8", entry).expect("entry");
+    assert_eq!(english.name, "Files");
+    assert_eq!(english.keywords, vec!["folder", "manager"]);
+    assert_eq!(app_in("C", entry).expect("entry").name, "Files");
+}
+
+#[test]
+fn an_empty_query_lists_every_app() {
+    let apps: Vec<App> = (0..120).map(|index| named(&format!("App {index:03}"), None, &[])).collect();
+    assert_eq!(matches(&apps, ""), (0..120).collect::<Vec<_>>());
+    assert_eq!(matches(&apps, "  "), (0..120).collect::<Vec<_>>());
+    assert_eq!(matches(&apps, "app").len(), MAX_MATCHES);
+}
+
+#[test]
+fn a_query_is_ranked_before_it_is_cut() {
     let apps = vec![
-        App {
-            name: "Firefox".into(),
-            generic: Some("Web Browser".into()),
-            exec: "firefox".into(),
-            icon: None,
-            terminal: false,
-        },
-        App {
-            name: "Files".into(),
-            generic: None,
-            exec: "nautilus".into(),
-            icon: None,
-            terminal: false,
-        },
+        named("Calls", None, &[]),
+        named("Disks", None, &[]),
+        named("Files", Some("File Manager"), &["folder"]),
+        named("Paramètres", None, &["wifi", "réseau"]),
+        named("Sound Recorder", None, &[]),
+        named("Text Editor", None, &["notes"]),
+        named("Web", Some("Browser"), &["internet", "sites"]),
     ];
-    assert_eq!(matches(&apps, "FIRE"), vec![0]);
-    assert_eq!(matches(&apps, "browser"), vec![0]);
-    assert_eq!(matches(&apps, ""), vec![0, 1]);
+    assert_eq!(matches(&apps, "s"), vec![4, 0, 1, 2, 3, 5, 6]);
+    assert_eq!(matches(&apps, "ed"), vec![5]);
+    assert_eq!(matches(&apps, "INTERNET"), vec![6]);
+    assert_eq!(matches(&apps, "parametres"), vec![3]);
+    assert_eq!(matches(&apps, "reseau"), vec![3]);
+    assert_eq!(matches(&apps, "manager"), vec![2]);
     assert_eq!(matches(&apps, "zzz"), Vec::<usize>::new());
 }

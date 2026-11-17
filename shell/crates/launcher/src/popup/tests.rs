@@ -13,6 +13,7 @@ fn apps() -> Vec<App> {
         App {
             name: "Firefox".into(),
             generic: Some("Web Browser".into()),
+            keywords: Vec::new(),
             exec: "firefox".into(),
             icon: Some("firefox".into()),
             terminal: false,
@@ -20,6 +21,7 @@ fn apps() -> Vec<App> {
         App {
             name: "Files".into(),
             generic: None,
+            keywords: Vec::new(),
             exec: "nautilus".into(),
             icon: None,
             terminal: false,

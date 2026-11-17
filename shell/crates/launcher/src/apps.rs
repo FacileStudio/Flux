@@ -10,8 +10,8 @@ use std::collections::HashSet;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-/// How many results the launcher shows at once.
-const MAX_MATCHES: usize = 10;
+/// How many results a query shows at most. An empty query lists every app.
+const MAX_MATCHES: usize = 50;
 
 /// The data directories the specification falls back to when `$XDG_DATA_DIRS`
 /// is unset or empty.
@@ -21,6 +21,7 @@ const DEFAULT_DATA_DIRS: &str = "/usr/local/share:/usr/share";
 pub struct App {
     pub name: String,
     pub generic: Option<String>,
+    pub keywords: Vec<String>,
     pub exec: String,
     pub icon: Option<String>,
     pub terminal: bool,
@@ -33,6 +34,7 @@ pub struct Env {
     pub data_dirs: Option<OsString>,
     pub desktops: Vec<String>,
     pub path: Option<OsString>,
+    pub locale: Option<String>,
 }
 
 impl Env {
@@ -49,6 +51,9 @@ impl Env {
                 .map(str::to_ascii_lowercase)
                 .collect(),
             path: std::env::var_os("PATH"),
+            locale: ["LC_ALL", "LC_MESSAGES", "LANG"]
+                .iter()
+                .find_map(|name| std::env::var(name).ok().filter(|value| !value.is_empty())),
         }
     }
 }
@@ -57,9 +62,10 @@ impl Env {
 pub fn discover(env: &Env) -> Vec<App> {
     let mut seen = HashSet::new();
     let mut found = Vec::new();
+    let locales = locale_tags(env.locale.as_deref().unwrap_or_default());
     for dir in data_dirs(env) {
         for path in unclaimed(&dir, &mut seen) {
-            if let Some(app) = parse(&path, env) {
+            if let Some(app) = parse(&path, env, &locales) {
                 found.push(app);
             }
         }
@@ -89,25 +95,94 @@ fn unclaimed(dir: &Path, seen: &mut HashSet<String>) -> Vec<PathBuf> {
         .collect()
 }
 
-/// The indices of the apps matching `query`, capped at [`MAX_MATCHES`]. An
-/// empty query matches everything, so the launcher opens on the top of the list.
+/// The indices of the apps matching `query`, best first. An empty query lists
+/// every app in name order, so the launcher can be browsed without knowing a
+/// name. A query is ranked before it is capped at [`MAX_MATCHES`]: a name that
+/// starts with it, then a name with a word that starts with it, then a name
+/// that contains it, then a generic name or a keyword that contains it.
 pub fn matches(apps: &[App], query: &str) -> Vec<usize> {
-    let needle = query.trim().to_lowercase();
+    let needle = fold(query.trim());
     if needle.is_empty() {
-        return (0..apps.len()).take(MAX_MATCHES).collect();
+        return (0..apps.len()).collect();
     }
-    apps.iter()
+    let mut found: Vec<(u8, usize)> = apps
+        .iter()
         .enumerate()
-        .filter(|(_, app)| {
-            app.name.to_lowercase().contains(&needle)
-                || app
-                    .generic
-                    .as_deref()
-                    .is_some_and(|generic| generic.to_lowercase().contains(&needle))
-        })
-        .map(|(index, _)| index)
-        .take(MAX_MATCHES)
-        .collect()
+        .filter_map(|(index, app)| Some((rank(app, &needle)?, index)))
+        .collect();
+    found.sort_by_key(|&(rank, _)| rank);
+    found.into_iter().map(|(_, index)| index).take(MAX_MATCHES).collect()
+}
+
+/// How well `app` answers the folded `needle`, lower being better, or `None`
+/// when it does not.
+fn rank(app: &App, needle: &str) -> Option<u8> {
+    let name = fold(&app.name);
+    if name.starts_with(needle) {
+        return Some(0);
+    }
+    if name.split(|character: char| !character.is_alphanumeric()).any(|word| word.starts_with(needle)) {
+        return Some(1);
+    }
+    if name.contains(needle) {
+        return Some(2);
+    }
+    app.generic
+        .iter()
+        .chain(&app.keywords)
+        .any(|text| fold(text).contains(needle))
+        .then_some(3)
+}
+
+/// `text` in lower case with the accents of French and its neighbours
+/// removed, so "parametres" finds "Paramètres".
+fn fold(text: &str) -> String {
+    let mut folded = String::with_capacity(text.len());
+    for character in text.chars().flat_map(char::to_lowercase) {
+        match character {
+            'à' | 'â' | 'ä' | 'á' | 'ã' => folded.push('a'),
+            'é' | 'è' | 'ê' | 'ë' => folded.push('e'),
+            'î' | 'ï' | 'í' => folded.push('i'),
+            'ô' | 'ö' | 'ó' | 'õ' => folded.push('o'),
+            'ù' | 'û' | 'ü' | 'ú' => folded.push('u'),
+            'ç' => folded.push('c'),
+            'ñ' => folded.push('n'),
+            'œ' => folded.push_str("oe"),
+            other => folded.push(other),
+        }
+    }
+    folded
+}
+
+/// The `Name[...]` tags that fit a POSIX locale such as `fr_FR.UTF-8@euro`,
+/// best first, in the order the desktop entry specification gives:
+/// `lang_COUNTRY@MODIFIER`, `lang_COUNTRY`, `lang@MODIFIER`, `lang`. The `C`
+/// and `POSIX` locales fit none.
+pub fn locale_tags(locale: &str) -> Vec<String> {
+    let (rest, modifier) = match locale.split_once('@') {
+        Some((rest, modifier)) => (rest, Some(modifier)),
+        None => (locale, None),
+    };
+    let base = rest.split('.').next().unwrap_or_default();
+    let (lang, country) = match base.split_once('_') {
+        Some((lang, country)) => (lang, Some(country)),
+        None => (base, None),
+    };
+    if lang.is_empty() || lang == "C" || lang == "POSIX" {
+        return Vec::new();
+    }
+    let mut tags = Vec::new();
+    if let (Some(country), Some(modifier)) = (country, modifier) {
+        tags.push(format!("{lang}_{country}@{modifier}"));
+    }
+    if let Some(country) = country {
+        tags.push(format!("{lang}_{country}"));
+    }
+    if let Some(modifier) = modifier {
+        tags.push(format!("{lang}@{modifier}"));
+    }
+    tags.push(lang.to_string());
+    tags
 }
 
 /// Where `.desktop` files live, most specific first: `$XDG_DATA_HOME` (or
@@ -138,15 +213,16 @@ pub fn data_dirs(env: &Env) -> Vec<PathBuf> {
 /// Read one `.desktop` file. `None` when the entry is not an application, is
 /// hidden, is not meant for this desktop, names a missing `TryExec`, or names no
 /// program: a row that cannot be launched is worse than no row.
-fn parse(path: &Path, env: &Env) -> Option<App> {
+fn parse(path: &Path, env: &Env, locales: &[String]) -> Option<App> {
     let text = std::fs::read_to_string(path).ok()?;
-    entry_from(&text).into_app(env)
+    entry_from(&text, locales).into_app(env)
 }
 
-/// The `[Desktop Entry]` group of a `.desktop` file. Everything after it is a
-/// different matter (the actions, and the localized keys like `Name[fr]`) and
-/// is skipped.
-fn entry_from(text: &str) -> Entry {
+/// The `[Desktop Entry]` group of a `.desktop` file, read for the locale tags
+/// in `locales` (best first). The other groups (the actions) are skipped. A
+/// localized key such as `Name[fr]` wins over the bare key when its tag is one
+/// of `locales`, and is skipped otherwise.
+fn entry_from(text: &str, locales: &[String]) -> Entry {
     let mut entry = Entry::default();
     let mut in_entry_group = false;
     for line in text.lines() {
@@ -157,19 +233,48 @@ fn entry_from(text: &str) -> Entry {
         if line.starts_with('#') || !in_entry_group {
             continue;
         }
-        if let Some((key, value)) = line.split_once('=') {
-            entry.apply(key.trim(), value.trim());
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
+        let (key, value) = (key.trim(), value.trim());
+        match key.split_once('[') {
+            None => entry.apply(key, locales.len(), value),
+            Some((base, tag)) => {
+                let tag = tag.trim_end_matches(']');
+                if let Some(fit) = locales.iter().position(|locale| locale == tag) {
+                    entry.apply_localized(base, fit, value);
+                }
+            }
         }
     }
     entry
+}
+
+/// A string a `.desktop` file may give in several languages: the best fit read
+/// so far, with how well it fits (lower is better).
+#[derive(Default)]
+struct Localized(Option<(usize, String)>);
+
+impl Localized {
+    /// Keep `value` when it fits better than what is held.
+    fn offer(&mut self, fit: usize, value: String) {
+        if self.0.as_ref().is_none_or(|(held, _)| fit < *held) {
+            self.0 = Some((fit, value));
+        }
+    }
+
+    fn take(self) -> Option<String> {
+        self.0.map(|(_, value)| value)
+    }
 }
 
 /// The fields the launcher reads out of a `.desktop` file.
 #[derive(Default)]
 struct Entry {
     kind: Option<String>,
-    name: Option<String>,
-    generic: Option<String>,
+    name: Localized,
+    generic: Localized,
+    keywords: Localized,
     exec: Option<String>,
     try_exec: Option<String>,
     icon: Option<String>,
@@ -180,13 +285,27 @@ struct Entry {
 }
 
 impl Entry {
-    /// Fold one `key=value` line in. Keys we do not render are not an error:
-    /// the specification defines many more than the launcher shows.
-    fn apply(&mut self, key: &str, value: &str) {
+    /// Fold in one of the keys that can be translated, read with fit `fit`.
+    /// Returns whether `key` is one of them.
+    fn apply_localized(&mut self, key: &str, fit: usize, value: &str) -> bool {
+        match key {
+            "Name" => self.name.offer(fit, unescape(value)),
+            "GenericName" => self.generic.offer(fit, unescape(value)),
+            "Keywords" => self.keywords.offer(fit, unescape(value)),
+            _ => return false,
+        }
+        true
+    }
+
+    /// Fold one bare `key=value` line in; `fit` is the fit of an untranslated
+    /// string. Keys we do not render are not an error: the specification
+    /// defines many more than the launcher shows.
+    fn apply(&mut self, key: &str, fit: usize, value: &str) {
+        if self.apply_localized(key, fit, value) {
+            return;
+        }
         match key {
             "Type" => self.kind = Some(value.to_string()),
-            "Name" => self.name = Some(unescape(value)),
-            "GenericName" => self.generic = Some(unescape(value)),
             "Exec" => self.exec = Some(value.to_string()),
             "TryExec" => self.try_exec = Some(unescape(value)),
             "Icon" => self.icon = Some(unescape(value)).filter(|icon| !icon.is_empty()),
@@ -212,8 +331,9 @@ impl Entry {
             }
         }
         Some(App {
-            name: self.name?,
-            generic: self.generic,
+            name: self.name.take()?,
+            generic: self.generic.take(),
+            keywords: self.keywords.take().map(|keywords| words(&keywords)).unwrap_or_default(),
             exec: self.exec.filter(|exec| !exec.trim().is_empty())?,
             icon: self.icon,
             terminal: self.terminal,
@@ -228,6 +348,16 @@ fn shown_in(only: Option<&[String]>, not: &[String], desktops: &[String]) -> boo
         return false;
     }
     only.is_none_or(|only| only.iter().any(|name| desktops.contains(name)))
+}
+
+/// A `;`-separated list value as written, empty items dropped.
+fn words(value: &str) -> Vec<String> {
+    value
+        .split(';')
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
+        .map(str::to_string)
+        .collect()
 }
 
 /// A `;`-separated list value, lowercased, empty items dropped.
