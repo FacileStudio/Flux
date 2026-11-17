@@ -11,11 +11,14 @@ failures=0
 
 lsblk() {
   case "$*" in
-    "-dnpo PATH,TYPE") printf '/dev/sda disk\n/dev/sdb disk\n/dev/sdc disk\n/dev/sdd disk\n/dev/sr0 rom\n/dev/loop0 loop\n' ;;
+    "-dnpo PATH,TYPE") printf '/dev/sda disk\n/dev/sdb disk\n/dev/sdc disk\n/dev/sdd disk\n/dev/sde disk\n/dev/sdf disk\n/dev/sr0 rom\n/dev/loop0 loop\n' ;;
     "-nrpo NAME,TYPE,MOUNTPOINT /dev/sda") printf '/dev/sda disk \n/dev/sda1 part \n/dev/sda2 part /mnt\n' ;;
     "-nrpo NAME,TYPE,MOUNTPOINT /dev/sdb") printf '/dev/sdb disk \n/dev/sdb1 part /iso\n/dev/sdb2 part \n' ;;
     "-nrpo NAME,TYPE,MOUNTPOINT /dev/sdc") printf '/dev/sdc disk \n/dev/sdc1 part \n/dev/mapper/vg-home lvm /home\n' ;;
     "-nrpo NAME,TYPE,MOUNTPOINT /dev/sdd") printf '/dev/sdd disk \n/dev/sdd1 part [SWAP]\n' ;;
+    "-nrpo NAME,TYPE,MOUNTPOINT /dev/sde") printf '/dev/sde disk \n/dev/sde1 part /run/media/flux/DATA\n' ;;
+    "-bdno SIZE /dev/sdf") printf '15931539456\n' ;;
+    "-bdno SIZE "*) printf '512110190592\n' ;;
     "-no PKNAME /dev/sr0") printf '\n' ;;
     *) return 0 ;;
   esac
@@ -89,6 +92,8 @@ rejects "live medium found by findmnt" --disk /dev/sda
 unset FAKE_ISO
 rejects "disk with a mounted volume" --disk /dev/sdc
 rejects "disk with an active swap" --disk /dev/sdd
+rejects "disk under 20 GB" --disk /dev/sdf
+accepts "disk auto-mounted under /run/media" "disk=/dev/sde" --disk /dev/sde
 accepts "by-id path resolves to the disk" "disk=/dev/sda" --disk "$scratch/ata-FAKE_SSD_123"
 rejects "uppercase user" --user Ada
 rejects "user with a space" --user "ada l"
@@ -131,6 +136,55 @@ settings_test() {
   fi
 }
 settings_test
+
+unmount_test() {
+  local calls
+  calls="$scratch/umounts"
+  (
+    umount() { printf '%s\n' "$*" >>"$calls"; }
+    wipefs() { :; }
+    log=/dev/null progress=json disk=/dev/sde
+    release_holders
+  )
+  if grep -qx '/dev/sde1' "$calls"; then
+    printf 'ok   an auto-mounted partition of the target is unmounted\n'
+  else
+    printf 'FAIL auto-mounted partition not unmounted: %s\n' "$(cat "$calls")"
+    failures=$((failures + 1))
+  fi
+}
+unmount_test
+
+networks_test() {
+  local from="$scratch/live" to="$scratch/target/etc/NetworkManager/system-connections" modes
+  mkdir -p "$from"
+  printf '[wifi-security]\npsk=secret\n' >"$from/Home.nmconnection"
+  printf 'not a connection\n' >"$from/notes.txt"
+  chmod 0644 "$from/Home.nmconnection"
+  keep_networks "$from" "$to"
+  keep_networks "$scratch/missing" "$scratch/untouched"
+  modes="$(stat -c %a "$to") $(stat -c %a "$to/Home.nmconnection") $(ls "$to" | wc -l)"
+  if [ "$modes" = "700 600 1" ] && cmp -s "$from/Home.nmconnection" "$to/Home.nmconnection" && [ ! -e "$scratch/untouched" ]; then
+    printf 'ok   saved networks reach the target, readable by root only\n'
+  else
+    printf 'FAIL saved networks: %s\n' "$modes"
+    failures=$((failures + 1))
+  fi
+}
+networks_test
+
+offline_test() {
+  local chosen plain
+  chosen=$(facile=false apps=true gaming=true nvidia=false offline_message 7)
+  plain=$(facile=true apps=true gaming=false nvidia=false offline_message 3)
+  if [[ "$chosen" == *"Facile tools off, gaming on (7 downloads)"* ]] && [[ "$plain" == *"this machine needs 3 downloads"* ]]; then
+    printf 'ok   the offline refusal names the choices that need the internet\n'
+  else
+    printf 'FAIL offline refusal: %s / %s\n' "$chosen" "$plain"
+    failures=$((failures + 1))
+  fi
+}
+offline_test
 
 tail_test() {
   local output
