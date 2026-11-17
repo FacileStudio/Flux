@@ -4,7 +4,9 @@ Usage: python3 -I scripts/solar-icons.py <icons.json>
 
 <icons.json> comes from the @iconify-json/solar npm package. The script writes
 pkgs/flux-icons/icons/<name>-symbolic.svg for every freedesktop name in MAP,
-then rewrites the statusbar masks from STATUSBAR with ImageMagick.
+pkgs/flux-icons/places/<name>.svg and places-dark/<name>.svg in the PLACE_INK of
+each scheme for every name in PLACES (the full-colour folders Files draws), then rewrites the statusbar masks from
+STATUSBAR with ImageMagick.
 """
 
 import json
@@ -17,6 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 STYLE = "bold-duotone"
 BAR_STYLE = "bold"
 INK = "#2e3436"
+PLACE_INK = {"places": "#737373", "places-dark": "#a3a3a3"}
 
 MAP = {
     "airplane-mode": "airplane",
@@ -106,12 +109,40 @@ MAP = {
     "open-menu": "hamburger-menu",
     "view-more": "menu-dots",
     "folder": "folder",
+    "folder-open": "folder-open",
+    "folder-documents": "folder-with-files",
+    "folder-download": "folder-down",
+    "folder-music": "folder",
+    "folder-pictures": "folder",
+    "folder-videos": "folder",
+    "folder-templates": "folder",
+    "folder-publicshare": "folder-cloud",
+    "folder-remote": "folder-cloud",
+    "user-desktop": "folder",
+    "inode-directory": "folder",
     "user-home": "home-2",
     "mail-unread": "letter-unread",
     "notifications": "bell",
     "notifications-disabled": "bell-off",
     "x-office-calendar": "calendar",
     "preferences-system-time": "clock-circle",
+}
+
+PLACES = {
+    "folder": "folder",
+    "folder-open": "folder-open",
+    "folder-drag-accept": "folder-open",
+    "folder-documents": "folder-with-files",
+    "folder-download": "folder-down",
+    "folder-music": "folder",
+    "folder-pictures": "folder",
+    "folder-videos": "folder",
+    "folder-templates": "folder",
+    "folder-publicshare": "folder-cloud",
+    "folder-remote": "folder-cloud",
+    "user-home": "folder",
+    "user-desktop": "folder",
+    "inode-directory": "folder",
 }
 
 for level in range(0, 101, 10):
@@ -129,9 +160,9 @@ STATUSBAR = {
 }
 
 
-def svg(body, size):
-    """A standalone SVG of one Solar body, inked for GTK's symbolic loader."""
-    body = body.replace("currentColor", INK)
+def svg(body, size, ink=INK):
+    """A standalone SVG of one Solar body in `ink`, by default GTK's symbolic ink."""
+    body = body.replace("currentColor", ink)
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24">{body}</svg>\n'
 
 
@@ -188,8 +219,15 @@ def main(source):
         old.unlink()
     for name, solar in sorted(MAP.items()):
         (target / f"{name}-symbolic.svg").write_text(svg(body(icons, solar), 16))
+    for folder, ink in PLACE_INK.items():
+        places = ROOT / "pkgs/flux-icons" / folder
+        places.mkdir(parents=True, exist_ok=True)
+        for old in places.glob("*.svg"):
+            old.unlink()
+        for name, solar in sorted(PLACES.items()):
+            (places / f"{name}.svg").write_text(svg(body(icons, solar), 64, ink))
     write_masks(icons)
-    print(f"wrote {len(MAP)} icons and {len(STATUSBAR)} masks")
+    print(f"wrote {len(MAP)} icons, {len(PLACES)} places and {len(STATUSBAR)} masks")
 
 
 if __name__ == "__main__":

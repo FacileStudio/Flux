@@ -6,6 +6,7 @@ let
   share = "${theme}/share/flux";
   dark = cfg.scheme == "dark";
   gtkTheme = if dark then "Flux-dark" else "Flux";
+  iconTheme = gtkTheme;
   monoFont = "JetBrains Mono";
   fluxScheme = pkgs.writeShellApplication {
     name = "flux-scheme";
@@ -22,6 +23,7 @@ let
       if [ "$want" = dark ]; then gtk=Flux-dark; else gtk=Flux; fi
       dconf write /org/gnome/desktop/interface/color-scheme "'prefer-$want'"
       dconf write /org/gnome/desktop/interface/gtk-theme "'$gtk'"
+      dconf write /org/gnome/desktop/interface/icon-theme "'$gtk'"
       mkdir -p "$HOME/.config/fuzzel"
       printf '[main]\ninclude=${share}/fuzzel/%s.ini\nfont=${cfg.font}:size=12\n\n[border]\nwidth=0\nradius=12\n' "$want" > "$HOME/.config/fuzzel/fuzzel.ini"
       echo "$want"
@@ -75,7 +77,7 @@ in
       "xdg/gtk-3.0/settings.ini".text = ''
         [Settings]
         gtk-theme-name=${gtkTheme}
-        gtk-icon-theme-name=Flux
+        gtk-icon-theme-name=${iconTheme}
         gtk-font-name=${cfg.font} 11
         gtk-application-prefer-dark-theme=${if dark then "1" else "0"}
       '';
@@ -87,7 +89,7 @@ in
         settings."org/gnome/desktop/interface" = {
           color-scheme = if dark then "prefer-dark" else "prefer-light";
           gtk-theme = gtkTheme;
-          icon-theme = "Flux";
+          icon-theme = iconTheme;
           font-name = "${cfg.font} 11";
           document-font-name = "${cfg.font} 11";
           monospace-font-name = "${monoFont} 11";
