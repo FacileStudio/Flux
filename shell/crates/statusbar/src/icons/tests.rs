@@ -11,8 +11,8 @@ use gtk4::{gdk_pixbuf, gio};
 use super::*;
 use crate::testing;
 
-/// Every icon has to decode to a full 24×24 frame with ink on it, and the five
-/// have to be five different pictures.
+/// Every icon has to decode to a full 24×24 frame with ink on it, and no two
+/// may be the same picture.
 ///
 /// A mask that is a row short, empty, or copied from its neighbour paints a blank
 /// or wrong pill, and nothing else in the suite would notice: the icons are the

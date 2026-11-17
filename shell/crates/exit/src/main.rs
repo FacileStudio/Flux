@@ -34,7 +34,12 @@ fn preview() -> bool {
     std::env::var_os("FLUX_SHELL_PREVIEW").is_some_and(|value| !value.is_empty())
 }
 
+/// Open the menu. A second `exit` hands its activation to this process, so an
+/// activation while the menu is open is the key pressed again, and closes it.
 fn activate(application: &Application) {
+    if !application.windows().is_empty() {
+        std::process::exit(0);
+    }
     if !ensure_supported() {
         std::process::exit(1);
     }
@@ -70,6 +75,7 @@ fn activate(application: &Application) {
     if let Some(first) = parts.buttons.first() {
         first.grab_focus();
     }
+    window.set_focus_visible(true);
 }
 
 /// The pieces the handlers reach back into.
@@ -119,6 +125,7 @@ fn dialog() -> (Box, Vec<Button>) {
 /// One choice: its icon over its label.
 fn tile(action: Action) -> Button {
     let content = Box::new(Orientation::Vertical, 8);
+    content.set_valign(gtk4::Align::Center);
     let icon = Image::from_icon_name(action.icon());
     icon.set_pixel_size(24);
     content.append(&icon);

@@ -88,11 +88,12 @@ pub struct Chip {
     pub urgent: bool,
 }
 
-/// What one bar shows: its output's workspaces in order, and the title of the
-/// window in front on that output.
+/// What one bar shows: its output's workspaces in order, and the window in
+/// front on that output, by niri id and by title.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct View {
     pub chips: Vec<Chip>,
+    pub window: Option<u64>,
     pub title: Option<String>,
 }
 
@@ -191,28 +192,25 @@ impl State {
                 urgent: workspace.is_urgent,
             })
             .collect();
+        let front = self.front(output, &shown);
         View {
             chips,
-            title: self.title(output, &shown),
+            window: front.map(|window| window.id),
+            title: front.and_then(title_of),
         }
     }
 
-    /// The title of the window in front: the active window of the output's
-    /// active workspace, or the focused window when the output is unknown.
-    fn title(&self, output: Option<&str>, shown: &[&Workspace]) -> Option<String> {
-        let window = match output {
+    /// The window in front: the active window of the output's active
+    /// workspace, or the focused window when the output is unknown.
+    fn front(&self, output: Option<&str>, shown: &[&Workspace]) -> Option<&Window> {
+        match output {
             Some(_) => shown
                 .iter()
                 .find(|workspace| workspace.is_active)
                 .and_then(|workspace| workspace.active_window_id)
                 .and_then(|id| self.windows.get(&id)),
             None => self.windows.values().find(|window| window.is_focused),
-        }?;
-        window
-            .title
-            .clone()
-            .or_else(|| window.app_id.clone())
-            .filter(|title| !title.trim().is_empty())
+        }
     }
 
     /// The layout in use as a short code and its full name, when more than one
@@ -224,6 +222,15 @@ impl State {
         let name = self.layouts.names.get(usize::from(self.layouts.current_idx))?;
         Some((short_layout(name), name.clone()))
     }
+}
+
+/// What the bar calls `window`: its title, or its app id when it has none.
+fn title_of(window: &Window) -> Option<String> {
+    window
+        .title
+        .clone()
+        .or_else(|| window.app_id.clone())
+        .filter(|title| !title.trim().is_empty())
 }
 
 /// A two or three letter code for an xkb layout name: the country in brackets
@@ -288,6 +295,12 @@ fn stream(path: &str, tx: &async_channel::Sender<Event>) -> std::io::Result<()> 
 /// The request that focuses the workspace with niri id `id`, on its own output.
 pub fn focus_request(id: u64) -> String {
     format!(r#"{{"Action":{{"FocusWorkspace":{{"reference":{{"Id":{id}}}}}}}}}"#)
+}
+
+/// The request that closes the window with niri id `id`, as `Mod+Q` does for
+/// the focused one.
+pub fn close_request(id: u64) -> String {
+    format!(r#"{{"Action":{{"CloseWindow":{{"id":{id}}}}}}}"#)
 }
 
 /// The request that moves to the next keyboard layout.

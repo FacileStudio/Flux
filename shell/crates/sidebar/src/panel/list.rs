@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use gtk4::prelude::*;
 
+use crate::popup::{line, wrapped};
 use crate::{model, text};
 
 use super::App;
@@ -48,12 +49,7 @@ impl App {
 
         row.append(&App::row_top(app, notification, now, times));
 
-        let summary = gtk4::Label::new(Some(&notification.summary));
-        summary.add_css_class("summary");
-        summary.set_halign(gtk4::Align::Start);
-        summary.set_xalign(0.0);
-        summary.set_wrap(true);
-        row.append(&summary);
+        row.append(&wrapped(&notification.summary, "summary"));
 
         if let Some(body) = row_body(notification) {
             row.append(&body);
@@ -70,9 +66,7 @@ impl App {
     ) -> gtk4::Box {
         let top = gtk4::Box::new(gtk4::Orientation::Horizontal, 6);
 
-        let name = gtk4::Label::new(Some(&notification.app_name));
-        name.add_css_class("dim");
-        name.set_halign(gtk4::Align::Start);
+        let name = line(&notification.app_name, "dim");
         name.set_hexpand(true);
 
         let time = gtk4::Label::new(Some(&model::relative_time(notification.ts, now, text::get().just_now)));
@@ -99,10 +93,5 @@ fn row_body(notification: &model::Notification) -> Option<gtk4::Label> {
     if notification.body.is_empty() {
         return None;
     }
-    let body = gtk4::Label::new(Some(&notification.body));
-    body.add_css_class("body");
-    body.set_halign(gtk4::Align::Start);
-    body.set_wrap(true);
-    body.set_xalign(0.0);
-    Some(body)
+    Some(wrapped(&notification.body, "body"))
 }

@@ -52,6 +52,9 @@ fn each_output_shows_the_window_in_front_of_it() {
     assert_eq!(state.view(Some("eDP-1")).title.as_deref(), Some("Terminal"));
     assert_eq!(state.view(Some("HDMI-A-1")).title.as_deref(), Some("firefox"));
     assert_eq!(state.view(None).title.as_deref(), Some("Terminal"));
+    assert_eq!(state.view(Some("eDP-1")).window, Some(10));
+    assert_eq!(state.view(Some("HDMI-A-1")).window, Some(20));
+    assert_eq!(state.view(Some("DP-9")).window, None, "no window, nothing to close");
 }
 
 #[test]
@@ -129,4 +132,6 @@ fn requests_are_niri_json() {
     assert_eq!(focus["Action"]["FocusWorkspace"]["reference"]["Id"], 5);
     let layout: serde_json::Value = serde_json::from_str(NEXT_LAYOUT).expect("json");
     assert_eq!(layout["Action"]["SwitchLayout"]["layout"], "Next");
+    let close: serde_json::Value = serde_json::from_str(&close_request(20)).expect("json");
+    assert_eq!(close["Action"]["CloseWindow"]["id"], 20);
 }

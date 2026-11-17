@@ -1,14 +1,15 @@
 //! One bar: its window on one monitor, the modules on it and the timers that
 //! keep them current.
 //!
-//! Left: the workspace chips of this monitor's output and the title of the
-//! window in front. Middle: the date and time, which open the sidebar. Right:
-//! CPU and memory, the keyboard layout when there is more than one, and the
-//! control row.
+//! Left: the apps button, the workspace chips of this monitor's output, then
+//! the close button and the title of the window in front. Middle: the date
+//! and time, which open the sidebar. Right: CPU and memory, the keyboard
+//! layout when there is more than one, and the control row.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+use gtk4::accessible::Property;
 use gtk4::prelude::*;
 use gtk4::{gdk, glib, Application, Box, Button, CenterBox, Label};
 use gtk4_layer_shell::Layer;
@@ -29,9 +30,10 @@ pub struct Bar {
     pub monitor: gdk::Monitor,
     window: gtk4::ApplicationWindow,
     popup: Popup,
-    connector: Option<String>,
     workspaces: Box,
     chips: RefCell<Vec<(u64, Button)>>,
+    front: Rc<Cell<Option<u64>>>,
+    close: Button,
     title: Label,
     layout: Button,
 }
@@ -49,7 +51,9 @@ impl Bar {
         let root = CenterBox::new();
         root.add_css_class("bar");
 
-        let (left, workspaces, title) = left_module();
+        let front = Rc::new(Cell::new(None));
+        let close = close_button(painted, &front);
+        let (left, workspaces, title) = left_module(painted, &close);
         let layout = layout_pill();
         let right = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
         right.set_halign(gtk4::Align::End);
@@ -73,18 +77,24 @@ impl Bar {
             monitor: monitor.clone(),
             window: layer.window,
             popup,
-            connector: monitor.connector().map(|name| name.to_string()),
             workspaces,
             chips: RefCell::new(Vec::new()),
+            front,
+            close,
             title,
             layout,
         })
     }
 
-    /// Draw this bar's view of the niri state.
+    /// Draw this bar's view of the niri state. The connector is read on every
+    /// draw: a monitor plugged in after login joins the list before its name
+    /// arrives, and a name kept from that moment would be `None` for good.
     pub fn render(&self, state: &State) {
-        let view = state.view(self.connector.as_deref());
+        let connector = self.monitor.connector();
+        let view = state.view(connector.as_deref());
         self.render_chips(&view.chips);
+        self.front.set(view.window);
+        self.close.set_visible(view.window.is_some());
         self.title.set_text(view.title.as_deref().unwrap_or_default());
         self.title.set_visible(view.title.is_some());
         match state.layout() {
@@ -131,8 +141,44 @@ impl Bar {
     }
 }
 
-/// The left module: the workspace chips, then the window title.
-fn left_module() -> (Box, Box, Label) {
+/// A 32 px button that shows one glyph and says what it does in a tooltip and
+/// to assistive technology.
+fn icon_button(painted: &Rc<RefCell<icons::Painted>>, icon: icons::Icon, class: &str, says: &str) -> Button {
+    let button = Button::new();
+    button.set_child(Some(&painted.borrow_mut().image(icon)));
+    button.add_css_class("icon");
+    button.add_css_class(class);
+    button.set_valign(gtk4::Align::Center);
+    button.set_tooltip_text(Some(says));
+    button.update_property(&[Property::Label(says)]);
+    button
+}
+
+/// The apps button: it opens the launcher, so an app can be started without
+/// knowing a key.
+fn apps_button(painted: &Rc<RefCell<icons::Painted>>) -> Button {
+    let button = icon_button(painted, icons::Icon::Apps, "apps", text::get().apps_tooltip);
+    button.connect_clicked(|_| spawn::detached(spawn::sibling("launcher"), &[]));
+    button
+}
+
+/// The close button: it closes the window in front on this bar's output,
+/// which `front` names. Hidden while there is no window.
+fn close_button(painted: &Rc<RefCell<icons::Painted>>, front: &Rc<Cell<Option<u64>>>) -> Button {
+    let button = icon_button(painted, icons::Icon::Close, "close", text::get().close_tooltip);
+    button.set_visible(false);
+    let front = front.clone();
+    button.connect_clicked(move |_| {
+        if let Some(id) = front.get() {
+            niri::send(niri::close_request(id));
+        }
+    });
+    button
+}
+
+/// The left module: the apps button, the workspace chips, then the close
+/// button and the title of the window in front.
+fn left_module(painted: &Rc<RefCell<icons::Painted>>, close: &Button) -> (Box, Box, Label) {
     let workspaces = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
     workspaces.add_css_class("workspaces");
     workspaces.set_visible(niri::present());
@@ -140,10 +186,14 @@ fn left_module() -> (Box, Box, Label) {
     title.add_css_class("title");
     title.set_ellipsize(gtk4::pango::EllipsizeMode::End);
     title.set_max_width_chars(TITLE_CHARS);
-    let left = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP * 2);
+    let window = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP / 2);
+    window.append(close);
+    window.append(&title);
+    let left = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
     left.set_halign(gtk4::Align::Start);
+    left.append(&apps_button(painted));
     left.append(&workspaces);
-    left.append(&title);
+    left.append(&window);
     (left, workspaces, title)
 }
 

@@ -4,26 +4,49 @@
 //! Every pill reads its backend off the main loop on a timer of its own and
 //! shows itself only while the backend answers. A service that comes up after
 //! the bar (pipewire-pulse at login, a hot-plugged battery) gets its pill on
-//! the next tick instead of never.
+//! the next tick instead of never. A control that can report its own changes
+//! is followed as well, so its pills move with the keys and the timer is only
+//! the safety net.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Box, Button, Label, Orientation};
+use gtk4::{Box, Button, Image, Label, Orientation};
 
 use crate::icons;
 use crate::popup::Popup;
 use crate::{battery, brightness, network, text, volume, work};
 
-/// One control: its icon, how often its pill is read, the read itself and the
-/// popup it opens.
+/// What one read of a control says: the words beside the icon, the icon to
+/// draw, and whether the pill warns.
+pub struct Reading {
+    pub text: String,
+    pub icon: icons::Icon,
+    pub low: bool,
+}
+
+impl Reading {
+    /// A reading that only says `text` beside `icon`.
+    pub fn of(icon: icons::Icon, text: String) -> Self {
+        Self { text, icon, low: false }
+    }
+}
+
+/// Where a followed control reports that it changed. The channel holds one
+/// tick, so a burst of changes costs one read.
+pub type Changes = async_channel::Sender<()>;
+
+/// One control: its icon, how often its pill is read, the read itself, what
+/// reports its changes when something can, and the popup it opens.
 pub struct Control {
     pub name: &'static str,
     pub icon: icons::Icon,
     pub every: u32,
-    pub label: fn() -> Option<String>,
+    pub read: fn() -> Option<Reading>,
+    pub follow: Option<fn(Changes)>,
     pub show: fn(&Popup),
 }
 
@@ -32,32 +55,45 @@ pub const CONTROLS: [Control; 4] = [
     Control {
         name: "volume",
         icon: icons::Icon::Volume,
-        every: 3,
-        label: volume::label,
+        every: 30,
+        read: volume::reading,
+        follow: Some(volume::follow),
         show: volume::show,
     },
     Control {
         name: "brightness",
         icon: icons::Icon::Brightness,
         every: 3,
-        label: brightness::label,
+        read: brightness::reading,
+        follow: Some(brightness::follow),
         show: brightness::show,
     },
     Control {
         name: "battery",
         icon: icons::Icon::Battery,
         every: 30,
-        label: battery::label,
+        read: battery::pill,
+        follow: Some(battery::follow),
         show: battery::show,
     },
     Control {
         name: "network",
         icon: icons::Icon::Network,
         every: 10,
-        label: network::label,
+        read: network::reading,
+        follow: None,
         show: network::show,
     },
 ];
+
+/// A pill's refresh, answering whether the pill is still on a bar.
+type Refresh = std::boxed::Box<dyn Fn() -> bool>;
+
+thread_local! {
+    /// The pills of every followed control, by control name. One follower runs
+    /// per control for the whole process, whatever the number of bars.
+    static FOLLOWED: RefCell<HashMap<&'static str, Vec<Refresh>>> = RefCell::new(HashMap::new());
+}
 
 /// Build the row. `painted` collects the glyphs so the palette can reach them
 /// later; see [`icons::follow_palette`].
@@ -74,10 +110,9 @@ pub fn build(popup: &Popup, painted: &Rc<RefCell<icons::Painted>>) -> Box {
 
 /// One control's pill: hidden until its first read answers, then kept current.
 fn pill(control: &'static Control, popup: &Popup, painted: &Rc<RefCell<icons::Painted>>) -> Button {
-    let label = Label::new(None);
     let child = Box::new(Orientation::Horizontal, 4);
     child.append(&painted.borrow_mut().image(control.icon));
-    child.append(&label);
+    child.append(&Label::new(None));
 
     let button = Button::new();
     button.set_child(Some(&child));
@@ -86,6 +121,7 @@ fn pill(control: &'static Control, popup: &Popup, painted: &Rc<RefCell<icons::Pa
     button.set_visible(false);
 
     let popup = popup.clone();
+    let clicked = painted.clone();
     button.connect_clicked(move |anchor| {
         if popup.is_open_for(anchor) {
             popup.hide();
@@ -93,42 +129,83 @@ fn pill(control: &'static Control, popup: &Popup, painted: &Rc<RefCell<icons::Pa
         }
         popup.position_under(anchor);
         (control.show)(&popup);
-        refresh(control, anchor, &label_of(anchor));
+        refresh(control, anchor, &clicked);
     });
 
-    refresh(control, &button, &label);
-    let weak = button.downgrade();
+    refresh(control, &button, painted);
+    let (weak, ticked) = (button.downgrade(), painted.clone());
     glib::timeout_add_seconds_local(control.every, move || {
         let Some(button) = weak.upgrade() else {
             return glib::ControlFlow::Break;
         };
-        refresh(control, &button, &label_of(&button));
+        refresh(control, &button, &ticked);
         glib::ControlFlow::Continue
+    });
+    let (weak, changed) = (button.downgrade(), painted.clone());
+    follow(control, move || {
+        let Some(button) = weak.upgrade() else {
+            return false;
+        };
+        refresh(control, &button, &changed);
+        true
     });
     button
 }
 
-/// The label a pill paints beside its icon.
-fn label_of(button: &Button) -> Label {
-    button
-        .child()
-        .and_then(|child| child.last_child())
-        .and_then(|label| label.downcast::<Label>().ok())
-        .unwrap_or_default()
+/// Run `refresh` every time `control` reports a change, for as long as it
+/// answers `true`. The first pill of a control starts its follower.
+fn follow(control: &'static Control, refresh: impl Fn() -> bool + 'static) {
+    let Some(start) = control.follow else {
+        return;
+    };
+    let first = FOLLOWED.with(|slot| {
+        let mut slot = slot.borrow_mut();
+        let first = !slot.contains_key(control.name);
+        slot.entry(control.name).or_default().push(std::boxed::Box::new(refresh));
+        first
+    });
+    if !first {
+        return;
+    }
+    let (changes, changed) = async_channel::bounded::<()>(1);
+    start(changes);
+    glib::spawn_future_local(async move {
+        while changed.recv().await.is_ok() {
+            FOLLOWED.with(|slot| {
+                if let Some(pills) = slot.borrow_mut().get_mut(control.name) {
+                    pills.retain(|refresh| refresh());
+                }
+            });
+        }
+    });
+}
+
+/// The glyph and the label a pill paints, in that order.
+fn parts(button: &Button) -> Option<(Image, Label)> {
+    let row = button.child()?;
+    let glyph = row.first_child()?.downcast::<Image>().ok()?;
+    let label = row.last_child()?.downcast::<Label>().ok()?;
+    Some((glyph, label))
 }
 
 /// Read the control off the main loop and show what it said, or hide the pill.
-fn refresh(control: &'static Control, button: &Button, label: &Label) {
-    let (button, label) = (button.downgrade(), label.downgrade());
-    work::off_main(control.label, move |text| {
-        let (Some(button), Some(label)) = (button.upgrade(), label.upgrade()) else {
+fn refresh(control: &'static Control, button: &Button, painted: &Rc<RefCell<icons::Painted>>) {
+    let (button, painted) = (button.downgrade(), painted.clone());
+    work::off_main(control.read, move |reading| {
+        let Some(button) = button.upgrade() else {
             return;
         };
-        if let Some(text) = &text {
-            label.set_text(text);
-            label.set_visible(!text.is_empty());
+        if let (Some(reading), Some((glyph, label))) = (&reading, parts(&button)) {
+            label.set_text(&reading.text);
+            label.set_visible(!reading.text.is_empty());
+            painted.borrow_mut().swap(&glyph, reading.icon);
+            if reading.low {
+                button.add_css_class("low");
+            } else {
+                button.remove_css_class("low");
+            }
         }
-        button.set_visible(text.is_some());
+        button.set_visible(reading.is_some());
     });
 }
 

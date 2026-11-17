@@ -68,11 +68,11 @@ pub fn report() -> String {
 fn pills() -> String {
     let mut text = String::from("pills\n");
     for control in &control::CONTROLS {
-        let reading = (control.label)();
+        let reading = (control.read)();
         let (found, missing) = reasons(control.name);
         let _ = writeln!(text, "{}", row(control.name, reading.is_some(), found, missing));
         if let Some(reading) = reading {
-            let _ = writeln!(text, "  {:<11}reads {reading}", "");
+            let _ = writeln!(text, "  {:<11}reads {}", "", reading.text);
         }
     }
     text

@@ -16,6 +16,7 @@ pub(super) struct NetState {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) enum StateKind {
     Connected,
+    Limited,
     Connecting,
     Disconnecting,
     Disconnected,
@@ -28,60 +29,70 @@ pub(super) fn state() -> Option<NetState> {
 }
 
 fn nm_state() -> Option<NetState> {
-    let out = Command::new("nmcli")
-        .args(["-t", "-f", "STATE", "g"])
-        .output()
-        .ok()?;
-    let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    if text.is_empty() {
-        return None;
-    }
-    let kind = match text.as_str() {
-        "connected" => StateKind::Connected,
-        "connecting" | "connecting (fixed)" => StateKind::Connecting,
-        "disconnecting" => StateKind::Disconnecting,
-        "disconnected" => StateKind::Disconnected,
-        _ => StateKind::Unknown,
-    };
-    let name = if kind == StateKind::Connected {
-        ssid_or_conn_name()?
-    } else {
-        String::new()
+    let text = nmcli(&["-t", "-f", "STATE", "general"])?;
+    let kind = nm_kind(text.trim())?;
+    let name = match kind {
+        StateKind::Connected | StateKind::Limited => active_name().unwrap_or_default(),
+        _ => String::new(),
     };
     Some(NetState { kind, name })
 }
 
-fn ssid_or_conn_name() -> Option<String> {
-    // Prefer the active Wi-Fi SSID.
-    ssid_from("dev", "wifi", "active,ssid").or_else(|| {
-        // Fallback: active connection name (ethernet, vpn, etc.).
-        ssid_from("c", "", "ACTIVE,NAME")
+/// The state one `nmcli -t -f STATE general` answer names, or `None` for no
+/// answer. `connected (site only)` and `connected (local only)` are a network
+/// with no way out to the internet, which is what a hotel portal looks like
+/// before its login page.
+fn nm_kind(answer: &str) -> Option<StateKind> {
+    Some(match answer {
+        "" => return None,
+        "connected" => StateKind::Connected,
+        limited if limited.starts_with("connected") => StateKind::Limited,
+        connecting if connecting.starts_with("connecting") => StateKind::Connecting,
+        "disconnecting" => StateKind::Disconnecting,
+        "disconnected" => StateKind::Disconnected,
+        _ => StateKind::Unknown,
     })
 }
 
-fn ssid_from(subcmd: &str, extra: &str, fields: &str) -> Option<String> {
-    let args: &[&str] = if extra.is_empty() {
-        &["-t", "-f", fields, subcmd]
-    } else {
-        &["-t", "-f", fields, subcmd, extra]
-    };
-    let out = Command::new("nmcli").args(args).output().ok()?;
-    let text = String::from_utf8_lossy(&out.stdout);
-    for line in text.lines() {
-        let line = line.trim();
-        if !line.starts_with("yes") {
-            continue;
-        }
-        let value = line
-            .split_once(':')
-            .or_else(|| line.split_once(','))
-            .map(|(_, value)| value.trim())
-            .unwrap_or("");
-        if !value.is_empty() {
-            return Some(value.to_string());
+/// The Wi-Fi network in use, or the name of the active connection (Ethernet,
+/// VPN) when there is none.
+///
+/// `--rescan no` matters: without it `nmcli device wifi list` starts a Wi-Fi
+/// scan whenever its list is older than 30 seconds, and the pill asks every
+/// few seconds for the whole session.
+fn active_name() -> Option<String> {
+    nmcli(&["-t", "-f", "ACTIVE,SSID", "device", "wifi", "list", "--rescan", "no"])
+        .and_then(|list| active_value(&list))
+        .or_else(|| nmcli(&["-t", "-f", "ACTIVE,NAME", "connection", "show", "--active"]).and_then(|list| active_value(&list)))
+}
+
+/// The standard output of one `nmcli` call that started.
+fn nmcli(args: &[&str]) -> Option<String> {
+    let out = Command::new("nmcli").args(args).env("LC_ALL", "C").output().ok()?;
+    Some(String::from_utf8_lossy(&out.stdout).into_owned())
+}
+
+/// The value of the first `yes:<value>` line of a terse two-field `nmcli`
+/// list, with nmcli's escapes resolved.
+fn active_value(list: &str) -> Option<String> {
+    list.lines()
+        .filter_map(|line| line.trim().strip_prefix("yes:"))
+        .map(unescape)
+        .find(|value| !value.trim().is_empty())
+}
+
+/// Undo terse mode's escaping: nmcli writes `\:` for a colon and `\\` for a
+/// backslash inside a value.
+fn unescape(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    let mut characters = value.chars();
+    while let Some(character) = characters.next() {
+        match character {
+            '\\' => out.extend(characters.next()),
+            other => out.push(other),
         }
     }
-    None
+    out
 }
 
 fn netctl_state() -> Option<NetState> {
@@ -114,3 +125,6 @@ fn parse_networkctl_status(text: &str) -> Option<NetState> {
     }
     None
 }
+
+#[cfg(test)]
+mod tests;

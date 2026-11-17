@@ -36,7 +36,8 @@ list {
 }
 
 row {
-  padding: 8px 12px;
+  min-height: 32px;
+  padding: 4px 12px;
   background-color: transparent;
   background-image: none;
   color: @fc_fg;

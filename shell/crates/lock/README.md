@@ -39,6 +39,10 @@ Threat: someone at the keyboard of an unattended, locked session.
   erases on clear) into a `Zeroizing` buffer; the `GString` copy is overwritten before it is
   freed; the buffer is dropped, and zeroed, as soon as PAM returns. The PAM reply is a `malloc`
   copy that PAM wipes and frees. The password is never logged.
+- **Keys typed during a check are held, not dropped.** PAM takes about two seconds to refuse a
+  password. Keys pressed meanwhile wait in a fixed-size buffer that never reallocates
+  (`keys::KeyBuffer`). A refusal puts them into the field; an unlock wipes them unread. Enter
+  is never held, so nothing is submitted without a key press after the answer.
 - **Single instance.** An `flock` on `$XDG_RUNTIME_DIR/flux-lock.lock`, released by the kernel
   when the process ends. A second `flux-lock` returns at once (and reports "locked" to a
   `--daemon` parent). Another locker holding the session makes the compositor refuse the lock,
@@ -52,10 +56,11 @@ The PAM service is `flux-lock` (`security.pam.services.flux-lock` in `modules/po
 
 One surface per output, created on the library's `monitor` signal (hotplug included): the
 blurred wallpaper (`~/.config/flux/wallpaper`, else the Flux default) under a muse scrim, the
-clock and date, then, on any key, the user's name and the password field. Caps Lock, the niri
-keyboard layout and the battery sit in the footer. Light and dark follow the shell palette. The
-content fades in over 150 ms and the field slides up; both are instant when GTK animations are
-off.
+clock and date, then, on any key or click, the user's name and the password field. The hint
+and the field share one slot, so the clock does not move. Caps Lock is announced under the
+field, with what the last attempt said. The niri keyboard layout and the battery sit in the
+footer. Light and dark follow the shell palette. The content fades in over 160 ms and the field
+fades in place of the hint; both are instant when GTK animations are off.
 
 ## Preview
 
