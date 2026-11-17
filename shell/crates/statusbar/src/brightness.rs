@@ -8,8 +8,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use gtk4::prelude::*;
-use gtk4::{Box, Button, Orientation};
+use gtk4::{gio, Box, Button, Orientation};
 
+use crate::control::{Changes, Reading};
+use crate::icons::Icon;
 use crate::popup::{self, FillBar, Popup};
 use crate::{sysfs, text, work};
 
@@ -42,9 +44,27 @@ pub fn percent() -> Option<u16> {
     Some((current * 100 / max).min(100) as u16)
 }
 
-/// The pill's label, or `None` to hide the pill.
-pub fn label() -> Option<String> {
-    percent().map(|percent| format!("{percent}%"))
+/// The pill's reading, or `None` to hide the pill.
+pub fn reading() -> Option<Reading> {
+    percent().map(|percent| Reading::of(Icon::Brightness, format!("{percent}%")))
+}
+
+/// Report every change of the backlight on `changes`. The kernel signals a
+/// write to `brightness` on the device's `actual_brightness` attribute, so a
+/// file monitor on that attribute sees the brightness keys. The monitor lives
+/// as long as the process.
+pub fn follow(changes: Changes) {
+    let Some(device) = device_in(Path::new(BACKLIGHT_DIR)) else {
+        return;
+    };
+    let attribute = gio::File::for_path(device.join("actual_brightness"));
+    let Ok(monitor) = attribute.monitor_file(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE) else {
+        return;
+    };
+    monitor.connect_changed(move |_, _, _, _| {
+        let _ = changes.try_send(());
+    });
+    std::mem::forget(monitor);
 }
 
 /// Move the backlight one step up or down.

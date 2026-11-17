@@ -8,12 +8,14 @@ mod text;
 
 use gtk4::prelude::*;
 
+use crate::control::Reading;
+use crate::icons::Icon;
 use crate::popup::{self, Popup};
 use crate::work;
 
-/// The pill's label, or `None` when no manager and no interface can answer.
-pub fn label() -> Option<String> {
-    status::state().map(|state| text::label(&state, crate::text::get()))
+/// The pill's reading, or `None` when no manager and no interface can answer.
+pub fn reading() -> Option<Reading> {
+    status::state().map(|state| Reading::of(Icon::Network, text::label(&state, crate::text::get())))
 }
 
 /// Open the network popup once the state is read.

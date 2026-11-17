@@ -25,23 +25,33 @@ mod masks;
 const SIDE: i32 = 24;
 
 /// The icons the bar draws. Only the ones it actually uses are compiled in.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Icon {
     Battery,
+    BatteryHalf,
+    BatteryLow,
+    BatteryCharge,
     Brightness,
     Volume,
     Network,
     Logout,
+    Apps,
+    Close,
 }
 
 /// Every icon, in the order the control row reads them. One list, so a new icon
 /// is added in one place and the checks and the diagnostic report both follow.
-pub const ALL: [Icon; 5] = [
+pub const ALL: [Icon; 10] = [
     Icon::Battery,
+    Icon::BatteryHalf,
+    Icon::BatteryLow,
+    Icon::BatteryCharge,
     Icon::Brightness,
     Icon::Volume,
     Icon::Network,
     Icon::Logout,
+    Icon::Apps,
+    Icon::Close,
 ];
 
 impl Icon {
@@ -49,10 +59,15 @@ impl Icon {
     fn mask(self) -> &'static str {
         match self {
             Self::Battery => masks::BATTERY,
+            Self::BatteryHalf => masks::BATTERY_HALF,
+            Self::BatteryLow => masks::BATTERY_LOW,
+            Self::BatteryCharge => masks::BATTERY_CHARGE,
             Self::Brightness => masks::BRIGHTNESS,
             Self::Volume => masks::VOLUME,
             Self::Network => masks::NETWORK,
             Self::Logout => masks::LOGOUT,
+            Self::Apps => masks::APPS,
+            Self::Close => masks::CLOSE,
         }
     }
 }
@@ -75,6 +90,18 @@ impl Painted {
         self.0.retain(|(_, image)| image.upgrade().is_some());
         self.0.push((icon, image.downgrade()));
         image
+    }
+
+    /// Make `image` show `icon` from now on, so a later [`retint`](Painted::retint)
+    /// paints the new glyph. An image that already shows it is left alone.
+    pub fn swap(&mut self, image: &gtk4::Image, icon: Icon) {
+        let Some(entry) = self.0.iter_mut().find(|(_, kept)| kept.upgrade().as_ref() == Some(image)) else {
+            return;
+        };
+        if entry.0 != icon {
+            entry.0 = icon;
+            image.set_paintable(Some(&texture(icon, &tint())));
+        }
     }
 
     /// Paint every icon again in the palette's current foreground.

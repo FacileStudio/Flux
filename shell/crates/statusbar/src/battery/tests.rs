@@ -42,3 +42,49 @@ fn the_percentage_follows_shell_json() {
     assert!(!percentage_on("{}"));
     assert!(!percentage_on("not json"));
 }
+
+#[test]
+fn a_low_battery_shows_its_level_whatever_the_setting() {
+    assert_eq!(pill_text(80, State::Discharging, false), "");
+    assert_eq!(pill_text(80, State::Discharging, true), "80%");
+    assert_eq!(pill_text(20, State::Discharging, false), "20%");
+    assert_eq!(pill_text(20, State::Charging, false), "");
+    assert_eq!(pill_text(20, State::Charging, true), "20%+");
+    assert!(is_low(20, State::Discharging));
+    assert!(!is_low(21, State::Discharging));
+    assert!(!is_low(5, State::Charging));
+    assert!(!is_low(5, State::Plugged));
+}
+
+#[test]
+fn the_glyph_follows_the_level() {
+    assert_eq!(glyph(100, State::Full), Icon::Battery);
+    assert_eq!(glyph(61, State::Discharging), Icon::Battery);
+    assert_eq!(glyph(60, State::Discharging), Icon::BatteryHalf);
+    assert_eq!(glyph(20, State::Discharging), Icon::BatteryLow);
+    assert_eq!(glyph(3, State::Plugged), Icon::BatteryLow);
+    assert_eq!(glyph(3, State::Charging), Icon::BatteryCharge);
+}
+
+#[test]
+fn each_warning_level_is_crossed_once_on_the_way_down() {
+    assert_eq!(crossed(16, 15), Some(15));
+    assert_eq!(crossed(15, 14), None);
+    assert_eq!(crossed(6, 5), Some(5));
+    assert_eq!(crossed(5, 4), None);
+    assert_eq!(crossed(40, 39), None);
+    assert_eq!(crossed(14, 16), None);
+    assert_eq!(crossed(30, 3), Some(5), "a long sleep can skip a level");
+    assert_eq!(crossed(NOT_DRAINING, 12), Some(15), "unplugged while already low");
+    assert_eq!(crossed(NOT_DRAINING, 50), None);
+}
+
+#[test]
+fn the_watch_warns_once_per_level_and_forgets_on_the_charger() {
+    assert_eq!(watch_step(NOT_DRAINING, 16, State::Discharging), (16, false));
+    assert_eq!(watch_step(16, 15, State::Discharging), (15, true));
+    assert_eq!(watch_step(15, 15, State::Discharging), (15, false));
+    assert_eq!(watch_step(15, 15, State::Charging), (NOT_DRAINING, false));
+    assert_eq!(watch_step(NOT_DRAINING, 15, State::Discharging), (15, true));
+    assert_eq!(watch_step(6, 5, State::Plugged), (NOT_DRAINING, false));
+}
