@@ -100,7 +100,7 @@ pub fn build(app: &Rc<App>) -> Widget {
     let body = Box::new(Orientation::Vertical, 8);
     body.append(&frame);
     body.append(&entry);
-    body.append(&list_panel(&list, 200));
+    body.append(&list_panel(&list, 160));
     let next = super::next(text.next);
     let weak = Rc::downgrade(app);
     next.connect_clicked(move |_| {

@@ -5,7 +5,7 @@ use gtk4::{Box, ListBox, Orientation, Widget};
 
 use super::{button, label, list_panel, page, row, row_at};
 use crate::app::{App, Screen};
-use crate::model::{human_size, Disk};
+use crate::model::{human_size, Contents, Disk};
 use crate::system;
 
 fn disk_row(app: &Rc<App>, disk: &Disk) -> gtk4::ListBoxRow {
@@ -16,6 +16,8 @@ fn disk_row(app: &Rc<App>, disk: &Disk) -> gtk4::ListBoxRow {
     }
     if disk.live {
         tags.push(text.tag_live);
+    } else if disk.too_small() {
+        tags.push(text.tag_small);
     }
     let title = if disk.model.is_empty() { disk.name.as_str() } else { disk.model.as_str() };
     let detail = [human_size(disk.size), disk.transport.to_uppercase(), disk.path.clone()]
@@ -25,7 +27,7 @@ fn disk_row(app: &Rc<App>, disk: &Disk) -> gtk4::ListBoxRow {
         .join(" · ");
     let glyph = if disk.removable { "drive-removable-media-symbolic" } else { "drive-harddisk-symbolic" };
     let item = row(Some(glyph), title, Some(&detail), &tags);
-    if disk.live {
+    if !disk.usable() {
         item.set_selectable(false);
         item.set_activatable(false);
         item.add_css_class("unavailable");
@@ -39,7 +41,7 @@ fn disk_list(app: &Rc<App>, disks: &[Disk], next: &gtk4::Button) -> ListBox {
         list.append(&disk_row(app, disk));
     }
     let chosen = app.state.borrow().disk.clone();
-    let index = chosen.and_then(|chosen| disks.iter().position(|disk| disk.path == chosen.path && !disk.live));
+    let index = chosen.and_then(|chosen| disks.iter().position(|disk| disk.path == chosen.path && disk.usable()));
     match index {
         Some(index) => list.select_row(row_at(&list, index).as_ref()),
         None => app.state.borrow_mut().disk = None,
@@ -55,7 +57,7 @@ fn disk_list(app: &Rc<App>, disks: &[Disk], next: &gtk4::Button) -> ListBox {
         let disk = usize::try_from(picked.index())
             .ok()
             .and_then(|index| disks.get(index))
-            .filter(|disk| !disk.live)
+            .filter(|disk| disk.usable())
             .cloned();
         next.set_sensitive(disk.is_some());
         app.state.borrow_mut().disk = disk;
@@ -89,12 +91,27 @@ pub fn build(app: &Rc<App>) -> Widget {
 
 pub fn confirm(app: &Rc<App>) -> Widget {
     let text = app.text();
-    let disk = app.state.borrow().disk.as_ref().map(Disk::label).unwrap_or_default();
+    let (disk, holds) = {
+        let state = app.state.borrow();
+        let disk = state.disk.as_ref();
+        let holds = match disk {
+            _ if state.preview => Contents { windows: true, partitions: 4 },
+            Some(disk) => system::contents(&disk.path),
+            None => Contents::default(),
+        };
+        (disk.map(Disk::label).unwrap_or_default(), holds)
+    };
+    let found = match holds {
+        Contents { windows: true, .. } => text.confirm_windows.to_string(),
+        Contents { partitions: 0, .. } => text.confirm_empty.to_string(),
+        Contents { partitions, .. } => text.confirm_partitions.replace("{n}", &partitions.to_string()),
+    };
     let warning = Box::new(Orientation::Vertical, 8);
     warning.add_css_class("danger-panel");
     warning.set_valign(gtk4::Align::Start);
     warning.append(&label(&disk, "danger-title"));
-    warning.append(&label(&text.confirm_body.replace("{disk}", &disk), "danger-body"));
+    warning.append(&label(&format!("{found} {}", text.confirm_body), "danger-body"));
+    warning.append(&label(text.confirm_backup, "danger-body"));
     let erase = button("edit-delete-symbolic", text.confirm_button, "danger");
     let weak = Rc::downgrade(app);
     erase.connect_clicked(move |_| {

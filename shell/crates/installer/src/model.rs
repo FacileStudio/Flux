@@ -72,7 +72,20 @@ pub struct Disk {
     pub live: bool,
 }
 
+/// The smallest disk Flux installs on, in bytes: the 20 GB the requirements ask for.
+pub const MIN_DISK: u64 = 20_000_000_000;
+
 impl Disk {
+    /// Whether the disk is under the 20 GB an install needs.
+    pub fn too_small(&self) -> bool {
+        self.size < MIN_DISK
+    }
+
+    /// Whether Flux can go on this disk: not the medium it runs from, and large enough.
+    pub fn usable(&self) -> bool {
+        !self.live && !self.too_small()
+    }
+
     /// How the disk is named to a person: its model and size, then its path.
     pub fn label(&self) -> String {
         let model = if self.model.is_empty() { self.name.as_str() } else { self.model.as_str() };
@@ -137,6 +150,34 @@ pub fn parse_disks(json: &str, live: &[String]) -> Vec<Disk> {
         })
         .filter(|disk| disk.size > 0 && !disk.name.starts_with("zram") && !disk.name.starts_with("loop"))
         .collect()
+}
+
+/// What a disk already holds, for the erase confirmation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Contents {
+    pub windows: bool,
+    pub partitions: usize,
+}
+
+const MICROSOFT_RESERVED: &str = "e3c9e316-0b5c-4db8-817d-f92df00215ae";
+
+/// What `lsblk -J -l -o TYPE,FSTYPE,PARTTYPE <disk>` says a disk holds. Windows is named when
+/// the disk has a Microsoft reserved partition or a BitLocker volume, which only a Windows
+/// install creates; a plain NTFS data disk counts as partitions.
+pub fn parse_contents(json: &str) -> Contents {
+    let root = serde_json::from_str::<Value>(json).unwrap_or(Value::Null);
+    let parts: Vec<&Value> = root
+        .get("blockdevices")
+        .and_then(Value::as_array)
+        .map(|devices| devices.iter().filter(|device| text(device.get("type")) == "part").collect())
+        .unwrap_or_default();
+    Contents {
+        windows: parts.iter().any(|part| {
+            text(part.get("parttype")).eq_ignore_ascii_case(MICROSOFT_RESERVED)
+                || text(part.get("fstype")).eq_ignore_ascii_case("BitLocker")
+        }),
+        partitions: parts.len(),
+    }
 }
 
 /// The device mounted at `/iso` in a `/proc/mounts` document, the medium the
@@ -395,6 +436,35 @@ pub struct Software {
 impl Default for Software {
     fn default() -> Self {
         Software { facile: true, apps: true, gaming: false, nvidia: false }
+    }
+}
+
+/// Whether this build can offer Steam and the NVIDIA driver: nixpkgs has both for x86_64 only.
+pub const X86: bool = cfg!(target_arch = "x86_64");
+
+/// A software choice the install medium does not carry, so the install downloads it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Download {
+    WithoutFacile,
+    WithoutApps,
+    Gaming,
+    Nvidia,
+}
+
+impl Software {
+    /// The choices that need the internet during the install. The medium carries one system,
+    /// the default one, so every choice that differs from `Software::default()` downloads.
+    pub fn downloads(&self) -> Vec<Download> {
+        let carried = Software::default();
+        [
+            (self.facile != carried.facile, Download::WithoutFacile),
+            (self.apps != carried.apps, Download::WithoutApps),
+            (self.gaming != carried.gaming, Download::Gaming),
+            (self.nvidia != carried.nvidia, Download::Nvidia),
+        ]
+        .into_iter()
+        .filter_map(|(differs, download)| differs.then_some(download))
+        .collect()
     }
 }
 

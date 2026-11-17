@@ -91,6 +91,22 @@ pub fn nvidia_gpu() -> bool {
     })
 }
 
+/// Whether the machine booted through UEFI, the only mode the backend installs in.
+pub fn uefi() -> bool {
+    Path::new("/sys/firmware/efi").is_dir()
+}
+
+/// What `disk` holds right now, for the erase confirmation.
+pub fn contents(disk: &str) -> model::Contents {
+    let output = Command::new("lsblk").args(["-J", "-l", "-o", "TYPE,FSTYPE,PARTTYPE", disk]).output();
+    model::parse_contents(&output.map(|out| String::from_utf8_lossy(&out.stdout).into_owned()).unwrap_or_default())
+}
+
+/// Open the Network page of Settings, to join a network from the live session.
+pub fn network_settings() {
+    let _ = Command::new("flux-settings").arg("network").stdout(Stdio::null()).stderr(Stdio::null()).spawn();
+}
+
 /// Whether NetworkManager reports full internet access.
 pub fn online() -> bool {
     Command::new("nmcli")
