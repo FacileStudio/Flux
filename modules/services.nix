@@ -18,7 +18,12 @@ let
 in
 {
   options.flux = {
-    flatpak.enable = lib.mkEnableOption "Flatpak with the Flathub remote added on first boot";
+    flatpak.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = desktop;
+      defaultText = lib.literalExpression ''config.flux.profile == "desktop"'';
+      description = "Flatpak with the system Flathub remote added on first boot. On by default on the desktop profile.";
+    };
     scanning.enable = lib.mkEnableOption "Document Scanner. SANE with sane-airscan is already on through ipp-usb; users need the scanner and lp groups to scan";
   };
 
