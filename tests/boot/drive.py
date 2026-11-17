@@ -550,10 +550,10 @@ class Run:
         state = {"last": after, "candidate": None}
 
         def until(frame):
-            if after is not None and frame.diff(after) < 0.02:
+            if after is not None and frame.diff(after) < 0.005:
                 state["last"] = frame
                 return None
-            looks = 0.80 < frame.dominant() < 0.995 and frame.spread() < 0.2
+            looks = 0.80 < frame.dominant() < 0.998 and frame.spread() < 0.2
             if looks and state["candidate"] is not None and frame.diff(state["candidate"]) < 0.03:
                 return frame
             if looks:
