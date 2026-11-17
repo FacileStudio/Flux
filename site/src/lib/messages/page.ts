@@ -35,10 +35,10 @@ export const page = {
 	'landing.cta.download': ['Download the beta', 'Télécharger la bêta', 'Descargar la beta', 'Beta herunterladen'],
 	'landing.cta.github': ['Follow on GitHub', 'Suivre sur GitHub', 'Seguir en GitHub', 'Auf GitHub folgen'],
 	'landing.demo.label': [
-		'A Flux desktop: Ghostty starts a Sablier timer, the launcher opens Settings as a new column, a Wi-Fi network connects, then the desktop switches to dark mode and back.',
-		'Un bureau Flux : Ghostty lance un minuteur Sablier, le lanceur ouvre les réglages dans une nouvelle colonne, un réseau Wi-Fi se connecte, puis le bureau passe en mode sombre et revient.',
-		'Un escritorio Flux: Ghostty inicia un temporizador de Sablier, el lanzador abre los ajustes en una nueva columna, se conecta una red Wi-Fi y el escritorio pasa al modo oscuro y vuelve.',
-		'Ein Flux-Desktop: Ghostty startet einen Sablier-Timer, der Starter öffnet die Einstellungen als neue Spalte, ein WLAN verbindet sich, dann wechselt der Desktop in den dunklen Modus und zurück.'
+		'A Flux desktop in dark mode: Ghostty starts a Sablier timer, the launcher opens Settings, a Wi-Fi network connects, the desktop tries light mode and goes back to dark, the cursor picks a new wallpaper, and an empty workspace shows it.',
+		'Un bureau Flux en mode sombre : Ghostty lance un minuteur Sablier, le lanceur ouvre les réglages, un réseau Wi-Fi se connecte, le bureau essaie le mode clair puis revient au sombre, le curseur choisit un nouveau fond d’écran et un espace de travail vide le montre.',
+		'Un escritorio Flux en modo oscuro: Ghostty inicia un temporizador de Sablier, el lanzador abre los ajustes, se conecta una red Wi-Fi, el escritorio prueba el modo claro y vuelve al oscuro, el cursor elige un nuevo fondo de pantalla y un espacio de trabajo vacío lo muestra.',
+		'Ein Flux-Desktop im dunklen Modus: Ghostty startet einen Sablier-Timer, der Starter öffnet die Einstellungen, ein WLAN verbindet sich, der Desktop probiert den hellen Modus und kehrt zum dunklen zurück, der Mauszeiger wählt ein neues Hintergrundbild und ein leerer Arbeitsbereich zeigt es.'
 	],
 	'landing.line': [
 		'The Linux system of Facile Studio.',
@@ -53,23 +53,23 @@ export const page = {
 	'nav.issues': ['Report a bug', 'Signaler un bug', 'Informar de un error', 'Fehler melden'],
 	'nav.suite': ['The Facile suite', 'La suite Facile', 'La suite Facile', 'Die Facile-Suite'],
 	'surfaces.title': [
-		'One design, from the boot menu to Settings',
-		'Un seul design, du menu de démarrage aux réglages',
-		'Un solo diseño, del menú de arranque a los ajustes',
-		'Ein Design, vom Bootmenü bis zu den Einstellungen'
+		'Screens we made ourselves',
+		'Des écrans faits maison',
+		'Pantallas hechas en casa',
+		'Hausgemachte Bildschirme'
 	],
 	'surfaces.line': [
-		'Flux draws its own Settings, installer and login screen, in the look of the Facile apps.',
-		'Flux dessine ses propres réglages, son installateur et son écran de connexion, dans le style des apps Facile.',
-		'Flux dibuja sus propios ajustes, su instalador y su pantalla de inicio de sesión, con el estilo de las apps de Facile.',
-		'Flux zeichnet seine eigenen Einstellungen, seinen Installer und seinen Anmeldebildschirm im Stil der Facile-Apps.'
+		'Settings, the installer and the login screen are written for Flux, in the style of the Facile apps. They start in dark mode. Light is one click away.',
+		'Les réglages, l’installateur et l’écran de connexion sont écrits pour Flux, dans le style des apps Facile. Ils démarrent en mode sombre. Le clair est à un clic.',
+		'Los ajustes, el instalador y la pantalla de inicio de sesión están hechos para Flux, con el estilo de las apps de Facile. Arrancan en modo oscuro. El claro está a un clic.',
+		'Einstellungen, Installer und Anmeldebildschirm sind für Flux geschrieben, im Stil der Facile-Apps. Sie starten dunkel. Hell ist einen Klick entfernt.'
 	],
 	'surface.settings.title': ['Settings', 'Réglages', 'Ajustes', 'Einstellungen'],
 	'surface.settings.body': [
-		'Wi-Fi, Bluetooth, sound and displays in one window.',
-		'Wi-Fi, Bluetooth, son et écrans dans une seule fenêtre.',
-		'Wi-Fi, Bluetooth, sonido y pantallas en una sola ventana.',
-		'WLAN, Bluetooth, Ton und Bildschirme in einem Fenster.'
+		'Wi-Fi, Bluetooth, sound, displays and wallpaper, with a search box on top.',
+		'Wi-Fi, Bluetooth, son, écrans et fond d’écran, avec une recherche en haut.',
+		'Wi-Fi, Bluetooth, sonido, pantallas y fondo de pantalla, con un buscador arriba.',
+		'WLAN, Bluetooth, Ton, Bildschirme und Hintergrund, mit einer Suche oben.'
 	],
 	'surface.settings.label': [
 		'The Flux Settings window, moving through its Wi-Fi, Bluetooth, Sound and Displays pages.',
@@ -79,17 +79,17 @@ export const page = {
 	],
 	'surface.login.title': ['Login', 'Connexion', 'Inicio de sesión', 'Anmeldung'],
 	'surface.login.body': [
-		'Your wallpaper, the time and your password.',
-		'Votre fond d’écran, l’heure et votre mot de passe.',
-		'Su fondo de pantalla, la hora y su contraseña.',
-		'Ihr Hintergrundbild, die Uhrzeit und Ihr Passwort.'
+		'The time over your wallpaper. Type your password and you are in.',
+		'L’heure sur votre fond d’écran. Tapez votre mot de passe, c’est tout.',
+		'La hora sobre su fondo de pantalla. Escriba su contraseña y listo.',
+		'Die Uhrzeit über Ihrem Hintergrundbild. Passwort eingeben, fertig.'
 	],
 	'surface.install.title': ['Installer', 'Installation', 'Instalador', 'Installer'],
 	'surface.install.body': [
-		'Try Flux from the USB stick, then install it when you are ready.',
-		'Essayez Flux depuis la clé USB, puis installez-le quand vous êtes prêt.',
-		'Pruebe Flux desde la memoria USB y luego instálelo cuando quiera.',
-		'Testen Sie Flux vom USB-Stick und installieren Sie es, wenn Sie so weit sind.'
+		'Try Flux from the USB stick, then install it in five steps.',
+		'Essayez Flux depuis la clé USB, puis installez-le en cinq étapes.',
+		'Pruebe Flux desde la memoria USB y luego instálelo en cinco pasos.',
+		'Testen Sie Flux vom USB-Stick und installieren Sie es dann in fünf Schritten.'
 	],
 	'rollback.title': [
 		'Your whole system is one config',
