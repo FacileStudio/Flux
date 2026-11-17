@@ -16,6 +16,7 @@ pub(super) fn label(state: &NetState, strings: &Text) -> String {
 pub(super) fn words(kind: StateKind, strings: &Text) -> &'static str {
     match kind {
         StateKind::Connected => strings.online,
+        StateKind::Limited => strings.limited,
         StateKind::Connecting => strings.connecting,
         StateKind::Disconnecting => strings.disconnecting,
         StateKind::Disconnected => strings.offline,

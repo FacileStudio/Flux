@@ -25,6 +25,7 @@ pub struct Text {
     pub connecting: &'static str,
     pub disconnecting: &'static str,
     pub offline: &'static str,
+    pub limited: &'static str,
     pub interface: &'static str,
     pub unavailable: &'static str,
 }
@@ -52,6 +53,7 @@ const EN: Text = Text {
     connecting: "Connecting",
     disconnecting: "Disconnecting",
     offline: "Offline",
+    limited: "No internet",
     interface: "Interface",
     unavailable: "Not available",
 };
@@ -79,6 +81,7 @@ const FR: Text = Text {
     connecting: "Connexion",
     disconnecting: "Déconnexion",
     offline: "Hors ligne",
+    limited: "Sans internet",
     interface: "Interface",
     unavailable: "Indisponible",
 };
