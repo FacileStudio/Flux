@@ -34,7 +34,12 @@ fn preview() -> bool {
     std::env::var_os("FLUX_SHELL_PREVIEW").is_some_and(|value| !value.is_empty())
 }
 
+/// Open the menu. A second `exit` hands its activation to this process, so an
+/// activation while the menu is open is the key pressed again, and closes it.
 fn activate(application: &Application) {
+    if !application.windows().is_empty() {
+        std::process::exit(0);
+    }
     if !ensure_supported() {
         std::process::exit(1);
     }
