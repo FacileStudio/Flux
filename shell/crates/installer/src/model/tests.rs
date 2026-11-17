@@ -162,12 +162,14 @@ fn install_args_follow_the_contract() {
         timezone: "Europe/Paris".into(),
         keymap: "fr".into(),
         locale: "fr_FR.UTF-8".into(),
+        software: Software::default(),
     };
     let args = install_args(&choices, "$6$salt$hash");
     assert_eq!(
         args.join(" "),
         "--disk /dev/vda --hostname flux --full-name Ada Lovelace --user ada --password-hash $6$salt$hash \
-         --timezone Europe/Paris --keymap fr --locale fr_FR.UTF-8 --yes --progress json"
+         --timezone Europe/Paris --keymap fr --locale fr_FR.UTF-8 --facile yes --apps yes --gaming no --nvidia no \
+         --yes --progress json"
     );
 }
 
@@ -183,4 +185,51 @@ fn every_language_layout_is_offered() {
     for language in LANGUAGES {
         assert!(KEYMAPS.iter().any(|(code, _)| *code == language.keymap), "{}", language.name);
     }
+}
+
+#[test]
+fn nvidia_needs_a_turing_or_newer_display_card() {
+    assert!(nvidia_display("0x10de\n", "0x2684\n", "0x030000\n"));
+    assert!(nvidia_display("0x10de", "0x1e04", "0x030200"));
+    assert!(!nvidia_display("0x10de", "0x1b80", "0x030000"), "a GTX 1080 needs the legacy driver");
+    assert!(!nvidia_display("0x10de", "0x2684", "0x040300"), "the card's audio function is not a display");
+    assert!(!nvidia_display("0x1002", "0x73bf", "0x030000"), "AMD is not NVIDIA");
+}
+
+#[test]
+fn install_args_carry_the_software_choices() {
+    let choices = Choices {
+        disk: "/dev/vda".to_string(),
+        software: Software { facile: false, apps: true, gaming: true, nvidia: false },
+        ..Choices::default()
+    };
+    let args = install_args(&choices, "$y$hash");
+    let pair = |flag: &str| args.iter().position(|arg| arg == flag).and_then(|at| args.get(at + 1)).cloned();
+    assert_eq!(pair("--disk").as_deref(), Some("/dev/vda"));
+    assert_eq!(pair("--facile").as_deref(), Some("no"));
+    assert_eq!(pair("--apps").as_deref(), Some("yes"));
+    assert_eq!(pair("--gaming").as_deref(), Some("yes"));
+    assert_eq!(pair("--nvidia").as_deref(), Some("no"));
+}
+
+#[test]
+fn zone1970_coordinates_parse_both_precisions() {
+    let (lat, lon) = parse_coordinates("+4852+00220").unwrap_or_default();
+    assert!((lat - 48.866_666).abs() < 1e-3 && (lon - 2.333_333).abs() < 1e-3, "Paris: {lat} {lon}");
+    let (lat, lon) = parse_coordinates("-334807+1510636").unwrap_or_default();
+    assert!((lat + 33.801_944).abs() < 1e-3 && (lon - 151.11).abs() < 1e-2, "Sydney: {lat} {lon}");
+    let (lat, lon) = parse_coordinates("+4043-07400").unwrap_or_default();
+    assert!((lat - 40.716_666).abs() < 1e-3 && (lon + 74.0).abs() < 1e-3, "New York: {lat} {lon}");
+    assert_eq!(parse_coordinates("4852+00220"), None);
+    assert_eq!(parse_coordinates("+48x2+00220"), None);
+}
+
+#[test]
+fn zone_points_skip_comments_and_keep_the_zone_name() {
+    let tab = "# comment\nFR,MC\t+4852+00220\tEurope/Paris\nAU\t-3352+15113\tAustralia/Sydney\tNew South Wales\n";
+    let points = parse_zone_points(tab);
+    assert_eq!(points.len(), 2);
+    assert_eq!(points[0].zone, "Europe/Paris");
+    assert_eq!(points[1].zone, "Australia/Sydney");
+    assert!(points[1].latitude < 0.0);
 }

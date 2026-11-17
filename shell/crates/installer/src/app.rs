@@ -23,6 +23,7 @@ pub enum Screen {
     Confirm,
     Account,
     TimeZone,
+    Software,
     Summary,
     Progress,
     Error,
@@ -30,7 +31,7 @@ pub enum Screen {
 }
 
 /// How many numbered steps the person walks through before the install starts.
-pub const STEPS: u8 = 5;
+pub const STEPS: u8 = 6;
 
 impl Screen {
     /// The numbered step this screen belongs to, for the screens that have one.
@@ -40,7 +41,8 @@ impl Screen {
             Screen::Disk | Screen::Confirm => Some(2),
             Screen::Account => Some(3),
             Screen::TimeZone => Some(4),
-            Screen::Summary => Some(5),
+            Screen::Software => Some(5),
+            Screen::Summary => Some(6),
             _ => None,
         }
     }
@@ -67,6 +69,9 @@ pub struct State {
     pub timezone: String,
     pub timezone_chosen: bool,
     pub zones: Vec<String>,
+    pub points: Vec<model::ZonePoint>,
+    pub software: model::Software,
+    pub nvidia_gpu: bool,
     pub error: String,
     pub error_log: String,
     pub preview: bool,
@@ -75,11 +80,15 @@ pub struct State {
 impl State {
     fn new() -> Self {
         let language = &LANGUAGES[0];
+        let nvidia_gpu = crate::system::nvidia_gpu();
         State {
             keymap: language.keymap.to_string(),
             timezone: language.timezone.to_string(),
             hostname: "flux".to_string(),
             zones: crate::system::zones(),
+            points: crate::system::zone_points(),
+            nvidia_gpu,
+            software: model::Software { nvidia: nvidia_gpu, ..model::Software::default() },
             ..State::default()
         }
     }
@@ -108,7 +117,15 @@ impl State {
             timezone: self.timezone.clone(),
             keymap: self.keymap.clone(),
             locale: LANGUAGES[self.language].locale.to_string(),
+            software: model::Software { nvidia: self.software.nvidia && self.nvidia_gpu, ..self.software },
         }
+    }
+
+    /// Whether every choice the backend needs is made: a disk, a valid account and a zone.
+    pub fn ready(&self) -> bool {
+        self.disk.as_ref().is_some_and(|disk| !disk.path.is_empty() && !disk.live)
+            && self.account_ready()
+            && !self.timezone.is_empty()
     }
 
     /// Whether the account screen holds values the backend accepts.
@@ -261,6 +278,7 @@ fn preview(app: &Rc<App>, name: &str) -> Option<Screen> {
         "confirm" => Screen::Confirm,
         "account" => Screen::Account,
         "timezone" => Screen::TimeZone,
+        "software" => Screen::Software,
         "summary" => Screen::Summary,
         "progress" => Screen::Progress,
         "error" => Screen::Error,
@@ -269,6 +287,8 @@ fn preview(app: &Rc<App>, name: &str) -> Option<Screen> {
     };
     let mut state = app.state.borrow_mut();
     state.preview = true;
+    state.nvidia_gpu = true;
+    state.software.nvidia = true;
     state.set_language(LANGUAGES.iter().position(|item| item.code == language).unwrap_or(0));
     state.full_name = "Ada Lovelace".to_string();
     state.username = "ada".to_string();
@@ -290,3 +310,6 @@ fn preview(app: &Rc<App>, name: &str) -> Option<Screen> {
     app.history.borrow_mut().push(Screen::Welcome);
     Some(screen)
 }
+
+#[cfg(test)]
+mod tests;

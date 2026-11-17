@@ -49,11 +49,12 @@ fn disk_list(app: &Rc<App>, disks: &[Disk], next: &gtk4::Button) -> ListBox {
     let disks = disks.to_vec();
     let next = next.clone();
     list.connect_row_selected(move |_, picked| {
-        let Some(app) = weak.upgrade() else {
+        let (Some(app), Some(picked)) = (weak.upgrade(), picked) else {
             return;
         };
-        let disk = picked
-            .and_then(|picked| disks.get(usize::try_from(picked.index()).ok()?))
+        let disk = usize::try_from(picked.index())
+            .ok()
+            .and_then(|index| disks.get(index))
             .filter(|disk| !disk.live)
             .cloned();
         next.set_sensitive(disk.is_some());
@@ -65,7 +66,7 @@ fn disk_list(app: &Rc<App>, disks: &[Disk], next: &gtk4::Button) -> ListBox {
 pub fn build(app: &Rc<App>) -> Widget {
     let text = app.text();
     let disks = if app.state.borrow().preview { crate::app::preview_disks() } else { system::disks() };
-    let next = button(text.next, "primary");
+    let next = super::next(text.next);
     let weak = Rc::downgrade(app);
     next.connect_clicked(move |_| {
         if let Some(app) = weak.upgrade() {
@@ -94,7 +95,7 @@ pub fn confirm(app: &Rc<App>) -> Widget {
     warning.set_valign(gtk4::Align::Start);
     warning.append(&label(&disk, "danger-title"));
     warning.append(&label(&text.confirm_body.replace("{disk}", &disk), "danger-body"));
-    let erase = button(text.confirm_button, "danger");
+    let erase = button("edit-delete-symbolic", text.confirm_button, "danger");
     let weak = Rc::downgrade(app);
     erase.connect_clicked(move |_| {
         if let Some(app) = weak.upgrade() {

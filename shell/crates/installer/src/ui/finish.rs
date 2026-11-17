@@ -21,11 +21,11 @@ pub fn error(app: &Rc<App>) -> Widget {
     let body = Box::new(Orientation::Vertical, 12);
     body.append(&panel);
     body.append(&details);
-    let copy = button(text.copy_log, "primary");
+    let copy = button("edit-copy-symbolic", text.copy_log, "primary");
     let copied = text.copied;
     copy.connect_clicked(move |copy| {
         copy.clipboard().set_text(&system::log());
-        copy.set_label(copied);
+        copy.set_child(Some(&super::content("object-select-symbolic", copied, false)));
     });
     super::default(app, &copy);
     page(app, text.error_title, text.error_subtitle, &body, &[&copy])
@@ -34,9 +34,9 @@ pub fn error(app: &Rc<App>) -> Widget {
 pub fn done(app: &Rc<App>) -> Widget {
     let text = app.text();
     let actions = Box::new(Orientation::Horizontal, 8);
-    let restart = button(text.restart, "primary");
+    let restart = button("system-reboot-symbolic", text.restart, "primary");
     restart.connect_clicked(|_| system::reboot());
-    let keep = button(text.close, "ghost");
+    let keep = button("media-removable-symbolic", text.close, "ghost");
     let window = app.window.clone();
     keep.connect_clicked(move |_| window.close());
     actions.append(&restart);

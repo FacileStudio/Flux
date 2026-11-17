@@ -250,6 +250,11 @@ passwordentry image {
   color: @fc_fg;
 }
 
+.field-hint {
+  font-size: 12px;
+  color: @fc_fg_muted;
+}
+
 .field-error {
   font-size: 12px;
   color: @fc_danger;
@@ -339,4 +344,65 @@ text selection,
 label selection {
   background-color: alpha(@fc_fg, 0.16);
   color: @fc_fg;
+}
+
+.software {
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+
+.software-icon {
+  margin-top: 2px;
+  color: @fc_fg_muted;
+}
+
+switch {
+  min-width: 40px;
+  min-height: 24px;
+  padding: 2px;
+  border-radius: 999px;
+  background-color: alpha(@fc_fg, 0.16);
+  background-image: none;
+  outline: 0 solid transparent;
+  transition: background-color 150ms ease-out;
+}
+
+switch:hover {
+  background-color: alpha(@fc_fg, 0.24);
+}
+
+switch:checked {
+  background-color: @fc_accent;
+}
+
+switch:checked:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+}
+
+switch slider {
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background-color: @fc_page;
+  background-image: none;
+  transition: margin 150ms ease-out, background-color 150ms ease-out;
+}
+
+switch:checked slider {
+  background-color: @fc_accent_fg;
+}
+
+switch image {
+  color: transparent;
+  opacity: 0;
+}
+
+switch:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+window.installer .panel.map-panel {
+  padding: 12px;
 }

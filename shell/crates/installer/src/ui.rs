@@ -4,7 +4,9 @@ mod account;
 mod disk;
 mod finish;
 mod language;
+mod map;
 mod progress;
+mod software;
 mod summary;
 mod timezone;
 mod welcome;
@@ -28,6 +30,7 @@ pub fn build(app: &Rc<App>, screen: Screen) -> Widget {
         Screen::Confirm => disk::confirm(app),
         Screen::Account => account::build(app),
         Screen::TimeZone => timezone::build(app),
+        Screen::Software => software::build(app),
         Screen::Summary => summary::build(app),
         Screen::Progress => progress::build(app),
         Screen::Error => finish::error(app),
@@ -45,11 +48,37 @@ pub fn label(text: &str, class: &str) -> Label {
     label
 }
 
-/// A button with `label` and the emphasis `class`: primary, secondary, ghost or danger.
-pub fn button(text: &str, class: &str) -> Button {
-    let button = Button::with_label(text);
+/// A button's inside: the themed `glyph` before `text`, or after it when `trailing`.
+pub fn content(glyph: &str, text: &str, trailing: bool) -> Box {
+    let line = Box::new(Orientation::Horizontal, 8);
+    line.set_halign(Align::Center);
+    let image = icon(glyph, 16);
+    let words = Label::new(Some(text));
+    if trailing {
+        line.append(&words);
+        line.append(&image);
+    } else {
+        line.append(&image);
+        line.append(&words);
+    }
+    line
+}
+
+/// A button with `glyph`, `text` and the emphasis `class`: primary, secondary, ghost or danger.
+pub fn button(glyph: &str, text: &str, class: &str) -> Button {
+    let button = Button::new();
+    button.set_child(Some(&content(glyph, text, false)));
     button.add_css_class("action");
     button.add_css_class(class);
+    button
+}
+
+/// The primary Continue button, its arrow after the word.
+pub fn next(text: &str) -> Button {
+    let button = Button::new();
+    button.set_child(Some(&content("go-next-symbolic", text, true)));
+    button.add_css_class("action");
+    button.add_css_class("primary");
     button
 }
 
@@ -82,9 +111,11 @@ pub fn page(app: &Rc<App>, title: &str, subtitle: &str, body: &impl IsA<Widget>,
     body.set_vexpand(true);
     column.append(body);
     column.append(&footer(app, actions));
+    let clamp = shell_common::ui::Clamp::new(WIDTH);
+    clamp.set_child(Some(&column));
     let scroll = ScrolledWindow::new();
     scroll.set_policy(gtk4::PolicyType::Never, gtk4::PolicyType::Automatic);
-    scroll.set_child(Some(&column));
+    scroll.set_child(Some(&clamp));
     scroll.upcast()
 }
 
@@ -108,7 +139,7 @@ pub fn hero(title: &str, subtitle: &str, content: &impl IsA<Widget>) -> Widget {
 fn footer(app: &Rc<App>, actions: &[&Button]) -> Box {
     let row = Box::new(Orientation::Horizontal, 8);
     row.add_css_class("footer");
-    let back = button(app.text().back, "ghost");
+    let back = button("go-previous-symbolic", app.text().back, "ghost");
     let weak = Rc::downgrade(app);
     back.connect_clicked(move |_| {
         if let Some(app) = weak.upgrade() {
