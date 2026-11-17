@@ -66,9 +66,18 @@ pub fn fold(text: &str) -> String {
         .collect()
 }
 
-/// Whether a page with this `title` and `id` answers `query`: every word of the query starts a word of either.
+/// Extra words that lead to the page called `id`, for controls people look for by name, in English and French.
+pub fn keywords(id: &str) -> &'static str {
+    match id {
+        "input" => "scroll direction wheel touchpad défilement sens molette pavé",
+        "system" => "software apps gaming nvidia language logiciels jeux langue",
+        _ => "",
+    }
+}
+
+/// Whether a page with this `title` and `id` answers `query`: every word of the query starts a word of the title, the id or the page's [`keywords`].
 pub fn matches(query: &str, title: &str, id: &str) -> bool {
-    let haystack = fold(&format!("{title} {id}"));
+    let haystack = fold(&format!("{title} {id} {}", keywords(id)));
     let words: Vec<&str> = haystack
         .split(|letter: char| !letter.is_alphanumeric())
         .filter(|word| !word.is_empty())
@@ -96,6 +105,14 @@ mod tests {
         assert!(!matches("opos", "À propos", "about"));
         assert!(matches("wi fi", "Wi-Fi", "network"));
         assert!(!matches("wallpaper", "About", "about"));
+    }
+
+    #[test]
+    fn search_finds_scroll_direction() {
+        for query in ["scroll", "direction", "défilement", "defilement", "sens", "molette", "wheel", "scroll dir"] {
+            assert!(matches(query, "Keyboard and mouse", "input"), "{query}");
+            assert!(!matches(query, "About", "about"), "{query}");
+        }
     }
 
     #[test]
