@@ -6,7 +6,16 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-11-17
+## [0.3.1] - 2026-11-17
+
+The first published release of the 0.3 changes below. The 0.3.0 tag was never published: its boot test could not see the new dark splash.
+
+### Fixed
+
+- The boot test detects a dark splash screen after a black loader.
+- A flaky Settings backend test that sometimes saw its own lock still held.
+
+## [0.3.0] - 2026-11-17 [not published]
 
 ### Fixed
 
