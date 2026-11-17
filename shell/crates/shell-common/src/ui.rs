@@ -17,7 +17,8 @@
 //! large (44 px, 16 px), which a full-screen surface gets by putting
 //! `fx-large` on the control or on any ancestor. A card's 20 px inset comes
 //! from its rows, so anything else placed straight in a card brings its own
-//! 16 px top and bottom margin.
+//! 16 px top and bottom margin. The details that open under a row go in a box
+//! with the `fx-inset` class, opened by an [`expand_button`].
 
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -390,6 +391,24 @@ fn input_in(widget: &gtk4::Widget) -> Option<gtk4::Widget> {
         child = current.next_sibling();
     }
     None
+}
+
+/// The button that opens the details under a row: a muted arrow, named `tooltip` on hover and for screen readers. Flip it with [`set_expanded`].
+pub fn expand_button(tooltip: &str) -> gtk4::Button {
+    let button = icon_button("pan-down-symbolic", tooltip);
+    button.add_css_class("fx-expander");
+    button.set_valign(Align::Center);
+    button
+}
+
+/// Point an [`expand_button`] up while its details are `open`, down otherwise.
+pub fn set_expanded(button: &gtk4::Button, open: bool) {
+    if open {
+        button.add_css_class("fx-open");
+    } else {
+        button.remove_css_class("fx-open");
+    }
+    button.update_state(&[gtk4::accessible::State::Expanded(Some(open))]);
 }
 
 /// A revealer that slides `child` down in [`MOTION_MS`] (instantly with animations off) and takes no space while closed.

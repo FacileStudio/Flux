@@ -199,6 +199,18 @@ button.fx-icon-button {
   transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
+button.fx-icon-button.fx-expander {
+  color: @fc_fg_muted;
+}
+
+button.fx-icon-button.fx-expander image {
+  transition: -gtk-icon-transform 160ms ease-out;
+}
+
+button.fx-icon-button.fx-expander.fx-open image {
+  -gtk-icon-transform: rotate(180deg);
+}
+
 button.fx-ghost:hover,
 button.fx-link:hover,
 menubutton.fx-ghost > button:hover,
