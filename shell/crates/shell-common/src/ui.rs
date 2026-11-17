@@ -10,6 +10,14 @@
 //! classes. An app loads it after the palette, before its own sheet:
 //! `theme::init(&format!("{}{}", ui::CSS, OWN), ...)`. A page crate adds only
 //! rules scoped under its own root class, through [`page_style`].
+//!
+//! [`CSS`] is the one definition of every control: button, entry, switch,
+//! slider, drop-down, list row, tag, banner, card. An app sheet never restates
+//! them. Controls come in two sizes: regular (36 px high, 14 px text) and
+//! large (44 px, 16 px), which a full-screen surface gets by putting
+//! `fx-large` on the control or on any ancestor. A card's 20 px inset comes
+//! from its rows, so anything else placed straight in a card brings its own
+//! 16 px top and bottom margin.
 
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -420,3 +428,6 @@ pub fn icon(name: &str, size: i32) -> gtk4::Image {
     image.set_pixel_size(size);
     image
 }
+
+#[cfg(test)]
+mod tests;

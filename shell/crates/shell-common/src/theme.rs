@@ -214,4 +214,4 @@ fn notify_reload() {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

@@ -14,6 +14,14 @@
   color: @fc_fg_muted;
 }
 
+.fx-hero-title,
+.fx-version {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: @fc_fg;
+}
+
 .fx-section-title {
   font-size: 18px;
   font-weight: 600;
@@ -21,10 +29,15 @@
   color: @fc_fg;
 }
 
+.fx-section-description {
+  font-size: 12px;
+  color: @fc_fg_muted;
+}
+
 .fx-card {
   background-color: @fc_component;
   border-radius: 12px;
-  padding: 20px;
+  padding: 4px 20px;
 }
 
 .fx-row {
@@ -32,15 +45,8 @@
   min-height: 36px;
 }
 
-.fx-card > .fx-row:first-child {
-  padding-top: 0;
-}
-
-.fx-card > .fx-row:last-child {
-  padding-bottom: 0;
-}
-
-.fx-title {
+.fx-title,
+.fx-row-title {
   font-size: 14px;
   font-weight: 500;
   color: @fc_fg;
@@ -51,22 +57,90 @@
   color: @fc_fg_muted;
 }
 
+.fx-value {
+  font-size: 14px;
+  font-feature-settings: "tnum";
+  color: @fc_fg_muted;
+}
+
+.fx-field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+label.fx-danger,
+.fx-subtitle.fx-danger,
+.fx-error,
+.fx-field-error {
+  color: @fc_danger;
+}
+
+.fx-error,
+.fx-field-error {
+  font-size: 12px;
+}
+
+.fx-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .fx-empty {
   padding: 48px 20px;
+  border-radius: 12px;
+  background-color: @fc_component;
 }
 
 .fx-empty-icon {
   color: @fc_fg_muted;
 }
 
-button.fx-button {
+.fx-banner {
+  padding: 12px 20px;
+  border-radius: 12px;
+  background-color: alpha(@fc_info, 0.1);
+  color: @fc_fg;
+  font-size: 14px;
+}
+
+.fx-banner.fx-danger {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+.fx-inset {
+  padding: 4px 12px;
+  border-radius: 8px;
+  background-color: @fc_page;
+}
+
+.fx-inset .fx-row {
+  padding: 8px 0;
+  min-height: 20px;
+}
+
+button.fx-button,
+menubutton.fx-button > button {
   min-height: 36px;
   min-width: 0;
   padding: 0 16px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.fx-large button.fx-button,
+.fx-large menubutton.fx-button > button,
+button.fx-button.fx-large {
+  min-height: 44px;
+  padding: 0 24px;
+  font-size: 16px;
 }
 
 button.fx-primary {
@@ -75,11 +149,11 @@ button.fx-primary {
 }
 
 button.fx-primary:hover {
-  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.08);
 }
 
 button.fx-primary:active {
-  background-color: mix(@fc_accent, @fc_accent_fg, 0.2);
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.14);
 }
 
 button.fx-secondary {
@@ -108,9 +182,63 @@ button.fx-danger:active {
   background-color: alpha(@fc_danger, 0.24);
 }
 
-button.fx-button:disabled {
+button.fx-ghost,
+button.fx-link,
+menubutton.fx-ghost > button {
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+button.fx-icon-button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+button.fx-ghost:hover,
+button.fx-link:hover,
+menubutton.fx-ghost > button:hover,
+button.fx-icon-button:hover {
+  background-color: alpha(@fc_fg, 0.08);
+  color: @fc_fg;
+}
+
+button.fx-ghost:active,
+button.fx-link:active,
+menubutton.fx-ghost > button:active,
+button.fx-icon-button:active {
+  background-color: alpha(@fc_fg, 0.14);
+  color: @fc_fg;
+}
+
+button.fx-button:disabled,
+menubutton.fx-button > button:disabled {
   background-color: @fc_surface;
   color: @fc_fg_muted;
+}
+
+button.fx-ghost:disabled,
+button.fx-link:disabled,
+menubutton.fx-ghost > button:disabled {
+  background-color: transparent;
+  color: alpha(@fc_fg_muted, 0.6);
+}
+
+button.fx-icon-button:disabled {
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+button.fx-button:focus-visible,
+menubutton.fx-button > button:focus-visible,
+button.fx-icon-button:focus-visible,
+dropdown > button:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
 }
 
 switch {
@@ -118,14 +246,14 @@ switch {
   min-height: 24px;
   padding: 2px;
   border-radius: 999px;
-  background-color: alpha(@fc_fg, 0.16);
+  background-color: alpha(@fc_fg, 0.24);
   background-image: none;
   outline: 0 solid transparent;
-  transition: background-color 150ms ease-out;
+  transition: background-color 160ms ease-out;
 }
 
 switch:hover {
-  background-color: alpha(@fc_fg, 0.24);
+  background-color: alpha(@fc_fg, 0.32);
 }
 
 switch:checked {
@@ -133,7 +261,7 @@ switch:checked {
 }
 
 switch:checked:hover {
-  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.08);
 }
 
 switch slider {
@@ -141,9 +269,9 @@ switch slider {
   min-height: 20px;
   margin: 0;
   border-radius: 999px;
-  background-color: @fc_page;
+  background-color: @fc_fg;
   background-image: none;
-  transition: margin 150ms ease-out, background-color 150ms ease-out;
+  transition: margin 160ms ease-out, background-color 160ms ease-out;
 }
 
 switch:checked slider {
@@ -158,6 +286,22 @@ switch image {
 switch:focus-visible {
   outline: 2px solid @fc_ring;
   outline-offset: 2px;
+}
+
+switch:disabled {
+  background-color: alpha(@fc_fg, 0.12);
+}
+
+switch:disabled slider {
+  background-color: @fc_fg_muted;
+}
+
+switch:checked:disabled {
+  background-color: @fc_fg_muted;
+}
+
+switch:checked:disabled slider {
+  background-color: @fc_accent_fg;
 }
 
 scale {
@@ -186,11 +330,20 @@ scale slider {
   border-radius: 999px;
   background-color: @fc_accent;
   background-image: none;
-  transition: background-color 150ms ease-out;
+  transition: background-color 160ms ease-out;
 }
 
 scale slider:hover {
-  background-color: mix(@fc_accent, @fc_accent_fg, 0.16);
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.08);
+}
+
+scale slider:active {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.14);
+}
+
+scale:disabled highlight,
+scale:disabled slider {
+  background-color: @fc_fg_muted;
 }
 
 scale:focus-visible slider {
@@ -207,24 +360,37 @@ dropdown > button {
   font-weight: 500;
   background-color: @fc_surface;
   color: @fc_fg;
-  transition: background-color 150ms ease-out;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
 dropdown > button:hover {
   background-color: mix(@fc_surface, @fc_fg, 0.08);
 }
 
+dropdown > button:active,
+dropdown > button:checked {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+dropdown > button:disabled {
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
+}
+
 dropdown arrow {
   color: @fc_fg_muted;
 }
 
-popover.menu > contents,
-dropdown popover > contents {
-  padding: 6px;
+popover > contents {
+  padding: 4px;
   border-radius: 12px;
   background-color: @fc_component;
   color: @fc_fg;
-  box-shadow: 0 8px 24px alpha(@fc_scrim, 0.32);
+  box-shadow: 0 8px 24px alpha(black, 0.32);
+}
+
+popover > arrow {
+  background-color: transparent;
 }
 
 dropdown popover listview,
@@ -234,10 +400,10 @@ dropdown popover scrolledwindow {
 
 dropdown popover listview > row {
   min-height: 32px;
-  padding: 0 10px;
+  padding: 4px 12px;
   border-radius: 8px;
   color: @fc_fg;
-  transition: background-color 120ms ease-out;
+  transition: background-color 160ms ease-out;
 }
 
 dropdown popover listview > row:hover,
@@ -249,93 +415,7 @@ spinner {
   color: @fc_fg_muted;
 }
 
-.fx-section-description {
-  font-size: 13px;
-  color: @fc_fg_muted;
-}
-
-label.fx-danger,
-.fx-subtitle.fx-danger,
-.fx-error,
-.fx-field-error {
-  color: @fc_danger;
-}
-
-.fx-error,
-.fx-field-error {
-  font-size: 12px;
-}
-
-.fx-value {
-  font-size: 14px;
-  font-feature-settings: "tnum";
-  color: @fc_fg_muted;
-}
-
-.fx-field-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: @fc_fg;
-}
-
-.fx-banner {
-  padding: 12px 16px;
-  border-radius: 12px;
-  background-color: alpha(@fc_info, 0.1);
-  color: @fc_fg;
-  font-size: 14px;
-}
-
-.fx-banner.fx-danger {
-  background-color: alpha(@fc_danger, 0.1);
-  color: @fc_danger;
-}
-
-button.fx-ghost,
-button.fx-link {
-  background-color: transparent;
-  color: @fc_fg_muted;
-}
-
-button.fx-ghost:hover,
-button.fx-link:hover {
-  background-color: @fc_surface;
-  color: @fc_fg;
-}
-
-button.fx-icon-button {
-  min-width: 32px;
-  min-height: 32px;
-  padding: 0;
-  border-radius: 8px;
-  background-color: transparent;
-  color: @fc_fg;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
-}
-
-button.fx-icon-button:hover {
-  background-color: @fc_surface;
-}
-
-button.fx-icon-button:disabled {
-  color: @fc_fg_muted;
-  background-color: transparent;
-}
-
-button.fx-button:focus-visible,
-button.fx-icon-button:focus-visible,
-dropdown > button:focus-visible {
-  outline: 2px solid @fc_ring;
-  outline-offset: 2px;
-}
-
-switch:disabled {
-  opacity: 0.5;
-}
-
-entry,
-passwordentry,
-searchentry {
+entry {
   min-height: 36px;
   padding: 0 12px;
   border-radius: 8px;
@@ -343,16 +423,19 @@ searchentry {
   background-image: none;
   color: @fc_fg;
   font-size: 14px;
-  box-shadow: none;
   outline: 0 solid transparent;
-  transition: outline-color 150ms ease-out;
+  transition: background-color 160ms ease-out, outline-color 160ms ease-out;
 }
 
-entry:focus-within,
-passwordentry:focus-within,
-searchentry:focus-within {
+.fx-large entry,
+entry.fx-large {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+entry:focus-within {
   outline: 2px solid @fc_ring;
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 entry.error,
@@ -360,19 +443,18 @@ entry.invalid {
   background-color: alpha(@fc_danger, 0.1);
 }
 
-entry text,
-passwordentry text,
-searchentry text {
+entry:disabled,
+entry:disabled > text {
+  color: @fc_fg_muted;
+}
+
+entry > text {
   background-color: transparent;
   color: @fc_fg;
 }
 
-entry text placeholder,
-passwordentry text placeholder,
-searchentry text placeholder,
-entry image,
-passwordentry image,
-searchentry image {
+entry > text > placeholder,
+entry > image {
   color: @fc_fg_muted;
 }
 
@@ -415,85 +497,128 @@ progressbar progress {
   background-color: @fc_accent;
 }
 
-list.fx-list {
+list.fx-list,
+list.fx-nav-list,
+list.fx-choices {
   background-color: transparent;
 }
 
-list.fx-list > row {
+list.fx-list > row,
+list.fx-nav-list > row,
+list.fx-choices > row {
   min-height: 40px;
   padding: 4px 12px;
   border-radius: 8px;
   color: @fc_fg;
+  font-size: 14px;
   background-color: transparent;
   outline: 0 solid transparent;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
-list.fx-list > row:hover {
+list.fx-nav-list > row {
+  font-weight: 500;
+}
+
+list.fx-list > row:hover,
+list.fx-nav-list > row:hover,
+list.fx-choices > row:hover {
   background-color: @fc_surface;
 }
 
+list.fx-list > row:active,
+list.fx-nav-list > row:active,
+list.fx-choices > row:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
 list.fx-list > row:selected,
-list.fx-list > row.fx-chosen {
+list.fx-list > row.fx-chosen,
+list.fx-nav-list > row:selected,
+list.fx-choices > row:selected {
   background-color: @fc_accent;
   color: @fc_accent_fg;
 }
 
 list.fx-list > row:selected .fx-title,
-list.fx-list > row:selected .fx-subtitle,
 list.fx-list > row.fx-chosen .fx-title,
-list.fx-list > row.fx-chosen .fx-subtitle {
+list.fx-choices > row:selected .fx-row-title {
   color: @fc_accent_fg;
 }
 
-list.fx-list > row:focus-visible {
+list.fx-list > row:selected .fx-subtitle,
+list.fx-list > row.fx-chosen .fx-subtitle,
+list.fx-choices > row:selected .dim {
+  color: alpha(@fc_accent_fg, 0.72);
+}
+
+list.fx-list > row:focus-visible,
+list.fx-nav-list > row:focus-visible,
+list.fx-choices > row:focus-visible {
   outline: 2px solid @fc_ring;
   outline-offset: -2px;
 }
 
-popover > contents {
-  padding: 6px;
-  border-radius: 12px;
-  background-color: @fc_component;
-  color: @fc_fg;
-  box-shadow: 0 8px 24px alpha(@fc_scrim, 0.32);
+expander-widget {
+  outline: 0 solid transparent;
 }
 
-popover > arrow {
-  background-color: transparent;
-}
-
-expander title {
+expander-widget > box > title {
+  padding: 4px 0;
+  border-radius: 8px;
   color: @fc_fg_muted;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
+  outline: 0 solid transparent;
+}
+
+expander-widget > box > title > expander {
+  color: @fc_fg_muted;
+}
+
+expander-widget > box > title:hover,
+expander-widget > box > title:hover > expander {
+  color: @fc_fg;
+}
+
+expander-widget:focus-visible > box > title {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
 }
 
 .fx-segmented {
   padding: 4px;
-  border-radius: 8px;
+  border-radius: 12px;
   background-color: @fc_surface;
 }
 
 .fx-segmented > button {
   min-height: 28px;
-  padding: 0 14px;
-  border-radius: 6px;
+  padding: 0 16px;
+  border-radius: 8px;
   background-color: transparent;
   background-image: none;
   color: @fc_fg;
   font-size: 14px;
   font-weight: 500;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
 .fx-segmented > button:hover {
-  background-color: alpha(@fc_fg, 0.06);
+  background-color: alpha(@fc_fg, 0.08);
+}
+
+.fx-segmented > button:active {
+  background-color: alpha(@fc_fg, 0.14);
 }
 
 .fx-segmented > button:checked {
   background-color: @fc_accent;
   color: @fc_accent_fg;
+}
+
+.fx-segmented > button:disabled {
+  color: @fc_fg_muted;
 }
 
 .fx-segmented > button:focus-visible {

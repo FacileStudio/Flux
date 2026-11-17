@@ -10,14 +10,22 @@
   padding: 24px 12px;
 }
 
-.fx-network .fx-net {
-  border-radius: 8px;
-  transition: background-color 160ms ease-out;
+.fx-network .fx-card > stack {
+  margin-top: 4px;
+}
+
+.fx-network .fx-card > stack:last-child,
+.fx-network .fx-card > .fx-net:last-child {
+  margin-bottom: 4px;
+}
+
+.fx-network .fx-card .fx-net {
+  margin: 0 -12px;
 }
 
 .fx-network .fx-net-header {
-  padding: 10px 12px;
-  min-height: 28px;
+  padding: 12px;
+  min-height: 36px;
   border-radius: 8px;
   transition: background-color 160ms ease-out;
 }
@@ -30,28 +38,27 @@
   font-weight: 600;
 }
 
-.fx-network .fx-bars,
-.fx-network .fx-lock,
-.fx-network .fx-chevron {
+.fx-network .fx-bars {
+  margin: 0 1px;
   color: @fc_fg;
 }
 
-.fx-network .fx-lock {
+.fx-network .fx-net-header > box + box {
+  margin-left: 2px;
+}
+
+.fx-network .fx-lock,
+.fx-network .fx-chevron {
   color: @fc_fg_muted;
 }
 
 .fx-network .fx-expand {
-  padding: 4px 12px 16px 42px;
+  margin: 0 12px 8px 44px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: @fc_page;
 }
 
 .fx-network.fx-quick .fx-expand {
-  padding: 4px 12px 12px 12px;
-}
-
-.fx-network passwordentry image {
-  color: @fc_fg_muted;
-}
-
-.fx-network .fx-card .fx-net {
-  margin: 0 -12px;
+  margin: 0 0 8px 0;
 }
