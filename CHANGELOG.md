@@ -6,6 +6,8 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-17
+
 ### Changed
 
 - kit now installs the Facile tools. Flux ships `kit` and `facile` (for `facile login`) and seeds `/etc/kit/kit.yml` with every Facile CLI. `kit sync` installs them in each account at login and checks for updates every hour, so you can remove any of them with `kit del`.
