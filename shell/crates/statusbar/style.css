@@ -40,6 +40,30 @@ button.ws.urgent:hover {
   color: @fc_danger;
 }
 
+button.icon {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 8px;
+}
+
+button.icon:hover {
+  background-color: @fc_surface;
+}
+
+button.icon:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+button.icon.close:hover {
+  background-color: alpha(@fc_danger, 0.1);
+}
+
+button.icon.close:active {
+  background-color: alpha(@fc_danger, 0.18);
+}
+
 .title {
   font-size: 13px;
   font-weight: 500;
