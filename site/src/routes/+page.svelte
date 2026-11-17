@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Badge, Button, DownloadSection, Icon, LANDING_HEADING, icons, type DownloadEntry } from '@facile/muse';
 	import { t } from '$lib/i18n';
-	import { marks } from '$lib/marks';
+	import { glyphs, marks } from '$lib/marks';
 	import { CHECKSUMS, DOWNLOADS, ISO_AARCH64, RELEASES, REPO, TRY_VM } from '$lib/release';
 	import Command from '$lib/components/Command.svelte';
 	import DesktopDemo from '$lib/components/DesktopDemo.svelte';
@@ -95,6 +95,17 @@
 				</Button>
 			</div>
 			<div class="md:order-1"><BoiteTile /></div>
+		</section>
+
+		<section class={width} aria-labelledby="mobile-title">
+			<div class="flex max-w-2xl flex-col items-start gap-4">
+				<span class="inline-flex size-12 items-center justify-center rounded-fc-lg bg-fc-surface">
+					<Icon icon={glyphs.phone} size={26} />
+				</span>
+				<Badge tone="accent">{t('mobile.badge')}</Badge>
+				<h2 id="mobile-title" class="{LANDING_HEADING} text-balance">{t('mobile.title')}</h2>
+				<p class={lead}>{t('mobile.line')}</p>
+			</div>
 		</section>
 
 		<section class="{width} grid items-center gap-8 md:grid-cols-2 md:gap-16" aria-labelledby="dev-title">
