@@ -24,6 +24,13 @@ let
     cat rules.css >> $out
   '';
 
+  greetings = {
+    fr = "Bon retour";
+    es = "Hola de nuevo";
+    de = "Willkommen zurück";
+  };
+  greeting = greetings.${lib.substring 0 2 config.i18n.defaultLocale} or "Welcome back";
+
   clock = lib.concatStrings [
     ''<span size="64pt" weight="300" letter_spacing="-1024">%H:%M</span>''
     "\n"
@@ -42,7 +49,7 @@ lib.mkIf (config.flux.profile == "desktop") {
       skip_selection = soleUser != null;
       background = { path = wallpaper; fit = "Cover"; };
       GTK.application_prefer_dark_theme = dark;
-      appearance.greeting_msg = "Welcome back";
+      appearance.greeting_msg = greeting;
       commands = {
         reboot = [ "systemctl" "reboot" ];
         poweroff = [ "systemctl" "poweroff" ];
