@@ -29,7 +29,22 @@ pub enum Screen {
     Done,
 }
 
+/// How many numbered steps the person walks through before the install starts.
+pub const STEPS: u8 = 5;
+
 impl Screen {
+    /// The numbered step this screen belongs to, for the screens that have one.
+    pub fn step(self) -> Option<u8> {
+        match self {
+            Screen::Language => Some(1),
+            Screen::Disk | Screen::Confirm => Some(2),
+            Screen::Account => Some(3),
+            Screen::TimeZone => Some(4),
+            Screen::Summary => Some(5),
+            _ => None,
+        }
+    }
+
     fn has_back(self) -> bool {
         !matches!(self, Screen::Welcome | Screen::Progress | Screen::Done)
     }
@@ -127,6 +142,11 @@ impl App {
         self.show(screen);
     }
 
+    /// The screen on show.
+    pub fn current(&self) -> Screen {
+        self.current.get()
+    }
+
     /// Whether the open screen offers Back.
     pub fn can_go_back(&self) -> bool {
         self.current.get().has_back()
@@ -210,6 +230,10 @@ pub fn activate(application: &Application) {
         current: Cell::new(Screen::Welcome),
     });
     keys(&app);
+    let owner = app.clone();
+    app.window.connect_destroy(move |_| {
+        let _ = &owner;
+    });
     let start = std::env::var("FLUX_INSTALLER_PREVIEW").ok().and_then(|name| preview(&app, &name));
     app.replace(start.unwrap_or(Screen::Welcome));
     app.window.fullscreen();

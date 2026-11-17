@@ -169,5 +169,10 @@ pub fn build(app: &Rc<App>) -> Widget {
     gtk4::glib::idle_add_local_once(move || {
         focus.grab_focus();
     });
-    page(app, text.account_title, text.account_subtitle, &body, &[&fields.next])
+    let screen = page(app, text.account_title, text.account_subtitle, &body, &[&fields.next]);
+    let owner = fields.clone();
+    screen.connect_destroy(move |_| {
+        let _ = &owner;
+    });
+    screen
 }
