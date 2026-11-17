@@ -32,7 +32,7 @@ export const glyphs = {
 	keyboard: 'solar:keyboard-linear',
 	headphones: 'solar:headphones-round-linear',
 	phone: 'solar:smartphone-linear',
-	folder: 'solar:folder-linear',
+	folder: 'solar:folder-bold-duotone',
 	document: 'solar:document-text-linear',
 	file: 'solar:file-linear',
 	sheet: 'solar:chart-linear',
