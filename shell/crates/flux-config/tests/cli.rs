@@ -91,6 +91,7 @@ fn several_values_and_accounts() {
     assert!(text(&out.stderr).contains("dry-run: chpasswd < (stdin)"));
     assert!(!text(&out.stderr).contains("hunter2") && !text(&out.stdout).contains("hunter2"));
     assert_eq!(settings(&root)["users"][1]["fullName"], "Bob Marley");
+    assert_eq!(settings(&root)["users"][1]["groups"], serde_json::json!(["networkmanager", "video", "audio", "lp"]));
     assert!(root.join("etc/flux/settings.json.bak").is_file());
     let _ = fs::remove_dir_all(&root);
 }
@@ -116,6 +117,13 @@ fn refuses_bad_input_without_writing() {
     }
     let out = run(&root, &["user", "add", "eve", "--full-name", "Eve"], "");
     assert!(!out.status.success(), "an empty password was accepted");
+    let out = run(&root, &["set", "hostname", "bad-"], "");
+    assert_eq!(out.status.code(), Some(1));
+    let out = run(&root, &["set", "software.gaming", "maybe"], "");
+    assert_eq!(out.status.code(), Some(2));
+    let out = run(&root, &["set", "software.games", "true"], "");
+    assert_eq!(out.status.code(), Some(2));
+    assert!(!root.join("etc/flux/settings.json").exists());
     let out = run(&root, &["frobnicate"], "");
     assert_eq!(out.status.code(), Some(2));
     let _ = fs::remove_dir_all(&root);
@@ -130,7 +138,7 @@ fn one_change_at_a_time() {
     let held = held.unwrap_or_else(|error| panic!("cannot open the lock: {error}"));
     let _ = held.lock();
     let out = run(&root, &["apply"], "");
-    assert!(!out.status.success());
+    assert_eq!(out.status.code(), Some(4));
     assert!(text(&out.stderr).contains("already running"), "{}", text(&out.stderr));
     drop(held);
     let out = run(&root, &["apply"], "");
@@ -146,11 +154,82 @@ fn read_only_commands() {
     let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap_or(serde_json::Value::Null);
     assert_eq!(value["exists"], false);
     assert_eq!(value["settings"]["users"][0]["fullName"], "Ada Lovelace");
+    assert_eq!(value["settings"]["software"], serde_json::json!({ "facile": true, "apps": true, "gaming": false }));
+    assert_eq!(value["settings"]["hardware"], serde_json::json!({ "nvidia": false }));
+    assert_eq!(value["unset"], serde_json::json!(["software.facile", "software.apps", "software.gaming", "hardware.nvidia"]));
     let out = run(&root, &["generations"], "");
     assert_eq!(text(&out.stdout).trim(), "[]");
     let out = run(&root, &["status"], "");
     assert!(text(&out.stdout).contains("\"running\":false"));
     let out = run(&root, &["rollback"], "");
     assert!(!out.status.success());
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn software_and_hardware_choices() {
+    let _serial = serial();
+    let root = root("choices");
+    let old = r#"{"version":1,"hostname":"flux","locale":"en_US.UTF-8","keymap":"us",
+        "users":[{"name":"ada","fullName":"Ada Lovelace","admin":true}]}"#;
+    let _ = fs::write(root.join("etc/flux/settings.json"), old);
+    let out = run(&root, &["set", "hostname", "lab"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let saved = settings(&root);
+    assert_eq!(saved["hostname"], "lab");
+    assert!(saved.get("software").is_none() && saved.get("hardware").is_none(), "{saved}");
+
+    let out = run(&root, &["set", "software.gaming", "true"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let lines: Vec<String> = text(&out.stdout).lines().map(String::from).collect();
+    assert!(lines.first().is_some_and(|line| line.contains("\"step\":\"start\"")), "{lines:?}");
+    assert!(lines.last().is_some_and(|line| line.contains("\"step\":\"done\"")), "{lines:?}");
+    assert_eq!(text(&out.stderr).matches("dry-run: nixos-rebuild").count(), 1);
+    let saved = settings(&root);
+    assert_eq!(saved["software"], serde_json::json!({ "gaming": true }));
+    assert!(saved.get("hardware").is_none(), "{saved}");
+
+    let out = run(&root, &["set", "hardware.nvidia", "true", "software.facile", "false", "software.apps", "false"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let out = run(&root, &["set", "hardware.nvidia", "false", "--no-apply"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let out = run(&root, &["get"], "");
+    let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap_or(serde_json::Value::Null);
+    assert_eq!(value["exists"], true);
+    assert_eq!(value["settings"]["software"], serde_json::json!({ "facile": false, "apps": false, "gaming": true }));
+    assert_eq!(value["settings"]["hardware"], serde_json::json!({ "nvidia": false }));
+    assert_eq!(value["unset"], serde_json::json!([]));
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn going_back_puts_the_lock_of_that_version_back() {
+    let _serial = serial();
+    let root = root("locks");
+    let profiles = root.join("nix/var/nix/profiles");
+    let _ = fs::create_dir_all(&profiles);
+    for number in [1, 2] {
+        let _ = std::os::unix::fs::symlink(format!("/nix/store/hash{number}-nixos-system-flux"), profiles.join(format!("system-{number}-link")));
+    }
+    let system = profiles.join("system");
+    let lock = root.join("etc/flux/flake.lock");
+
+    let _ = std::os::unix::fs::symlink("system-1-link", &system);
+    let _ = fs::write(&lock, "lock of version 1");
+    let out = run(&root, &["apply"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+
+    let _ = fs::remove_file(&system);
+    let _ = std::os::unix::fs::symlink("system-2-link", &system);
+    let _ = fs::write(&lock, "lock of version 2");
+    let out = run(&root, &["update"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    assert_eq!(fs::read_to_string(root.join("etc/flux/flake.lock.bak")).unwrap_or_default(), "lock of version 2");
+    let kept = root.join("var/lib/flux-config/locks");
+    assert!(kept.join("hash1-nixos-system-flux.lock").is_file() && kept.join("hash2-nixos-system-flux.lock").is_file());
+
+    let out = run(&root, &["rollback"], "");
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    assert_eq!(fs::read_to_string(&lock).unwrap_or_default(), "lock of version 1");
     let _ = fs::remove_dir_all(&root);
 }
