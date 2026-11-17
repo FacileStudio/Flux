@@ -34,34 +34,51 @@ pub struct Updates {
     pub automatic: bool,
 }
 
-/// The optional software groups Flux installs.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// The optional software groups Flux installs. `None` means the file does not
+/// say: the key stays out of the file and NixOS keeps what `configuration.nix` says.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Software {
-    #[serde(default = "yes")]
-    pub facile: bool,
-    #[serde(default = "yes")]
-    pub apps: bool,
-    #[serde(default)]
-    pub gaming: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub facile: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub apps: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gaming: Option<bool>,
 }
 
-impl Default for Software {
-    fn default() -> Self {
-        Software { facile: true, apps: true, gaming: false }
+impl Software {
+    /// Every choice filled in, with the Flux default where the file is silent.
+    pub fn resolved(self) -> Software {
+        Software {
+            facile: Some(self.facile.unwrap_or(true)),
+            apps: Some(self.apps.unwrap_or(true)),
+            gaming: Some(self.gaming.unwrap_or(false)),
+        }
+    }
+
+    fn is_unset(&self) -> bool {
+        *self == Software::default()
     }
 }
 
-/// Drivers the machine needs beyond the free defaults.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// Drivers the machine needs beyond the free defaults. `None` works as in [`Software`].
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Hardware {
-    #[serde(default)]
-    pub nvidia: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nvidia: Option<bool>,
 }
 
-fn yes() -> bool {
-    true
+impl Hardware {
+    /// The choice filled in, with the Flux default where the file is silent.
+    pub fn resolved(self) -> Hardware {
+        Hardware { nvidia: Some(self.nvidia.unwrap_or(false)) }
+    }
+
+    fn is_unset(&self) -> bool {
+        *self == Hardware::default()
+    }
 }
 
 /// The whole file.
@@ -80,15 +97,20 @@ pub struct Settings {
     pub users: Vec<User>,
     #[serde(default)]
     pub updates: Updates,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Software::is_unset")]
     pub software: Software,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Hardware::is_unset")]
     pub hardware: Hardware,
 }
 
-/// The groups a new account gets besides `wheel`.
+/// The groups an account listed without `groups` has, as `modules/settings.nix` reads it.
 pub fn default_groups() -> Vec<String> {
     ["networkmanager", "video", "audio"].map(String::from).to_vec()
+}
+
+/// The groups an account made in Settings gets besides `wheel`: the installer's list.
+pub fn new_user_groups() -> Vec<String> {
+    ["networkmanager", "video", "audio", "lp"].map(String::from).to_vec()
 }
 
 impl Default for Settings {
@@ -184,7 +206,7 @@ impl Settings {
             name: name.to_string(),
             full_name: full_name.to_string(),
             admin,
-            groups: default_groups(),
+            groups: new_user_groups(),
         });
         Ok(())
     }
@@ -220,6 +242,24 @@ impl Settings {
         Ok(())
     }
 
+    /// The `software` and `hardware` keys the file does not set, as `flux-config set` names them.
+    pub fn unset_choices(&self) -> Vec<&'static str> {
+        [
+            ("software.facile", self.software.facile),
+            ("software.apps", self.software.apps),
+            ("software.gaming", self.software.gaming),
+            ("hardware.nvidia", self.hardware.nvidia),
+        ]
+        .into_iter()
+        .filter_map(|(key, value)| value.is_none().then_some(key))
+        .collect()
+    }
+
+    /// The settings with every `software` and `hardware` choice filled in, for showing. Never save this.
+    pub fn resolved(&self) -> Settings {
+        Settings { software: self.software.resolved(), hardware: self.hardware.resolved(), ..self.clone() }
+    }
+
     /// The document as written to disk: pretty, with a trailing newline.
     pub fn to_json(&self) -> String {
         let mut json = serde_json::to_string_pretty(self).unwrap_or_default();
@@ -237,16 +277,13 @@ pub fn load(path: &Path, zoneinfo: Option<&Path>) -> Result<Option<Settings>, St
     }
 }
 
-/// Write `settings` to `path` atomically: the old file is copied to `backup`,
-/// the new one is written beside it, flushed, then renamed over it.
-pub fn save(path: &Path, backup: &Path, settings: &Settings) -> Result<(), String> {
-    settings.check(None).map_err(|errors| errors.join("; "))?;
-    let dir = path.parent().ok_or("settings path has no directory")?;
+/// Replace `path` with `bytes` without a moment where it is empty or half
+/// written: a temporary file beside it, flushed, then renamed over it.
+pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let dir = path.parent().ok_or_else(|| format!("{} has no directory", path.display()))?;
+    let name = path.file_name().ok_or_else(|| format!("{} has no file name", path.display()))?;
     fs::create_dir_all(dir).map_err(|error| format!("cannot create {}: {error}", dir.display()))?;
-    if path.exists() {
-        fs::copy(path, backup).map_err(|error| format!("cannot back up {}: {error}", path.display()))?;
-    }
-    let temp = dir.join(".settings.json.tmp");
+    let temp = dir.join(format!(".{}.tmp", name.to_string_lossy()));
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -254,14 +291,27 @@ pub fn save(path: &Path, backup: &Path, settings: &Settings) -> Result<(), Strin
         .mode(0o644)
         .open(&temp)
         .map_err(|error| format!("cannot write {}: {error}", temp.display()))?;
-    file.write_all(settings.to_json().as_bytes())
-        .and_then(|()| file.sync_all())
-        .map_err(|error| format!("cannot write {}: {error}", temp.display()))?;
+    file.write_all(bytes).and_then(|()| file.sync_all()).map_err(|error| format!("cannot write {}: {error}", temp.display()))?;
     fs::rename(&temp, path).map_err(|error| format!("cannot replace {}: {error}", path.display()))?;
     if let Ok(dir) = File::open(dir) {
         let _ = dir.sync_all();
     }
     Ok(())
+}
+
+/// Put the content of `from` at `path`, atomically.
+pub fn copy_atomic(from: &Path, path: &Path) -> Result<(), String> {
+    let bytes = fs::read(from).map_err(|error| format!("cannot read {}: {error}", from.display()))?;
+    write_atomic(path, &bytes)
+}
+
+/// Write `settings` to `path` atomically, after copying the old file to `backup`.
+pub fn save(path: &Path, backup: &Path, settings: &Settings) -> Result<(), String> {
+    settings.check(None).map_err(|errors| errors.join("; "))?;
+    if path.exists() {
+        fs::copy(path, backup).map_err(|error| format!("cannot back up {}: {error}", path.display()))?;
+    }
+    write_atomic(path, settings.to_json().as_bytes())
 }
 
 #[cfg(test)]
@@ -295,17 +345,33 @@ mod tests {
     }
 
     #[test]
-    fn software_defaults_keep_old_files_valid() {
+    fn absent_choices_stay_absent() {
         let json = r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us"}"#;
         let settings = Settings::parse(json, None).unwrap_or_default();
-        assert_eq!(settings.software, Software { facile: true, apps: true, gaming: false });
-        assert!(!settings.hardware.nvidia);
-        let minimal = r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us",
+        assert_eq!(settings.software, Software::default());
+        assert_eq!(settings.hardware.nvidia, None);
+        let written = settings.to_json();
+        assert!(!written.contains("software") && !written.contains("hardware"), "{written}");
+        assert_eq!(settings.unset_choices(), ["software.facile", "software.apps", "software.gaming", "hardware.nvidia"]);
+        let resolved = settings.resolved();
+        assert_eq!(resolved.software, Software { facile: Some(true), apps: Some(true), gaming: Some(false) });
+        assert_eq!(resolved.hardware.nvidia, Some(false));
+    }
+
+    #[test]
+    fn set_choices_are_kept() {
+        let partial = r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us",
             "software":{"apps":false,"gaming":true},"hardware":{"nvidia":true}}"#;
-        let settings = Settings::parse(minimal, None).unwrap_or_default();
-        assert_eq!(settings.software, Software { facile: true, apps: false, gaming: true });
-        assert!(settings.hardware.nvidia);
+        let settings = Settings::parse(partial, None).unwrap_or_default();
+        assert_eq!(settings.software, Software { facile: None, apps: Some(false), gaming: Some(true) });
+        assert_eq!(settings.hardware.nvidia, Some(true));
+        assert_eq!(settings.unset_choices(), ["software.facile"]);
+        let written: serde_json::Value = serde_json::from_str(&settings.to_json()).unwrap_or_default();
+        assert_eq!(written["software"], serde_json::json!({ "apps": false, "gaming": true }));
+        assert_eq!(written["hardware"], serde_json::json!({ "nvidia": true }));
+        assert_eq!(settings.resolved().software.facile, Some(true));
         assert!(Settings::parse(r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us","software":{"games":true}}"#, None).is_err());
+        assert!(Settings::parse(r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us","hardware":{"nvidia":"yes"}}"#, None).is_err());
     }
 
     #[test]
@@ -351,11 +417,15 @@ mod tests {
         second.hostname = "lab".to_string();
         assert_eq!(save(&path, &backup, &second), Ok(()));
         assert_eq!(load(&path, None), Ok(Some(second)));
-        assert_eq!(load(&backup, None), Ok(Some(first)));
+        assert_eq!(load(&backup, None), Ok(Some(first.clone())));
         assert!(!dir.join(".settings.json.tmp").exists());
         let bad = Settings { hostname: "-".to_string(), ..Settings::default() };
         assert!(save(&path, &backup, &bad).is_err());
         assert_eq!(load(&dir.join("missing.json"), None), Ok(None));
+        assert_eq!(copy_atomic(&backup, &path), Ok(()));
+        assert_eq!(load(&path, None), Ok(Some(first)));
+        assert!(copy_atomic(&dir.join("missing.json"), &path).is_err());
+        assert!(path.is_file() && !dir.join(".settings.json.tmp").exists());
         let _ = fs::remove_dir_all(&dir);
     }
 }
