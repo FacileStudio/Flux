@@ -6,6 +6,13 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- kit now installs the Facile tools. Flux ships `kit` and `facile` (for `facile login`) and seeds `/etc/kit/kit.yml` with every Facile CLI. `kit sync` installs them in each account at login and checks for updates every hour, so you can remove any of them with `kit del`.
+- `flux.facile.enable` and `flux.facile.exclude` are now `flux.kit.enable` and `flux.kit.exclude`. The old names still work and print a rename warning. An excluded tool is left out of the seed.
+- Flatpak is on by default on the desktop profile, with the system Flathub remote.
+- `~/.local/state/kit/nix-profile/bin` is on `PATH`, so Nix packages added with `kit add` run.
+
 ## [0.3.2] - 2026-11-17
 
 ### Changed

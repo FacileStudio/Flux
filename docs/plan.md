@@ -18,7 +18,7 @@ installer ISO and the Boite VM image are thin hosts on top of that one module.
 
 | Stream | Owns | Output |
 |---|---|---|
-| tools | `pkgs/facile-tools/`, `modules/facile.nix`, `scripts/gen-facile-tools.*` | Facile CLIs preinstalled from release binaries, lockfile generated from `facile/internal/manifest/tools.yml` |
+| tools | `pkgs/facile-tools/`, `modules/kit.nix`, `scripts/gen-facile-tools.*` | `kit` and `facile` shipped from release binaries; `/etc/kit/kit.yml` seeds every Facile CLI, which `kit sync` installs per user at login and daily; lockfile generated from `kit/crates/kit-core/catalog/tools.yml` |
 | shell | `shell/` (widgets fork with history), `pkgs/flux-shell/`, `modules/desktop-shell.nix` | statusbar, sidebar, launcher, exit built by Nix, started by niri, styled with muse |
 | theme | `theme/`, `pkgs/flux-theme/`, `modules/theme.nix`, colors in `modules/niri.kdl` | muse tokens turned into GTK palette, GTK app theme, Ghostty theme, niri colors |
 | iso | `hosts/iso/`, `pkgs/flux-install/`, `template/` | live desktop ISO plus a `flux-install` script that writes a machine flake from `template/` |
