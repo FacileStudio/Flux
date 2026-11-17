@@ -11,6 +11,14 @@ on:
         description: Fail on notices (missing theme, splash or install backend)
         type: boolean
         default: false
+      upload-iso:
+        description: Upload the built ISO as an artifact kept for one day
+        type: boolean
+        default: false
+      virgl:
+        description: Also boot the live ISO on virtio-vga-gl with a software render node
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       strict:
@@ -34,6 +42,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
+      - name: Read the options
+        id: opts
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          UPLOAD: ${{ inputs.upload-iso }}
+          VIRGL: ${{ inputs.virgl }}
+        run: |
+          label() { jq -e --arg l "$1" 'index($l) != null' <<<"${LABELS:-[]}" >/dev/null && echo true || echo false; }
+          upload=$UPLOAD; virgl=$VIRGL
+          [ "$(label boot-upload-iso)" = true ] && upload=true
+          [ "$(label boot-virgl)" = true ] && virgl=true
+          echo "upload-iso=${upload:-false}" >> "$GITHUB_OUTPUT"
+          echo "virgl=${virgl:-false}" >> "$GITHUB_OUTPUT"
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android \
@@ -49,7 +70,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
           ls -l /dev/kvm
           test -r /dev/kvm && test -w /dev/kvm
-      - name: Install QEMU with virgl
+      - name: Install QEMU
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
@@ -57,6 +78,7 @@ jobs:
           qemu-system-x86_64 --version
           qemu-system-x86_64 -display help | grep -q egl-headless
       - name: Provide a software render node
+        if: steps.opts.outputs.virgl == 'true'
         run: |
           if ! sudo modprobe vgem; then
             sudo apt-get install -y -qq "linux-modules-extra-$(uname -r)"
@@ -84,6 +106,15 @@ jobs:
           ls -l "$fd/FV"
           echo "code=$fd/FV/OVMF_CODE.fd" >> "$GITHUB_OUTPUT"
           echo "vars=$fd/FV/OVMF_VARS.fd" >> "$GITHUB_OUTPUT"
+      - name: Upload the ISO
+        if: steps.opts.outputs.upload-iso == 'true' && inputs.iso-artifact == ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: flux-iso
+          path: result-iso/iso/*.iso
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
       - name: Boot, install and screenshot
         env:
           OVMF_CODE: ${{ steps.ovmf.outputs.code }}
@@ -96,13 +127,24 @@ jobs:
             exit 1
           fi
           mkdir -p "$RUNNER_TEMP/boot"
-          node=$(find /dev/dri -name 'renderD*' | sort | head -n 1)
           args=(--iso "${isos[0]}" --out boot-screens --ovmf-code "$OVMF_CODE" --ovmf-vars "$OVMF_VARS"
-            --workdir "$RUNNER_TEMP/boot" --gpu virgl --rendernode "$node")
+            --workdir "$RUNNER_TEMP/boot" --gpu plain)
           if [ "$STRICT" = true ]; then
             args+=(--strict)
           fi
           python3 tests/boot/drive.py "${args[@]}"
+      - name: Boot the live ISO on virgl
+        if: always() && steps.opts.outputs.virgl == 'true'
+        continue-on-error: true
+        env:
+          OVMF_CODE: ${{ steps.ovmf.outputs.code }}
+          OVMF_VARS: ${{ steps.ovmf.outputs.vars }}
+        run: |
+          iso=$(find -L result-iso/iso -maxdepth 1 -name '*.iso' | head -n 1)
+          node=$(find /dev/dri -name 'renderD*' | sort | head -n 1)
+          test -n "$node"
+          python3 tests/boot/drive.py --iso "$iso" --out boot-screens/virgl --ovmf-code "$OVMF_CODE" \
+            --ovmf-vars "$OVMF_VARS" --workdir "$RUNNER_TEMP/boot" --gpu virgl --rendernode "$node" --no-install
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

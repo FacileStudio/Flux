@@ -48,7 +48,7 @@ in
       };
 
       boot.consoleLogLevel = 0;
-      boot.kernelParams = [ "quiet" "rd.udev.log_level=3" "udev.log_priority=3" ];
+      boot.kernelParams = [ "quiet" "rd.udev.log_level=3" "udev.log_priority=3" "plymouth.use-simpledrm" ];
     })
   ];
 }

@@ -19,10 +19,14 @@ GRUB is the first still screen with content across it (arrow keys are sent until
 stops); Plymouth is one flat colour with content in a small area; a session is a screen that
 stays still for 10 to 12 seconds. Every distinct frame is also kept under frames/.
 
-GPU. niri refuses software EGL renderers, so on a plain virtio-vga the session stays black.
-The default `--gpu virgl` gives the guest virtio-vga-gl with `-display egl-headless`, which
-needs a host render node. When the session never shows, the run records a failure and falls
-back to the text console (Ctrl+Alt+F2) so the install is still exercised.
+GPU. The default `--gpu plain` is virtio-vga without 3D, which is what most VMs give a guest:
+Flux patches niri to accept llvmpipe there. `--gpu virgl` gives the guest virtio-vga-gl with
+`-display egl-headless`, which needs a host render node. When the session never shows, the run
+records a failure and falls back to the text console (Ctrl+Alt+F2) so the install is still exercised.
+
+Diagnostics. The guest script dumps /dev/dri, the connectors, the niri version, the logind
+sessions, greetd and Plymouth units, the user units and the matching journal lines to the serial
+port as FLUX-DIAG lines, in the live and installed phases, so a black screen can be explained.
 
 A phase whose signal never arrives fails the run with a message naming it. Heuristic
 screenshots that cannot be matched become notices; `--strict` turns notices into failures.
@@ -66,6 +70,23 @@ say "FLUX-TEST-INFO os=$(. /etc/os-release; printf '%s' "$PRETTY_NAME") host=$(h
 say "FLUX-TEST-INFO cmdline=$(cat /proc/cmdline)"
 failed=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{print $1}' | tr '\n' ' ')
 say "FLUX-TEST-FAILED-UNITS ${failed:-none}"
+diag() { local label=$1; shift; "$@" 2>&1 | tr -d '\000-\010\013\014\016-\037\177' | sed "s|^|FLUX-DIAG [$label] |" > /dev/ttyS0; }
+diag dri ls -l /dev/dri /dev/dri/by-path
+diag gpu sh -c 'for d in /sys/class/drm/card?; do echo "$d $(cat $d/device/uevent | tr "\n" " ")"; done'
+diag connectors sh -c 'for c in /sys/class/drm/card*-*; do echo "$c $(cat $c/status) $(head -n1 $c/modes 2>/dev/null)"; done'
+diag niri sh -c 'niri --version; command -v niri'
+diag sessions loginctl list-sessions --no-legend
+diag session sh -c 'for s in $(loginctl list-sessions --no-legend | awk "{print \$1}"); do loginctl show-session "$s" -p Name -p TTY -p Type -p Class -p State -p Active -p Service; done'
+diag units systemctl status --no-pager --lines=0 greetd.service plymouth-start.service plymouth-quit.service plymouth-quit-wait.service
+diag plymouth sh -c 'plymouth --ping && echo running || echo not-running'
+diag kernel journalctl -b --no-pager -o short-monotonic -k --grep 'drm|fb0|virtio_gpu|simpledrm|efifb|bochs|plymouth'
+diag system journalctl -b --no-pager -o short-monotonic -u greetd.service -u plymouth-start.service -u plymouth-quit.service -u systemd-logind.service
+diag grep sh -c 'journalctl -b --no-pager -o short-monotonic --grep "niri|greetd|regreet|cage|flux-|plymouth|EGL|llvmpipe|wayland" | tail -n 300'
+for u in $(loginctl list-users --no-legend | awk '{print $2}'); do
+  diag "$u-failed" systemctl --user -M "$u@" --no-pager --failed
+  diag "$u-units" systemctl --user -M "$u@" --no-pager --lines=0 status graphical-session.target niri.service flux-statusbar.service flux-installer.service flux-wallpaper.service
+  diag "$u-journal" sh -c "journalctl -b --no-pager -o short-monotonic _UID=$(id -u "$u") | tail -n 300"
+done
 case "$mode" in
   live)
     installer=$(command -v flux-install || true)
@@ -423,7 +444,7 @@ class Run:
 
     def target_drives(self, boot_index):
         return [
-            "-drive", f"file={self.target},if=none,id=target,format=qcow2,discard=unmap",
+            "-drive", f"file={self.disk},if=none,id=target,format=qcow2,discard=unmap",
             "-device", f"virtio-blk-pci,drive=target,bus=pcie.0,addr=0x10,bootindex={boot_index}",
             "-drive", f"file={self.script},if=none,id=script,format=raw,readonly=on",
             "-device", f"virtio-blk-pci,drive=script,serial={SCRIPT_SERIAL},bus=pcie.0,addr=0x11",
@@ -449,8 +470,8 @@ class Run:
         self.vars = self.work / "OVMF_VARS.fd"
         shutil.copyfile(vars_template, self.vars)
         os.chmod(self.vars, 0o644)
-        self.target = self.work / "target.qcow2"
-        subprocess.run(["qemu-img", "create", "-q", "-f", "qcow2", str(self.target), o.disk_size], check=True)
+        self.disk = self.work / "target.qcow2"
+        subprocess.run(["qemu-img", "create", "-q", "-f", "qcow2", str(self.disk), o.disk_size], check=True)
         script = GUEST_SCRIPT.replace("@HASH@", PASSWORD_HASH).replace("@INSTALL@", "no" if o.no_install else "yes")
         self.script = self.work / "script.img"
         self.script.write_bytes(script.encode().ljust(1024 * 1024, b"\x00"))
@@ -466,7 +487,7 @@ class Run:
             if self.opts.gpu != "virgl":
                 raise PhaseError(name, f"QEMU did not start; see qemu-{name}.log")
             reason = (self.out / f"qemu-{name}.log").read_text().strip().splitlines()[-1]
-            self.soft_fail("gpu", f"QEMU could not start the virgl display ({reason}); retrying with plain virtio-vga, where niri cannot render")
+            self.soft_fail("gpu", f"QEMU could not start the virgl display ({reason}); retrying with plain virtio-vga")
             self.opts.gpu = "plain"
             machine = Machine(self, name, drives)
         self.machines.append(machine)
@@ -765,8 +786,8 @@ def parse(argv):
     p.add_argument("--ovmf-vars", help="OVMF_VARS.fd template; copied, never written")
     p.add_argument("--qemu", default="qemu-system-x86_64")
     p.add_argument("--accel", default="kvm", choices=["kvm", "tcg"])
-    p.add_argument("--gpu", default="virgl", choices=["virgl", "plain"],
-                   help="virgl gives the guest a 3D GPU (niri refuses software renderers); plain is virtio-vga without 3D")
+    p.add_argument("--gpu", default="plain", choices=["plain", "virgl"],
+                   help="plain is virtio-vga without 3D (niri renders with llvmpipe); virgl gives the guest a 3D GPU")
     p.add_argument("--rendernode", help="host DRM render node for egl-headless (default: QEMU picks one)")
     p.add_argument("--terminal", default="niri", choices=["niri", "vt"],
                    help="how to reach a shell: niri keybindings, or the text console on Ctrl+Alt+F2")

@@ -1,8 +1,8 @@
 diff --git a/src/backend/tty.rs b/src/backend/tty.rs
-index c30ca6ba6b..4fd34fe52d 100644
+index 5368c7e..904f8b4 100644
 --- a/src/backend/tty.rs
 +++ b/src/backend/tty.rs
-@@ -96,6 +96,9 @@ pub struct Tty {
+@@ -95,6 +95,9 @@ pub struct Tty {
      // The dma-buf global corresponds to the output device (the primary GPU). It is only `Some()`
      // if we have a device corresponding to the primary GPU.
      dmabuf_global: Option<DmabufGlobal>,
@@ -12,7 +12,7 @@ index c30ca6ba6b..4fd34fe52d 100644
      // The output config had changed, but the session is paused, so we need to update it on resume.
      update_output_config_on_resume: bool,
      // Whether the debug tinting is enabled.
-@@ -527,6 +530,7 @@ impl Tty {
+@@ -503,6 +506,7 @@ impl Tty {
              ignored_nodes: HashSet::new(),
              devices: HashMap::new(),
              dmabuf_global: None,
@@ -20,7 +20,7 @@ index c30ca6ba6b..4fd34fe52d 100644
              update_output_config_on_resume: false,
              debug_tint: false,
              ipc_outputs: Arc::new(Mutex::new(HashMap::new())),
-@@ -801,13 +805,10 @@ impl Tty {
+@@ -780,42 +784,53 @@ impl Tty {
          let mut try_initialize_gpu = || {
              let display = unsafe { EGLDisplay::new(gbm.clone())? };
              let egl_device = EGLDevice::device_for_display(&display)?;
@@ -36,8 +36,22 @@ index c30ca6ba6b..4fd34fe52d 100644
 +                "software EGL renderers are only allowed on the primary node"
              );
  
-             let render_node = egl_device
-@@ -820,23 +821,33 @@ impl Tty {
+-            let render_node = egl_device
+-                .try_get_render_node()
+-                .ok()
+-                .flatten()
+-                .unwrap_or(node);
++            let render_node = if is_software {
++                self.primary_render_node
++            } else {
++                egl_device
++                    .try_get_render_node()
++                    .ok()
++                    .flatten()
++                    .unwrap_or(node)
++            };
+             self.gpu_manager
+                 .as_mut()
                  .add_node(render_node, gbm.clone())
                  .context("error adding render node to GPU manager")?;
  
@@ -78,7 +92,7 @@ index c30ca6ba6b..4fd34fe52d 100644
  
              let mut renderer = self
                  .gpu_manager
-@@ -868,35 +879,44 @@ impl Tty {
+@@ -847,35 +862,44 @@ impl Tty {
  
              niri.update_shaders();
  
@@ -152,7 +166,7 @@ index c30ca6ba6b..4fd34fe52d 100644
                          }
                      }
                  }
-@@ -927,9 +947,14 @@ impl Tty {
+@@ -906,9 +930,14 @@ impl Tty {
              })
              .unwrap();
  
@@ -170,7 +184,7 @@ index c30ca6ba6b..4fd34fe52d 100644
  
          let device = OutputDevice {
              token,
-@@ -1211,15 +1236,17 @@ impl Tty {
+@@ -1190,15 +1219,17 @@ impl Tty {
                              },
                          )
                          .unwrap();
@@ -195,7 +209,7 @@ index c30ca6ba6b..4fd34fe52d 100644
                  }
              }
  
-@@ -1508,21 +1535,25 @@ impl Tty {
+@@ -1485,21 +1516,25 @@ impl Tty {
          }
  
          let mut dmabuf_feedback = None;
@@ -236,7 +250,7 @@ index c30ca6ba6b..4fd34fe52d 100644
                  }
              }
          }
-@@ -2062,6 +2093,11 @@ impl Tty {
+@@ -2031,6 +2066,11 @@ impl Tty {
      }
  
      pub fn import_dmabuf(&mut self, dmabuf: &Dmabuf) -> bool {
@@ -248,7 +262,7 @@ index c30ca6ba6b..4fd34fe52d 100644
          let mut renderer = match self.gpu_manager.single_renderer(&self.primary_render_node) {
              Ok(renderer) => renderer,
              Err(err) => {
-@@ -2085,6 +2121,10 @@ impl Tty {
+@@ -2052,6 +2092,10 @@ impl Tty {
      }
  
      pub fn early_import(&mut self, surface: &WlSurface) {
