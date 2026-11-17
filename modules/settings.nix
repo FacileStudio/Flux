@@ -182,7 +182,7 @@ in
         (u: lib.nameValuePair u.name {
           isNormalUser = set true;
           description = set u.fullName;
-          extraGroups = set (u.groups ++ lib.optional u.admin "wheel");
+          extraGroups = u.groups ++ lib.optional u.admin "wheel";
           shell = set pkgs.zsh;
           hashedPassword = set null;
         })
