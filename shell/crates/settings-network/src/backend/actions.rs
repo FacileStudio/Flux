@@ -35,15 +35,23 @@ pub async fn scan(conn: &Connection, device: &str) -> zbus::Result<()> {
     bus::invoke(conn, device, bus::WIRELESS, "RequestScan", &(options,)).await
 }
 
+/// The profiles one join touched: the one it `created`, if any, and the saved
+/// ones it `replaces` once the new one has connected.
+#[derive(Debug, Default)]
+pub struct Joined {
+    pub created: Option<String>,
+    pub replaces: Vec<String>,
+}
+
 /// Join `join.ssid`: reuse the saved profile when no new password is given,
-/// otherwise replace any saved profile with a fresh one. Returns the profile
-/// this call created, if any, so a wrong password can remove it again.
+/// otherwise add a fresh one beside any saved profile. The saved ones stay
+/// until the new one connects, so a failed attempt never forgets a network.
 pub async fn connect(
     conn: &Connection,
     snapshot: &Snapshot,
     device: &str,
     join: &Join,
-) -> zbus::Result<Option<String>> {
+) -> zbus::Result<Joined> {
     let saved: Vec<String> = snapshot
         .saved_for(&join.ssid)
         .map(|profile| profile.path.clone())
@@ -54,11 +62,8 @@ pub async fn connect(
         if let Some(profile) = saved.first() {
             let body = (bus::object(Some(profile))?, device_path, specific);
             bus::invoke(conn, NM_PATH, NM, "ActivateConnection", &body).await?;
-            return Ok(None);
+            return Ok(Joined::default());
         }
-    }
-    for profile in &saved {
-        delete(conn, profile).await?;
     }
     let settings = profile(join);
     let (created, _active): (OwnedObjectPath, OwnedObjectPath) = bus::call(
@@ -69,7 +74,10 @@ pub async fn connect(
         &(settings, device_path, specific),
     )
     .await?;
-    Ok(Some(created.as_str().to_string()))
+    Ok(Joined {
+        created: Some(created.as_str().to_string()),
+        replaces: saved,
+    })
 }
 
 /// The settings of a new Wi-Fi profile.

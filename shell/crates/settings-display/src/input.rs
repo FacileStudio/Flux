@@ -23,6 +23,16 @@ pub fn title() -> String {
     i18n::text().input_title.to_string()
 }
 
+/// Where a scroll direction sits in the two-option choice: Natural first, then Traditional.
+pub fn direction_index(natural: bool) -> usize {
+    usize::from(!natural)
+}
+
+/// Whether the scroll direction at `index` of the choice is Natural.
+pub fn natural_at(index: usize) -> bool {
+    index == 0
+}
+
 pub(crate) struct Input {
     text: &'static Text,
     config: RefCell<InputConfig>,
@@ -142,9 +152,9 @@ impl Input {
         row
     }
 
-    fn choice(self: &Rc<Self>, title: &str, names: &[&str], selected: usize, set: fn(&mut InputConfig, usize)) -> GtkBox {
+    fn choice(self: &Rc<Self>, title: &str, subtitle: &str, names: &[&str], selected: usize, set: fn(&mut InputConfig, usize)) -> GtkBox {
         let names: Vec<String> = names.iter().map(|name| name.to_string()).collect();
-        let (row, dropdown) = ui::choice_row(title, "", &names, selected, |_| {});
+        let (row, dropdown) = ui::choice_row(title, subtitle, &names, selected, |_| {});
         let this = self.clone();
         dropdown.connect_selected_notify(move |dropdown| {
             let index = dropdown.selected() as usize;
@@ -191,16 +201,20 @@ impl Input {
         let text = self.text;
         let config = self.config.borrow().clone();
         let section = ui::section_with(text.touchpad, "");
+        section.card.append(&self.choice(
+            text.scroll_direction,
+            text.scroll_touchpad_hint,
+            &text.scroll_directions,
+            direction_index(config.touchpad_natural),
+            |c, i| c.touchpad_natural = natural_at(i),
+        ));
         section.card.append(&self.switch(text.tap, text.tap_hint, config.tap, |c, on| c.tap = on));
-        section.card.append(&self.switch(text.natural, text.natural_hint, config.touchpad_natural, |c, on| {
-            c.touchpad_natural = on
-        }));
         section.card.append(&self.switch(text.dwt, text.dwt_hint, config.dwt, |c, on| c.dwt = on));
         section.card.append(&self.slider(text.speed, (-1.0, 1.0, 0.1), config.touchpad_speed, |c, v| {
             c.touchpad_speed = (v * 10.0).round() / 10.0
         }));
         let selected = ScrollMethod::ALL.iter().position(|m| *m == config.scroll).unwrap_or(0);
-        section.card.append(&self.choice(text.scroll_method, &text.scroll_methods, selected, |c, i| {
+        section.card.append(&self.choice(text.scroll_method, "", &text.scroll_methods, selected, |c, i| {
             c.scroll = ScrollMethod::ALL.get(i).copied().unwrap_or_default()
         }));
         section.root
@@ -210,15 +224,19 @@ impl Input {
         let text = self.text;
         let config = self.config.borrow().clone();
         let section = ui::section_with(text.mouse, "");
+        section.card.append(&self.choice(
+            text.scroll_direction,
+            text.scroll_mouse_hint,
+            &text.scroll_directions,
+            direction_index(config.mouse_natural),
+            |c, i| c.mouse_natural = natural_at(i),
+        ));
         section.card.append(&self.slider(text.speed, (-1.0, 1.0, 0.1), config.mouse_speed, |c, v| {
             c.mouse_speed = (v * 10.0).round() / 10.0
         }));
         let selected = usize::from(config.mouse_profile == AccelProfile::Flat);
-        section.card.append(&self.choice(text.acceleration, &text.accel_profiles, selected, |c, i| {
+        section.card.append(&self.choice(text.acceleration, "", &text.accel_profiles, selected, |c, i| {
             c.mouse_profile = if i == 1 { AccelProfile::Flat } else { AccelProfile::Adaptive }
-        }));
-        section.card.append(&self.switch(text.natural, text.natural_hint, config.mouse_natural, |c, on| {
-            c.mouse_natural = on
         }));
         section.root
     }
@@ -261,7 +279,9 @@ pub fn page() -> gtk4::Widget {
         });
         ui::clear(&target);
         target.append(&error);
-        target.append(&input.keyboard());
+        if backend::preview_scene() != "pointer" {
+            target.append(&input.keyboard());
+        }
         if loaded.touchpad {
             target.append(&input.touchpad());
         }

@@ -210,6 +210,14 @@ fn input_kdl_leaves_the_system_layout_alone_by_default() {
     assert!(!kdl.contains("xkb"));
     assert!(kdl.contains("numlock false"));
     assert!(kdl.contains("    touchpad {\n        tap\n        natural-scroll\n        accel-speed 0.00\n"));
+    assert!(kdl.contains("    mouse {\n        accel-speed 0.00\n"));
+    let swapped = InputConfig { touchpad_natural: false, mouse_natural: true, ..InputConfig::default() };
+    let kdl = input_kdl(&swapped);
+    assert!(kdl.contains("    touchpad {\n        tap\n        accel-speed 0.00\n"));
+    assert!(kdl.contains("    mouse {\n        natural-scroll\n        accel-speed 0.00\n"));
+    for natural in [true, false] {
+        assert_eq!(crate::input::natural_at(crate::input::direction_index(natural)), natural);
+    }
     let single = InputConfig { layouts: vec![Layout { layout: "de".into(), variant: String::new() }], switch: "grp:caps_toggle".into(), ..InputConfig::default() };
     let kdl = input_kdl(&single);
     assert!(kdl.contains("layout \"de\"\n        }"));
