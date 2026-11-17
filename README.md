@@ -15,7 +15,7 @@ The same flake builds three things:
   sidebar, launcher and exit menu in GTK 4
 - **Design:** colors from the muse design system, applied to the shell, GTK apps, Ghostty and niri
 - **Shell:** zsh by default, with vim, Neovim and vis
-- **Tools:** every public Facile CLI preinstalled, pinned to its latest release
+- **Tools:** `kit` installs every public Facile CLI in each account at first login and keeps it updated; Flux ships `kit` and `facile` (for `facile login`). Leave tools out with `flux.kit.exclude`
 - **Dev basics:** git, mise, bun, ripgrep, fd, fzf, jq
 
 ## Try it in a VM
@@ -77,7 +77,7 @@ Set `flux.profile = "headless";` for a server or VM without the desktop.
 | `nix run .#vm` | boots the desktop in QEMU |
 | `nix build .#iso` | live installer ISO |
 | `nix build .#boite` | headless qcow2 image for Boîte |
-| `nix build .#facile-tools` | the Facile CLIs |
+| `nix build .#facile-tools` | kit, facile and the locked Facile CLIs |
 | `nix build .#flux-shell` | statusbar, sidebar, launcher, exit |
 
 Flux targets `x86_64-linux` and `aarch64-linux`.

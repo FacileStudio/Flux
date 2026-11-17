@@ -8,6 +8,6 @@ Flux startet auf dem niri-Desktop, mit der Statusleiste oben.
 
 **Mod** ist die Super-Taste (Windows oder Cmd).
 
-Alle Facile-Werkzeuge sind schon installiert. Starten Sie `sablier`, `nuage` oder `casier` im Terminal und melden Sie sich mit Ihrem Facile-Konto an.
+kit installiert bei der ersten Anmeldung alle Facile-Werkzeuge in Ihrem Konto und sucht jede Stunde nach Updates. Entfernen Sie eines mit `kit del <werkzeug>`, fügen Sie eines mit `kit add <werkzeug>` hinzu. Starten Sie `sablier`, `nuage` oder `casier` im Terminal und melden Sie sich mit Ihrem Facile-Konto an.
 
 Ändern Sie das Passwort mit `passwd`.

@@ -26,7 +26,7 @@ in
   };
 
   config = {
-    flux.facile.enable = lib.mkDefault cfg.facile;
+    flux.kit.enable = lib.mkDefault cfg.facile;
     nixpkgs.config.allowUnfreePredicate = pkg: lib.elem (lib.getName pkg) config.flux.unfree;
   };
 }

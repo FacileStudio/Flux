@@ -6,15 +6,19 @@ type Asset = { name: string; url: string; digest?: string };
 type Entry = { version: string; repo: string; bins: string[]; systems: Record<string, { url: string; hash: string }> };
 
 const skip = new Set(["widgets"]);
-const extra = [{ name: "facile", repo: "FacileStudio/facile", bin: "facile", asset: "facile" }];
+const extra = [
+  { name: "facile", repo: "FacileStudio/facile", bin: "facile", asset: "facile" },
+  { name: "kit", repo: "FacileStudio/kit", bin: "kit", asset: "kit" },
+];
 const arches: Record<string, string> = { "x86_64-linux": "amd64", "aarch64-linux": "arm64" };
+const catalogApi = "repos/FacileStudio/kit/contents/crates/kit-core/catalog/tools.yml";
 const out = new URL("../pkgs/facile-tools/tools.json", import.meta.url).pathname;
 
-/** Reads the catalog from a local path when given, else from facile's main branch. */
+/** Reads the catalog from a local path when given, else from kit's main branch. */
 async function loadCatalog(path?: string): Promise<Tool[]> {
   const text = path
     ? await Bun.file(path).text()
-    : await $`gh api repos/FacileStudio/facile/contents/internal/manifest/tools.yml -H ${"Accept: application/vnd.github.raw"}`.text();
+    : await $`gh api ${catalogApi} -H ${"Accept: application/vnd.github.raw"}`.text();
   return (Bun.YAML.parse(text) as { tools: Tool[] }).tools;
 }
 

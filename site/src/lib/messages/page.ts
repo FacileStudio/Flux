@@ -117,6 +117,14 @@ export const page = {
 		'Jede Boîte-VM läuft mit Flux ohne Desktop: dieselbe Shell und dieselben Werkzeuge, in Sekunden bereit.'
 	],
 	'boite.link': ['Open Boîte', 'Ouvrir Boîte', 'Abrir Boîte', 'Boîte öffnen'],
+	'mobile.badge': ['Coming soon', 'Bientôt disponible', 'Próximamente', 'Demnächst'],
+	'mobile.title': ['Flux Mobile', 'Flux Mobile', 'Flux Mobile', 'Flux Mobile'],
+	'mobile.line': [
+		'Flux for your phone: a private Android system without Google, with the Facile apps preinstalled. Built on LineageOS.',
+		'Flux pour votre téléphone : un système Android privé, sans Google, avec les apps Facile déjà installées. Construit sur LineageOS.',
+		'Flux para su teléfono: un sistema Android privado, sin Google, con las apps de Facile ya instaladas. Basado en LineageOS.',
+		'Flux für Ihr Smartphone: ein privates Android-System ohne Google, mit den Facile-Apps vorinstalliert. Gebaut auf LineageOS.'
+	],
 	'dev.title': ['Try it in a VM', 'Essayez-le dans une VM', 'Pruébelo en una VM', 'In einer VM ausprobieren'],
 	'dev.line': [
 		'Have Nix with flakes? One command boots the Flux desktop in QEMU. Log in as flux, password flux.',
