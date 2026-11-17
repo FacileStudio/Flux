@@ -120,6 +120,10 @@ fn one_change_at_a_time() {
     assert!(!out.status.success());
     assert!(text(&out.stderr).contains("already running"), "{}", text(&out.stderr));
     drop(held);
+    let settle = fs::OpenOptions::new().write(true).open(root.join("run/flux-config/lock"));
+    if let Ok(settle) = settle {
+        let _ = settle.lock();
+    }
     let out = run(&root, &["apply"], "");
     assert!(out.status.success(), "{}", text(&out.stderr));
     let _ = fs::remove_dir_all(&root);
