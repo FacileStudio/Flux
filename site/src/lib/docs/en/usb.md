@@ -14,7 +14,7 @@ Pick the ISO, pick the stick, then start writing.
 Find the stick's name with `lsblk`, then replace `/dev/sdX` with it:
 
 ```sh
-sudo dd if=flux-0.3.1-x86_64-linux.iso of=/dev/sdX bs=4M status=progress oflag=sync
+sudo dd if=flux-0.5.0-x86_64-linux.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 
 Check the name twice: `dd` overwrites the disk you name without asking.
