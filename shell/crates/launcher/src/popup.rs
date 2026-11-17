@@ -21,7 +21,9 @@ mod tests;
 /// The pixel size of a result's icon.
 const ICON_SIZE: i32 = 24;
 
-/// The result rows, their scroller and the line shown when nothing matches.
+/// The result rows, their scroller and the line shown when nothing matches or
+/// an app could not start.
+#[derive(Clone)]
 pub(super) struct Results {
     pub list: ListBox,
     pub scroll: ScrolledWindow,
@@ -47,6 +49,8 @@ pub(super) fn build() -> (Entry, Results) {
     let empty = Label::new(Some(text::get().empty));
     empty.add_css_class("dim");
     empty.add_css_class("empty");
+    empty.set_wrap(true);
+    empty.set_max_width_chars(48);
     empty.set_visible(false);
     (entry, Results { list, scroll, empty })
 }
@@ -65,11 +69,7 @@ pub(super) fn install(
     let matches = Rc::new(RefCell::new(fill(results, apps, "")));
 
     let found = matches.clone();
-    let found_results = Results {
-        list: results.list.clone(),
-        scroll: results.scroll.clone(),
-        empty: results.empty.clone(),
-    };
+    let found_results = results.clone();
     let found_apps = apps.clone();
     entry.connect_changed(move |entry| {
         *found.borrow_mut() = fill(&found_results, &found_apps, &entry.text());
@@ -77,25 +77,26 @@ pub(super) fn install(
 
     let row_apps = apps.clone();
     let row_matches = matches.clone();
+    let row_results = results.clone();
     results.list.connect_row_activated(move |_, row| {
-        launch_at(&row_apps, &row_matches.borrow(), row.index());
+        launch_at(&row_results, &row_apps, &row_matches.borrow(), row.index());
     });
 
-    window.add_controller(keys(surface, &results.list, apps, matches));
+    window.add_controller(keys(surface, results, apps, matches));
     window.add_controller(click_outside(surface));
 }
 
 /// The keys: `Esc` closes, the arrows move, `Return` launches the selection.
 fn keys(
     surface: &Box,
-    list: &ListBox,
+    results: &Results,
     apps: &Rc<Vec<App>>,
     matches: Rc<RefCell<Vec<usize>>>,
 ) -> gtk4::EventControllerKey {
     let controller = gtk4::EventControllerKey::new();
     controller.set_propagation_phase(PropagationPhase::Capture);
     let surface = surface.clone();
-    let list = list.clone();
+    let results = results.clone();
     let apps = apps.clone();
     controller.connect_key_pressed(move |_, key, _, _| match key {
         gdk::Key::Escape => {
@@ -103,16 +104,16 @@ fn keys(
             glib::Propagation::Stop
         }
         gdk::Key::Down => {
-            move_selection(&list, matches.borrow().len(), 1);
+            move_selection(&results, matches.borrow().len(), 1);
             glib::Propagation::Stop
         }
         gdk::Key::Up => {
-            move_selection(&list, matches.borrow().len(), -1);
+            move_selection(&results, matches.borrow().len(), -1);
             glib::Propagation::Stop
         }
         gdk::Key::Return | gdk::Key::KP_Enter => {
-            let position = list.selected_row().map(|row| row.index()).unwrap_or(0);
-            launch_at(&apps, &matches.borrow(), position);
+            let position = results.list.selected_row().map(|row| row.index()).unwrap_or(0);
+            launch_at(&results, &apps, &matches.borrow(), position);
             glib::Propagation::Stop
         }
         _ => glib::Propagation::Proceed,
@@ -157,6 +158,8 @@ pub(super) fn fill(results: &Results, apps: &[App], query: &str) -> Vec<usize> {
     if let Some(first) = list.row_at_index(0) {
         list.select_row(Some(&first));
     }
+    results.scroll.vadjustment().set_value(0.0);
+    results.empty.set_text(text::get().empty);
     results.scroll.set_visible(!found.is_empty());
     results.empty.set_visible(found.is_empty());
     found
@@ -198,20 +201,46 @@ fn icon(name: Option<&str>) -> Image {
     image
 }
 
-/// Move the selection by `delta` rows, clamped to the list.
-fn move_selection(list: &ListBox, count: usize, delta: i32) {
+/// Move the selection by `delta` rows, clamped to the list, and scroll so the
+/// selected row is on screen. The rows take no focus, so nothing else scrolls.
+fn move_selection(results: &Results, count: usize, delta: i32) {
     if count == 0 {
         return;
     }
+    let list = &results.list;
     let current = list.selected_row().map(|row| row.index()).unwrap_or(0);
     let target = (current + delta).clamp(0, count as i32 - 1);
-    if let Some(row) = list.row_at_index(target) {
-        list.select_row(Some(&row));
+    let Some(row) = list.row_at_index(target) else {
+        return;
+    };
+    list.select_row(Some(&row));
+    if let Some(bounds) = row.compute_bounds(list) {
+        let adjustment = results.scroll.vadjustment();
+        adjustment.set_value(scrolled_to_show(
+            adjustment.value(),
+            adjustment.page_size(),
+            f64::from(bounds.y()),
+            f64::from(bounds.height()),
+        ));
     }
 }
 
-/// Launch the app shown at `position`, then leave: the launcher has done its job.
-fn launch_at(apps: &[App], matches: &[usize], position: i32) {
+/// Where a view `page` tall, scrolled to `value`, has to be to show the span
+/// that starts at `top` and is `height` tall: where it is when the span is in
+/// view, and otherwise the nearest position that shows all of it.
+fn scrolled_to_show(value: f64, page: f64, top: f64, height: f64) -> f64 {
+    if top < value {
+        top
+    } else if top + height > value + page {
+        top + height - page
+    } else {
+        value
+    }
+}
+
+/// Launch the app shown at `position`, then leave: the launcher has done its
+/// job. When the app cannot start, stay open and say so under the list.
+fn launch_at(results: &Results, apps: &[App], matches: &[usize], position: i32) {
     let Some(app) = usize::try_from(position)
         .ok()
         .and_then(|position| matches.get(position))
@@ -219,9 +248,12 @@ fn launch_at(apps: &[App], matches: &[usize], position: i32) {
     else {
         return;
     };
-    if let Err(error) = exec::launch(&app.exec, app.terminal) {
-        eprintln!("launcher: {}: {}", app.name, error);
-        std::process::exit(1);
+    match exec::launch(&app.exec, app.terminal) {
+        Ok(()) => std::process::exit(0),
+        Err(error) => {
+            eprintln!("launcher: {}: {}", app.name, error);
+            results.empty.set_text(&text::get().failed.replace("{name}", &app.name));
+            results.empty.set_visible(true);
+        }
     }
-    std::process::exit(0);
 }
