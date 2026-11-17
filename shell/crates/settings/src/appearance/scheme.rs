@@ -140,7 +140,7 @@ fn chosen() -> Scheme {
     match preview::current() {
         Some(preview) if preview.dark => Scheme::Dark,
         Some(_) => Scheme::Light,
-        None => scheme::current().unwrap_or(Scheme::Light),
+        None => scheme::current().unwrap_or(Scheme::Dark),
     }
 }
 

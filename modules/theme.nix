@@ -37,7 +37,7 @@ in
     };
     scheme = lib.mkOption {
       type = lib.types.enum [ "light" "dark" ];
-      default = "light";
+      default = "dark";
       description = "Initial muse color scheme. Users switch at runtime with `flux-scheme light|dark|toggle` or the shell toggle; the shell, libadwaita apps and Ghostty follow the GNOME color-scheme preference live.";
     };
   };

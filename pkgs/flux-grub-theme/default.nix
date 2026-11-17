@@ -4,7 +4,7 @@
 , librsvg
 , inter
 , flux-theme
-, scheme ? "light"
+, scheme ? "dark"
 }:
 
 let

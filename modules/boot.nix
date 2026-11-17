@@ -2,6 +2,8 @@
 
 let
   version = lib.fileContents ../version;
+  inherit (config.flux.theme) scheme;
+  plymouth = pkgs.flux-plymouth.override { inherit scheme; };
 in
 {
   config = lib.mkMerge [
@@ -32,7 +34,7 @@ in
           enable = lib.mkDefault (!config.boot.loader.systemd-boot.enable);
           efiSupport = lib.mkDefault true;
           device = lib.mkDefault "nodev";
-          theme = lib.mkDefault pkgs.flux-grub-theme;
+          theme = lib.mkDefault (pkgs.flux-grub-theme.override { inherit scheme; });
           splashImage = null;
           timeoutStyle = lib.mkDefault "hidden";
           configurationLimit = lib.mkDefault 10;
@@ -42,8 +44,8 @@ in
       boot.plymouth = {
         enable = lib.mkDefault true;
         theme = lib.mkDefault "flux";
-        themePackages = [ pkgs.flux-plymouth ];
-        logo = lib.mkDefault "${pkgs.flux-plymouth}/share/plymouth/themes/flux/mark.png";
+        themePackages = [ plymouth ];
+        logo = lib.mkDefault "${plymouth}/share/plymouth/themes/flux/mark.png";
         font = lib.mkDefault "${pkgs.inter}/share/fonts/truetype/InterVariable.ttf";
       };
 

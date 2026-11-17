@@ -79,18 +79,18 @@ in
     MENU HELPMSGENDROW -1
 
     MENU COLOR BORDER       30;44   #00000000 #00000000 none
-    MENU COLOR SCREEN       37;40   #ff0a0a0a #00000000 none
-    MENU COLOR TITLE        1;36;44 #ff0a0a0a #00000000 none
-    MENU COLOR UNSEL        37;44   #ff0a0a0a #00000000 none
-    MENU COLOR SEL          7;37;40 #ffffffff #ff0a0a0a none
-    MENU COLOR HOTKEY       37;44   #ff0a0a0a #00000000 none
-    MENU COLOR HOTSEL       7;37;40 #ffffffff #ff0a0a0a none
-    MENU COLOR TABMSG       31;40   #ff636363 #00000000 none
-    MENU COLOR TIMEOUT      1;37;40 #ff636363 #00000000 none
-    MENU COLOR TIMEOUT_MSG  37;40   #ff636363 #00000000 none
-    MENU COLOR CMDMARK      1;36;40 #ff636363 #00000000 none
-    MENU COLOR CMDLINE      37;40   #ff0a0a0a #00000000 none
-    MENU COLOR HELP         37;40   #ff636363 #00000000 none
+    MENU COLOR SCREEN       37;40   #fffafafa #00000000 none
+    MENU COLOR TITLE        1;36;44 #fffafafa #00000000 none
+    MENU COLOR UNSEL        37;44   #fffafafa #00000000 none
+    MENU COLOR SEL          7;37;40 #ff020202 #fffafafa none
+    MENU COLOR HOTKEY       37;44   #fffafafa #00000000 none
+    MENU COLOR HOTSEL       7;37;40 #ff020202 #fffafafa none
+    MENU COLOR TABMSG       31;40   #ff8c8c8c #00000000 none
+    MENU COLOR TIMEOUT      1;37;40 #ff8c8c8c #00000000 none
+    MENU COLOR TIMEOUT_MSG  37;40   #ff8c8c8c #00000000 none
+    MENU COLOR CMDMARK      1;36;40 #ff8c8c8c #00000000 none
+    MENU COLOR CMDLINE      37;40   #fffafafa #00000000 none
+    MENU COLOR HELP         37;40   #ff8c8c8c #00000000 none
   '';
   specialisation.safe-graphics.configuration = {
     boot.kernelParams = [ "nomodeset" ];
@@ -130,7 +130,7 @@ in
       desktopName = "Install Flux";
       comment = "Install Flux on this computer";
       exec = "flux-installer";
-      icon = "system-software-install";
+      icon = "studio.facile.flux.Installer";
       categories = [ "System" ];
     })
   ];

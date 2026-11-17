@@ -2,7 +2,7 @@
 , stdenvNoCC
 , librsvg
 , flux-theme
-, scheme ? "light"
+, scheme ? "dark"
 }:
 
 let
