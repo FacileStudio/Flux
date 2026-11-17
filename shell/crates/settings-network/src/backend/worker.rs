@@ -24,7 +24,7 @@ struct Scan {
 
 struct Pending {
     ssid: String,
-    created: Option<String>,
+    joined: actions::Joined,
     until: Instant,
 }
 
@@ -223,10 +223,10 @@ impl Worker {
         };
         emit(&self.events, Event::Connecting(join.ssid.clone()));
         match actions::connect(&self.conn, &self.last, &device, &join).await {
-            Ok(created) => {
+            Ok(joined) => {
                 self.pending = Some(Pending {
                     ssid: join.ssid,
-                    created,
+                    joined,
                     until: Instant::now() + JOIN_LIMIT,
                 });
             }
@@ -274,11 +274,14 @@ impl Worker {
             return;
         };
         let Some(failure) = failure else {
+            for profile in &job.joined.replaces {
+                let _ = actions::delete(&self.conn, profile).await;
+            }
             emit(&self.events, Event::Connected(job.ssid));
             return;
         };
-        if failure == Failure::WrongPassword {
-            if let Some(profile) = &job.created {
+        if failure == Failure::WrongPassword || !job.joined.replaces.is_empty() {
+            if let Some(profile) = &job.joined.created {
                 let _ = actions::delete(&self.conn, profile).await;
             }
         }
