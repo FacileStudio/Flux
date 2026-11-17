@@ -51,12 +51,20 @@ modules = [
 | `users[].name` | string | `^[a-z_][a-z0-9_-]{0,31}$`, not reserved (`rules.json`, `systemd-*`, `nixbld*`), unique | `users.users.<name>` with `isNormalUser`, shell zsh |
 | `users[].fullName` | string | 1 to 64 characters, no `:`, `,` or control character, no outer space | `users.users.<name>.description` |
 | `users[].admin` | bool | default `false`; at least one user must be `true` | adds `wheel` to `extraGroups` |
-| `users[].groups` | list | default `["networkmanager", "video", "audio"]`; drawn from `rules.json` | `users.users.<name>.extraGroups` (replaces the list) |
+| `users[].groups` | list | default `["networkmanager", "video", "audio"]` when the key is missing; drawn from `rules.json` | `users.users.<name>.extraGroups` (replaces the list) |
 | `updates.automatic` | bool | default `false` | read at run time by `flux-auto-update.service`; no rebuild needed |
-| `software.facile` | bool | default `true`; optional | `flux.software.facile` (the Facile command line tools) |
-| `software.apps` | bool | default `true`; optional | `flux.software.apps` (Firefox, Files and the everyday apps; `false` gives a minimal desktop) |
-| `software.gaming` | bool | default `false`; optional | `flux.software.gaming` (Steam, GameMode, Gamescope, MangoHud, ntsync) |
-| `hardware.nvidia` | bool | default `false`; optional | `flux.hardware.nvidia.enable` (the NVIDIA driver, open module on Turing and newer) |
+| `software.facile` | bool | optional; Flux default `true` | `flux.software.facile` (the Facile command line tools) |
+| `software.apps` | bool | optional; Flux default `true` | `flux.software.apps` (Firefox, Files and the everyday apps; `false` gives a minimal desktop) |
+| `software.gaming` | bool | optional; Flux default `false` | `flux.software.gaming` (Steam, GameMode, Gamescope, MangoHud, ntsync) |
+| `hardware.nvidia` | bool | optional; Flux default `false` | `flux.hardware.nvidia.enable` (the NVIDIA driver, open module on Turing and newer) |
+
+### Absent `software` and `hardware` keys
+
+Each of the four `software` and `hardware` keys is optional, and absent is not the same as its default. A key that is in the file is applied at priority 90. A key that is not in the file applies nothing, so `configuration.nix` decides (`flux.hardware.nvidia.enable = true;` there keeps working), and the Flux default applies only when `configuration.nix` is silent too.
+
+`flux-config` never adds a key on its own. It writes one only when someone runs `flux-config set software.gaming true` (or the installer writes it), and it leaves out a `software` or `hardware` object that has no key. Renaming the device on a machine whose file has no `hardware` key writes a file that still has none.
+
+New accounts made in Settings get `["networkmanager", "video", "audio", "lp"]`, the same list as the installer's first account. On a machine that has no file yet, the first change reads each person's groups from `/etc/group` and keeps the ones `rules.json` allows.
 
 Unknown keys are refused on both sides. The module reports every broken rule at once, as assertions that start with `settings.json (flux.settingsFile):`.
 
@@ -78,7 +86,64 @@ Removing an entry drops `users.users.<name>`. The home folder stays on disk. Ren
 
 ## flux-config
 
-`flux-config` is the only writer. It validates every input with the same rules, writes the file atomically (temporary file, `fsync`, rename) after copying the previous one to `settings.json.bak`, and holds `/run/flux-config/lock` so two changes never overlap. If the rebuild fails, it puts the previous file back.
+`flux-config` is the only writer. It validates every input with the same rules, writes the file atomically (temporary file, `fsync`, rename) after copying the previous one to `settings.json.bak`, and holds `/run/flux-config/lock` so two changes never overlap.
+
+### Commands that change the file
+
+```
+flux-config set hostname <name>
+flux-config set timezone <zone|auto>
+flux-config set locale <locale>
+flux-config set formats <locale|same>
+flux-config set keymap <layout>
+flux-config set auto-update <on|off>            no rebuild
+flux-config set software.facile <true|false>
+flux-config set software.apps <true|false>
+flux-config set software.gaming <true|false>
+flux-config set hardware.nvidia <true|false>
+flux-config set <key> <value> <key> <value>...  several at once, one rebuild
+```
+
+`on`, `yes` and `true` mean the same, as do `off`, `no` and `false`. Every `set` except `auto-update` rebuilds, prints the progress lines below and exits the same way. The operation name in `state.json` is `set-` plus the first key, for example `set-software.gaming`.
+
+### Reading the file
+
+`flux-config get` prints one JSON object:
+
+```json
+{
+  "exists": true,
+  "settings": {
+    "version": 1,
+    "hostname": "ada-laptop",
+    "...": "the other keys of the schema",
+    "software": { "facile": true, "apps": true, "gaming": false },
+    "hardware": { "nvidia": false }
+  },
+  "unset": ["software.facile", "software.apps", "hardware.nvidia"]
+}
+```
+
+- `exists` is `false` when there is no file yet; `settings` is then read from the running system.
+- `settings.software` and `settings.hardware` always hold all four values. A key the file does not set shows the Flux default (`facile` true, `apps` true, `gaming` false, `nvidia` false).
+- `unset` names the keys that came from a default and not from the file, spelled as `set` takes them. For those, `configuration.nix` may say something else than the value shown.
+
+Rust code that links the crate gets the same values from `Settings::resolved()` and `Settings::unset_choices()`. Never save a resolved copy: it would write the defaults into the file.
+
+### When a rebuild fails
+
+- If `nixos-rebuild` fails before the system switches, `flux-config` puts the previous `settings.json` back, atomically, and exits 1.
+- If it exits non-zero after the switch (a service that did not start gives exit status 4 while the new version is already running and is the boot default), the change is kept. `flux-config` compares `/run/current-system` before and after to tell the two apart. It then finishes the operation (the password step of `user add` included), prints `flux-config: warning: the new version is in use, but: ...` on stderr, writes the same line to the log, ends with a `done` line and exits 0.
+
+### flake.lock, updates and going back
+
+- `flux-config update` copies `flake.lock` to `flake.lock.bak` before `nix flake update flux`. If the update or its rebuild fails before the switch, it puts that lock back, so `check` still offers the update and later changes rebuild the version in use.
+- After every rebuild that ends with the system switched (`set`, `user`, `apply`, `update`), `flux-config` copies `flake.lock` to `/var/lib/flux-config/locks/<store name of the generation>.lock`. `update` also keeps the lock of the generation it starts from when none is kept yet.
+- `flux-config rollback [generation]` puts the kept lock of the target generation back as `flake.lock` once the profile points at it. The next change in Settings then rebuilds the version gone back to, and `check` offers the newer one again. `settings.json` is not rolled back: the next rebuild applies the current file on the older version.
+- A generation built before this existed has no kept lock; `rollback` then leaves `flake.lock` as it is and says so in the log.
+- Kept locks of generations that no longer exist are deleted after each rebuild and by `gc`.
+
+### Progress
 
 Long operations print one JSON line per step on stdout, as `flux-install --progress json` does:
 
@@ -88,5 +153,21 @@ Long operations print one JSON line per step on stdout, as `flux-install --progr
 ```
 
 The last line is also kept in `/run/flux-config/state.json` with the operation name, the helper's pid and whether a restart is needed, and the full output in `/run/flux-config/log`, so a reopened Settings page reattaches to a running change.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Done. A warning on stderr is possible (see "When a rebuild fails"). |
+| 1 | The change failed or the input was refused. The reason is the last stderr line, and the `error` progress line when the operation had started. |
+| 2 | Wrong usage: unknown command, key or option. |
+| 3 | The change needs administrator rights and `flux-config` was not run as root. |
+| 4 | Another change is running. |
+| 126 | From `pkexec`, not `flux-config`: the password prompt was dismissed. |
+| 127 | From `pkexec`, not `flux-config`: not authorized (wrong password, or the person is not allowed). Its last stderr line is "This incident has been reported.", which is not an error message to show. |
+
+`flux-config` never exits 126 or 127 itself. The `pkexec` codes are read from https://raw.githubusercontent.com/polkit-org/polkit/main/src/programs/pkexec.c .
+
+### Rights
 
 Changes run through `pkexec flux-config ...` under the polkit action `studio.facile.flux.config`. Members of `wheel` confirm with their own password, kept for a few minutes; other people need an administrator's password. Read-only commands (`get`, `status`, `check`, `generations`) need no rights. `FLUX_CONFIG_ROOT=<dir>` moves every path under `<dir>` and never runs a program; `--dry-run` prints the programs and writes nothing on the real root.
