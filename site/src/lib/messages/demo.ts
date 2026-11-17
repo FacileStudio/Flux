@@ -79,5 +79,6 @@ export const demo = {
 	'demo.boot.today': ['today', 'aujourd’hui', 'hoy', 'heute'],
 	'demo.boot.yesterday': ['yesterday', 'hier', 'ayer', 'gestern'],
 	'demo.boot.week': ['last week', 'la semaine dernière', 'la semana pasada', 'letzte Woche'],
-	'demo.boite.ready': ['ready', 'prête', 'lista', 'bereit']
+	'demo.boite.ready': ['ready', 'prête', 'lista', 'bereit'],
+	'demo.kit.synced': ['3 packages, the machine matches kit.yml', '3 paquets, la machine suit kit.yml', '3 paquetes, la máquina sigue kit.yml', '3 Pakete, die Maschine folgt kit.yml']
 } satisfies Record<string, Row>;

@@ -7,6 +7,7 @@
 	import DesktopDemo from '$lib/components/DesktopDemo.svelte';
 	import LandingShell from '$lib/components/LandingShell.svelte';
 	import BoiteTile from '$lib/components/tiles/BoiteTile.svelte';
+	import KitTile from '$lib/components/tiles/KitTile.svelte';
 	import InstallerTile from '$lib/components/tiles/InstallerTile.svelte';
 	import LoginTile from '$lib/components/tiles/LoginTile.svelte';
 	import RollbackTile from '$lib/components/tiles/RollbackTile.svelte';
@@ -95,6 +96,28 @@
 				</Button>
 			</div>
 			<div class="md:order-1"><BoiteTile /></div>
+		</section>
+
+		<section class="{width} grid items-center gap-10 md:grid-cols-2 md:gap-16" aria-labelledby="kit-title">
+			<div class="flex flex-col items-start gap-4">
+				<span class="inline-flex size-12 items-center justify-center rounded-fc-lg bg-fc-surface">
+					<Icon icon={marks.kit} size={28} />
+				</span>
+				<Badge tone="accent">{t('kit.builtin')}</Badge>
+				<h2 id="kit-title" class="{LANDING_HEADING} text-balance">{t('kit.title')}</h2>
+				<p class={lead}>{t('kit.line')}</p>
+				<Button
+					href="https://github.com/FacileStudio/kit"
+					variant="ghost"
+					iconRight={icons.external}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="-ml-3"
+				>
+					{t('kit.link')}
+				</Button>
+			</div>
+			<KitTile />
 		</section>
 
 		<section class={width} aria-labelledby="mobile-title">
