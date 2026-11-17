@@ -1,0 +1,154 @@
+name: boot-test
+
+on:
+  pull_request:
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: Fail on notices (missing theme, splash or install backend)
+        type: boolean
+        default: false
+      upload-iso:
+        description: Upload the built ISO as an artifact kept for one day
+        type: boolean
+        default: false
+      virgl:
+        description: Also boot the live ISO on virtio-vga-gl with a software render node
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      strict:
+        type: boolean
+        default: true
+      iso-artifact:
+        description: Name of an uploaded ISO artifact to test instead of building one
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boot-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  boot:
+    name: boot, install and screenshot (x86_64-linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Read the options
+        id: opts
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          UPLOAD: ${{ inputs.upload-iso }}
+          VIRGL: ${{ inputs.virgl }}
+        run: |
+          label() { jq -e --arg l "$1" 'index($l) != null' <<<"${LABELS:-[]}" >/dev/null && echo true || echo false; }
+          upload=$UPLOAD; virgl=$VIRGL
+          [ "$(label boot-upload-iso)" = true ] && upload=true
+          [ "$(label boot-virgl)" = true ] && virgl=true
+          echo "upload-iso=${upload:-false}" >> "$GITHUB_OUTPUT"
+          echo "virgl=${virgl:-false}" >> "$GITHUB_OUTPUT"
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/local/share/powershell \
+            /usr/share/swift /usr/local/julia* /opt/microsoft /opt/google
+          sudo docker image prune --all --force || true
+          df -h /
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
+      - name: Install QEMU
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            qemu-system-x86 qemu-system-modules-opengl qemu-utils libgl1-mesa-dri libegl1
+          qemu-system-x86_64 --version
+          qemu-system-x86_64 -display help | grep -q egl-headless
+      - name: Provide a software render node
+        if: steps.opts.outputs.virgl == 'true'
+        run: |
+          if ! sudo modprobe vgem; then
+            sudo apt-get install -y -qq "linux-modules-extra-$(uname -r)"
+            sudo modprobe vgem
+          fi
+          sudo udevadm settle
+          sudo chmod 0666 /dev/dri/renderD*
+          ls -l /dev/dri
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+      - name: Download the ISO
+        if: inputs.iso-artifact != ''
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.iso-artifact }}
+          path: result-iso/iso
+      - name: Build the ISO
+        if: inputs.iso-artifact == ''
+        run: nix build --print-build-logs --out-link result-iso ".#packages.x86_64-linux.iso"
+      - name: Fetch OVMF
+        id: ovmf
+        run: |
+          fd=$(nix build --no-link --print-out-paths --inputs-from . nixpkgs#OVMF.fd)
+          ls -l "$fd/FV"
+          echo "code=$fd/FV/OVMF_CODE.fd" >> "$GITHUB_OUTPUT"
+          echo "vars=$fd/FV/OVMF_VARS.fd" >> "$GITHUB_OUTPUT"
+      - name: Upload the ISO
+        if: steps.opts.outputs.upload-iso == 'true' && inputs.iso-artifact == ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: flux-iso
+          path: result-iso/iso/*.iso
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+      - name: Boot, install and screenshot
+        env:
+          OVMF_CODE: ${{ steps.ovmf.outputs.code }}
+          OVMF_VARS: ${{ steps.ovmf.outputs.vars }}
+          STRICT: ${{ inputs.strict && 'true' || 'false' }}
+        run: |
+          mapfile -t isos < <(find -L result-iso/iso -maxdepth 1 -name '*.iso')
+          if [ "${#isos[@]}" -ne 1 ]; then
+            echo "Expected one ISO under result-iso/iso, found ${#isos[@]}"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/boot"
+          args=(--iso "${isos[0]}" --out boot-screens --ovmf-code "$OVMF_CODE" --ovmf-vars "$OVMF_VARS"
+            --workdir "$RUNNER_TEMP/boot" --gpu plain)
+          if [ "$STRICT" = true ]; then
+            args+=(--strict)
+          fi
+          python3 tests/boot/drive.py "${args[@]}"
+      - name: Boot the live ISO on virgl
+        if: always() && steps.opts.outputs.virgl == 'true'
+        continue-on-error: true
+        env:
+          OVMF_CODE: ${{ steps.ovmf.outputs.code }}
+          OVMF_VARS: ${{ steps.ovmf.outputs.vars }}
+        run: |
+          iso=$(find -L result-iso/iso -maxdepth 1 -name '*.iso' | head -n 1)
+          node=$(find /dev/dri -name 'renderD*' | sort | head -n 1)
+          test -n "$node"
+          python3 tests/boot/drive.py --iso "$iso" --out boot-screens/virgl --ovmf-code "$OVMF_CODE" \
+            --ovmf-vars "$OVMF_VARS" --workdir "$RUNNER_TEMP/boot" --gpu virgl --rendernode "$node" --no-install
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: boot-screens
+          path: boot-screens
+          retention-days: 14
+          if-no-files-found: warn

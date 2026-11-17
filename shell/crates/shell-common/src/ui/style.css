@@ -1,0 +1,502 @@
+.fx-page {
+  padding: 40px 32px 48px 32px;
+}
+
+.fx-page-title {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: @fc_fg;
+}
+
+.fx-page-description {
+  font-size: 14px;
+  color: @fc_fg_muted;
+}
+
+.fx-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: @fc_fg;
+}
+
+.fx-card {
+  background-color: @fc_component;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.fx-row {
+  padding: 16px 0;
+  min-height: 36px;
+}
+
+.fx-card > .fx-row:first-child {
+  padding-top: 0;
+}
+
+.fx-card > .fx-row:last-child {
+  padding-bottom: 0;
+}
+
+.fx-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.fx-subtitle {
+  font-size: 12px;
+  color: @fc_fg_muted;
+}
+
+.fx-empty {
+  padding: 48px 20px;
+}
+
+.fx-empty-icon {
+  color: @fc_fg_muted;
+}
+
+button.fx-button {
+  min-height: 36px;
+  min-width: 0;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+button.fx-primary {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+button.fx-primary:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+}
+
+button.fx-primary:active {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.2);
+}
+
+button.fx-secondary {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+button.fx-secondary:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+button.fx-secondary:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.14);
+}
+
+button.fx-danger {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+button.fx-danger:hover {
+  background-color: alpha(@fc_danger, 0.18);
+}
+
+button.fx-danger:active {
+  background-color: alpha(@fc_danger, 0.24);
+}
+
+button.fx-button:disabled {
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
+}
+
+switch {
+  min-width: 40px;
+  min-height: 24px;
+  padding: 2px;
+  border-radius: 999px;
+  background-color: alpha(@fc_fg, 0.16);
+  background-image: none;
+  outline: 0 solid transparent;
+  transition: background-color 150ms ease-out;
+}
+
+switch:hover {
+  background-color: alpha(@fc_fg, 0.24);
+}
+
+switch:checked {
+  background-color: @fc_accent;
+}
+
+switch:checked:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+}
+
+switch slider {
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background-color: @fc_page;
+  background-image: none;
+  transition: margin 150ms ease-out, background-color 150ms ease-out;
+}
+
+switch:checked slider {
+  background-color: @fc_accent_fg;
+}
+
+switch image {
+  color: transparent;
+  opacity: 0;
+}
+
+switch:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+scale {
+  padding: 8px 0;
+  min-height: 20px;
+  outline: 0 solid transparent;
+}
+
+scale trough {
+  min-height: 4px;
+  border-radius: 999px;
+  background-color: alpha(@fc_fg, 0.12);
+}
+
+scale highlight {
+  min-height: 4px;
+  margin: 0;
+  border-radius: 999px;
+  background-color: @fc_accent;
+}
+
+scale slider {
+  min-width: 16px;
+  min-height: 16px;
+  margin: -6px;
+  border-radius: 999px;
+  background-color: @fc_accent;
+  background-image: none;
+  transition: background-color 150ms ease-out;
+}
+
+scale slider:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.16);
+}
+
+scale:focus-visible slider {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+dropdown > button {
+  min-height: 36px;
+  min-width: 140px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: @fc_surface;
+  color: @fc_fg;
+  transition: background-color 150ms ease-out;
+}
+
+dropdown > button:hover {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+dropdown arrow {
+  color: @fc_fg_muted;
+}
+
+popover.menu > contents,
+dropdown popover > contents {
+  padding: 6px;
+  border-radius: 12px;
+  background-color: @fc_component;
+  color: @fc_fg;
+  box-shadow: 0 8px 24px alpha(@fc_scrim, 0.32);
+}
+
+dropdown popover listview,
+dropdown popover scrolledwindow {
+  background-color: transparent;
+}
+
+dropdown popover listview > row {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: @fc_fg;
+  transition: background-color 120ms ease-out;
+}
+
+dropdown popover listview > row:hover,
+dropdown popover listview > row:selected {
+  background-color: @fc_surface;
+}
+
+spinner {
+  color: @fc_fg_muted;
+}
+
+.fx-section-description {
+  font-size: 13px;
+  color: @fc_fg_muted;
+}
+
+label.fx-danger,
+.fx-subtitle.fx-danger,
+.fx-error,
+.fx-field-error {
+  color: @fc_danger;
+}
+
+.fx-error,
+.fx-field-error {
+  font-size: 12px;
+}
+
+.fx-value {
+  font-size: 14px;
+  font-feature-settings: "tnum";
+  color: @fc_fg_muted;
+}
+
+.fx-field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.fx-banner {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: alpha(@fc_info, 0.1);
+  color: @fc_fg;
+  font-size: 14px;
+}
+
+.fx-banner.fx-danger {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+button.fx-ghost,
+button.fx-link {
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+button.fx-ghost:hover,
+button.fx-link:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+button.fx-icon-button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+button.fx-icon-button:hover {
+  background-color: @fc_surface;
+}
+
+button.fx-icon-button:disabled {
+  color: @fc_fg_muted;
+  background-color: transparent;
+}
+
+button.fx-button:focus-visible,
+button.fx-icon-button:focus-visible,
+dropdown > button:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+switch:disabled {
+  opacity: 0.5;
+}
+
+entry,
+passwordentry,
+searchentry {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+  background-image: none;
+  color: @fc_fg;
+  font-size: 14px;
+  box-shadow: none;
+  outline: 0 solid transparent;
+  transition: outline-color 150ms ease-out;
+}
+
+entry:focus-within,
+passwordentry:focus-within,
+searchentry:focus-within {
+  outline: 2px solid @fc_ring;
+  outline-offset: 1px;
+}
+
+entry.error,
+entry.invalid {
+  background-color: alpha(@fc_danger, 0.1);
+}
+
+entry text,
+passwordentry text,
+searchentry text {
+  background-color: transparent;
+  color: @fc_fg;
+}
+
+entry text placeholder,
+passwordentry text placeholder,
+searchentry text placeholder,
+entry image,
+passwordentry image,
+searchentry image {
+  color: @fc_fg_muted;
+}
+
+selection,
+text selection,
+label selection {
+  background-color: alpha(@fc_fg, 0.16);
+  color: @fc_fg;
+}
+
+levelbar trough {
+  min-height: 4px;
+  padding: 0;
+  border-radius: 999px;
+  background-color: alpha(@fc_fg, 0.12);
+}
+
+levelbar block {
+  min-height: 4px;
+  border-radius: 999px;
+}
+
+levelbar block.filled {
+  background-color: @fc_accent;
+}
+
+levelbar block.empty {
+  background-color: transparent;
+}
+
+progressbar trough {
+  min-height: 6px;
+  border-radius: 999px;
+  background-color: alpha(@fc_fg, 0.12);
+}
+
+progressbar progress {
+  min-height: 6px;
+  border-radius: 999px;
+  background-color: @fc_accent;
+}
+
+list.fx-list {
+  background-color: transparent;
+}
+
+list.fx-list > row {
+  min-height: 40px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  color: @fc_fg;
+  background-color: transparent;
+  outline: 0 solid transparent;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+list.fx-list > row:hover {
+  background-color: @fc_surface;
+}
+
+list.fx-list > row:selected,
+list.fx-list > row.fx-chosen {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+list.fx-list > row:selected .fx-title,
+list.fx-list > row:selected .fx-subtitle,
+list.fx-list > row.fx-chosen .fx-title,
+list.fx-list > row.fx-chosen .fx-subtitle {
+  color: @fc_accent_fg;
+}
+
+list.fx-list > row:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: -2px;
+}
+
+popover > contents {
+  padding: 6px;
+  border-radius: 12px;
+  background-color: @fc_component;
+  color: @fc_fg;
+  box-shadow: 0 8px 24px alpha(@fc_scrim, 0.32);
+}
+
+popover > arrow {
+  background-color: transparent;
+}
+
+expander title {
+  color: @fc_fg_muted;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fx-segmented {
+  padding: 4px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+}
+
+.fx-segmented > button {
+  min-height: 28px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background-color: transparent;
+  background-image: none;
+  color: @fc_fg;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.fx-segmented > button:hover {
+  background-color: alpha(@fc_fg, 0.06);
+}
+
+.fx-segmented > button:checked {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+.fx-segmented > button:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}

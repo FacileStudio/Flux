@@ -1,0 +1,57 @@
+.fx-display menubutton.fx-button > button {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: transparent;
+  color: @fc_fg_muted;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.fx-display menubutton.fx-button > button:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+.fx-display menubutton.fx-add {
+  margin: 8px 0 0 -16px;
+}
+
+.fx-display dropdown:disabled > button {
+  opacity: 0.6;
+}
+
+.fx-display .fx-chooser {
+  padding: 0;
+}
+
+.fx-display .fx-chooser scrolledwindow {
+  background-color: transparent;
+}
+
+.fx-display entry.fx-test {
+  margin: 8px 0 0 0;
+}
+
+.fx-display .fx-canvas-card {
+  padding: 8px;
+}
+
+.fx-display .fx-monitor {
+  background-color: alpha(@fc_fg, 0.14);
+  color: @fc_fg;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.fx-display .fx-monitor:hover {
+  background-color: alpha(@fc_fg, 0.2);
+}
+
+.fx-display .fx-monitor.dragging {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}

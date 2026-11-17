@@ -1,0 +1,16 @@
+[package]
+name = "settings-bluetooth"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+gtk4.workspace = true
+shell-common.workspace = true
+async-channel = "2"
+futures-util = { version = "0.3", default-features = false }
+tokio = { version = "1", default-features = false, features = ["rt", "time", "sync"] }
+zbus = { version = "5", default-features = false, features = ["tokio"] }
+
+[dev-dependencies]
+serde = "1"

@@ -1,0 +1,57 @@
+.fx-network.fx-quick {
+  padding: 8px;
+}
+
+.fx-network .fx-row.fx-inline {
+  padding: 4px 0;
+}
+
+.fx-network.fx-quick .fx-empty {
+  padding: 24px 12px;
+}
+
+.fx-network .fx-net {
+  border-radius: 8px;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-network .fx-net-header {
+  padding: 10px 12px;
+  min-height: 28px;
+  border-radius: 8px;
+  transition: background-color 160ms ease-out;
+}
+
+.fx-network .fx-net-header:hover {
+  background-color: @fc_surface;
+}
+
+.fx-network .fx-net-header.fx-connected .fx-title {
+  font-weight: 600;
+}
+
+.fx-network .fx-bars,
+.fx-network .fx-lock,
+.fx-network .fx-chevron {
+  color: @fc_fg;
+}
+
+.fx-network .fx-lock {
+  color: @fc_fg_muted;
+}
+
+.fx-network .fx-expand {
+  padding: 4px 12px 16px 42px;
+}
+
+.fx-network.fx-quick .fx-expand {
+  padding: 4px 12px 12px 12px;
+}
+
+.fx-network passwordentry image {
+  color: @fc_fg_muted;
+}
+
+.fx-network .fx-card .fx-net {
+  margin: 0 -12px;
+}

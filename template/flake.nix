@@ -1,7 +1,7 @@
 {
   description = "My Flux machine";
 
-  inputs.flux.url = "github:FacileStudio/Flux";
+  inputs.flux.url = "github:FacileStudio/Flux/stable";
 
   outputs = { flux, ... }: {
     nixosConfigurations.flux = flux.inputs.nixpkgs.lib.nixosSystem {
@@ -10,6 +10,7 @@
         flux.nixosModules.flux
         ./hardware-configuration.nix
         ./configuration.nix
+        { flux.settingsFile = ./settings.json; }
       ];
     };
   };

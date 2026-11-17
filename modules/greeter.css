@@ -1,0 +1,247 @@
+
+window,
+window.background {
+  background-color: @fc_page;
+  color: @fc_fg;
+}
+
+* {
+  outline-color: @fc_ring;
+  -gtk-secondary-caret-color: @fc_fg;
+  caret-color: @fc_fg;
+}
+
+overlay > picture {
+  opacity: 0.45;
+}
+
+overlay > picture + frame {
+  background-color: @fc_bg;
+  color: @fc_fg;
+  border: none;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px alpha(@fc_scrim, 0.18);
+  padding: 24px 28px 20px;
+}
+
+overlay > picture + frame + frame {
+  background: none;
+  border: none;
+  box-shadow: none;
+  margin-top: 88px;
+  color: @fc_fg;
+}
+
+overlay > picture + frame + frame > label {
+  color: @fc_fg;
+}
+
+grid {
+  margin-left: -115px;
+  margin-right: -16px;
+}
+
+grid > label:first-child {
+  margin-left: 115px;
+  margin-right: 16px;
+  background-image: url("@mark@");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 56px 56px;
+  padding-top: 76px;
+  font-size: 20px;
+  color: @fc_fg;
+}
+
+grid > label:not(:first-child) {
+  color: transparent;
+  opacity: 0;
+  font-size: 1px;
+}
+
+grid > button.toggle,
+grid > button.toggle:hover,
+grid > button.toggle:checked {
+  opacity: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+grid > button.toggle > image {
+  -gtk-icon-size: 1px;
+  min-width: 0;
+  min-height: 0;
+}
+
+combobox button.combo,
+grid > entry {
+  background-color: @fc_field;
+  background-image: none;
+  color: @fc_fg;
+  border: none;
+  box-shadow: none;
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+}
+
+combobox button.combo:hover {
+  background-color: @fc_surface;
+}
+
+combobox arrow {
+  color: @fc_fg_muted;
+  -gtk-icon-size: 14px;
+}
+
+grid > entry,
+grid > entry:focus-within {
+  outline: none;
+}
+
+grid > entry > image {
+  color: @fc_fg_muted;
+}
+
+grid > entry > text > placeholder {
+  color: @fc_fg_muted;
+}
+
+combobox:disabled {
+  margin-bottom: -14px;
+}
+
+combobox:disabled button.combo {
+  background: none;
+  color: @fc_fg_muted;
+  font-weight: 500;
+  font-size: 13px;
+  min-height: 0;
+  padding: 0;
+}
+
+combobox:disabled arrow {
+  opacity: 0;
+}
+
+grid > combobox + combobox {
+  opacity: 0;
+  margin-top: 43px;
+}
+
+grid > combobox + combobox *,
+grid > combobox + combobox button.combo {
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 1px;
+  -gtk-icon-size: 1px;
+  background: none;
+}
+
+grid > box {
+  margin-right: 16px;
+}
+
+grid > button.toggle + button.toggle + box {
+  margin-top: -52px;
+  margin-bottom: 8px;
+}
+
+grid > box > button {
+  border: none;
+  box-shadow: none;
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 0;
+  font-weight: 600;
+  background-image: none;
+}
+
+grid > box > button.suggested-action {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+  min-width: 500px;
+}
+
+grid > box > button.suggested-action:hover {
+  background-color: alpha(@fc_accent, 0.88);
+}
+
+grid > box > button:not(.suggested-action) {
+  background-color: transparent;
+  color: @fc_fg_muted;
+  min-width: 120px;
+}
+
+grid > box > button:not(.suggested-action):hover {
+  background-color: @fc_component;
+  color: @fc_fg;
+}
+
+grid > box > button + button.suggested-action {
+  min-width: 365px;
+}
+
+overlay > box {
+  margin-bottom: 24px;
+}
+
+overlay > box > frame {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+infobar > revealer > box {
+  background-color: @fc_bg;
+  color: @fc_fg;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px alpha(@fc_scrim, 0.12);
+}
+
+infobar.info {
+  opacity: 0;
+}
+
+infobar.error > revealer > box label {
+  color: @fc_danger;
+}
+
+overlay > box > box > button {
+  background-color: alpha(@fc_bg, 0.6);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 18px;
+  color: @fc_fg;
+  border: none;
+  box-shadow: none;
+  border-radius: 999px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+overlay > box > box > button:first-child {
+  background-image: -gtk-icontheme("system-reboot-symbolic");
+}
+
+overlay > box > box > button:last-child {
+  background-image: -gtk-icontheme("system-shutdown-symbolic");
+}
+
+overlay > box > box > button:hover {
+  background-color: @fc_bg;
+}
+
+overlay > box > box > button > label {
+  opacity: 0;
+  font-size: 1px;
+}

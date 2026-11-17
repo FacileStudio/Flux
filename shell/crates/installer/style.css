@@ -1,0 +1,323 @@
+window.installer,
+window.installer.backdrop {
+  background-color: @fc_page;
+}
+
+window.installer scrolledwindow,
+window.installer viewport {
+  background-color: transparent;
+}
+
+window.installer scrollbar {
+  opacity: 0;
+}
+
+.page {
+  padding: 64px 24px 40px 24px;
+}
+
+.hero-header {
+  margin-top: 32px;
+  margin-bottom: 40px;
+}
+
+.hero {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: @fc_fg;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: @fc_fg;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: @fc_fg_muted;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: @fc_fg;
+}
+
+.mark {
+  color: @fc_fg;
+}
+
+button.choice {
+  padding: 24px;
+  min-height: 140px;
+  border-radius: 12px;
+  background-color: @fc_component;
+  color: @fc_fg;
+}
+
+button.choice:hover {
+  background-color: @fc_surface;
+}
+
+button.choice.primary {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+button.choice.primary:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+}
+
+.choice-title {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.choice-body {
+  font-size: 14px;
+  opacity: 0.72;
+}
+
+button.action {
+  min-height: 44px;
+  min-width: 96px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 12px;
+}
+
+button.action.primary {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+button.action.primary:hover {
+  background-color: mix(@fc_accent, @fc_accent_fg, 0.12);
+}
+
+button.action.primary:disabled {
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
+}
+
+button.action.ghost {
+  min-width: 0;
+  padding: 0 16px;
+  background-color: transparent;
+  color: @fc_fg_muted;
+}
+
+button.action.ghost:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+button.action.danger {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+button.action.danger:hover {
+  background-color: alpha(@fc_danger, 0.18);
+}
+
+button.choice:focus-visible,
+button.action:focus-visible,
+row:focus-visible,
+expander title:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+window.installer .panel {
+  background-color: @fc_component;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+window.installer .panel.empty {
+  padding: 24px;
+}
+
+list.choices {
+  background-color: transparent;
+}
+
+list.choices row {
+  min-height: 32px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  outline: 0 solid transparent;
+}
+
+list.choices row:hover {
+  background-color: @fc_surface;
+}
+
+list.choices row:selected {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+list.choices row:selected .dim {
+  color: alpha(@fc_accent_fg, 0.72);
+}
+
+list.choices row:selected .tag {
+  background-color: alpha(@fc_accent_fg, 0.16);
+  color: @fc_accent_fg;
+}
+
+list.choices row.unavailable {
+  opacity: 0.5;
+}
+
+.row-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tag {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: @fc_surface;
+  color: @fc_fg_muted;
+}
+
+entry,
+passwordentry {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+  color: @fc_fg;
+  font-size: 16px;
+  outline: 0 solid transparent;
+}
+
+entry:focus-within,
+passwordentry:focus-within {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+entry text,
+passwordentry text {
+  background-color: transparent;
+  color: @fc_fg;
+}
+
+entry text placeholder,
+passwordentry text placeholder {
+  color: @fc_fg_muted;
+}
+
+entry image,
+passwordentry image {
+  color: @fc_fg_muted;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.field-error {
+  font-size: 12px;
+  color: @fc_danger;
+}
+
+expander.advanced title {
+  padding: 8px 0;
+  color: @fc_fg_muted;
+  font-weight: 500;
+}
+
+expander.advanced title arrow {
+  color: @fc_fg_muted;
+}
+
+expander.advanced > box > :last-child {
+  margin-top: 8px;
+}
+
+.danger-panel {
+  padding: 20px;
+  border-radius: 12px;
+  background-color: alpha(@fc_danger, 0.1);
+}
+
+.danger-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: @fc_danger;
+}
+
+.danger-body {
+  font-size: 14px;
+  color: @fc_fg;
+}
+
+window.installer .panel.summary {
+  padding: 8px 20px;
+}
+
+.summary-row {
+  padding: 12px 0;
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_fg;
+}
+
+.value-danger {
+  font-size: 14px;
+  font-weight: 500;
+  color: @fc_danger;
+}
+
+progressbar.install trough {
+  min-height: 8px;
+  border-radius: 999px;
+  background-color: @fc_surface;
+}
+
+progressbar.install progress {
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 999px;
+  background-color: @fc_accent;
+}
+
+textview.log,
+textview.log text {
+  background-color: transparent;
+  color: @fc_fg_muted;
+  font-size: 12px;
+}
+
+textview.log {
+  padding: 12px;
+}
+
+.footer {
+  margin-top: 8px;
+}
+
+selection,
+text selection,
+label selection {
+  background-color: alpha(@fc_fg, 0.16);
+  color: @fc_fg;
+}

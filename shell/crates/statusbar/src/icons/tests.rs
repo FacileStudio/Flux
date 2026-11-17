@@ -89,7 +89,7 @@ fn a_palette_rewrite_retints_the_icons() {
 /// `palette.css` the way `palette sync` does, and watch the glyph follow it —
 /// twice, so a rewrite that moved the icons the once would not pass.
 fn retint_check(context: &glib::MainContext) {
-    let home = std::env::temp_dir().join("widgets-icon-retint-test");
+    let home = std::env::temp_dir().join("flux-icon-retint-test");
     // Start from nothing: a palette or sheet a failed run left behind would answer here.
     let _ = std::fs::remove_dir_all(&home);
     let previous = std::env::var_os("HOME");
@@ -145,7 +145,7 @@ fn glyph_colour(image: &gtk4::Image) -> Option<(u8, u8, u8)> {
 /// the widget under test reads it back from disk on top of the system palette.
 fn palette_at(dir: &std::path::Path, fg: &str) {
     let sheet = format!("@define-color fc_fg {fg};\n");
-    let config = dir.join(".config/widgets");
+    let config = dir.join(".config/flux");
     std::fs::create_dir_all(&config).expect("the test config directory");
     std::fs::write(config.join("palette.css"), sheet).expect("write the palette");
 }

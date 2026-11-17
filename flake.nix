@@ -11,6 +11,7 @@
       dirsIn = path: lib.attrNames (lib.filterAttrs (_: t: t == "directory") (builtins.readDir path));
       mkHost = system: host: lib.nixosSystem {
         inherit system;
+        specialArgs.fluxFlake = self;
         modules = [ self.nixosModules.flux ./hosts/${host} ];
       };
       hosts = dirsIn ./hosts;
@@ -47,7 +48,7 @@
         in {
           default = pkgs.mkShell {
             nativeBuildInputs = with pkgs; [ cargo rustc clippy rustfmt pkg-config wrapGAppsHook4 ];
-            buildInputs = with pkgs; [ gtk4 gtk4-layer-shell pam librsvg ];
+            buildInputs = with pkgs; [ gtk4 gtk4-layer-shell pam librsvg libpulseaudio ];
           };
         });
 

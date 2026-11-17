@@ -1,35 +1,36 @@
 //! `launcher`: the application palette.
 //!
-//! This file is the entry point and the window placement. The surface itself —
-//! the query field, the results, the keys — is [`popup`].
+//! This file is the entry point and the window placement. The surface itself
+//! (the query field, the results, the keys) is [`popup`].
 
 mod apps;
 mod exec;
 mod popup;
+mod text;
 
 use std::rc::Rc;
 
 use gtk4::prelude::*;
 use gtk4::{gdk, Application, Box, Orientation};
-use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+use gtk4_layer_shell::{KeyboardMode, Layer};
 use shell_common::app::run as run_app;
 use shell_common::layer::{ensure_supported, LayerWindow};
-use shell_common::theme;
+use shell_common::{motion, theme};
 
 use apps::App;
 
 const STYLE: &str = include_str!("../style.css");
 const WIDTH: i32 = 600;
-const TOP_RATIO: f64 = 0.35;
+const TOP_RATIO: f64 = 0.28;
 
 fn main() {
     if std::env::args().skip(1).any(|argument| argument == "--version") {
         println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
         return;
     }
-    let apps = Rc::new(apps::discover());
+    let apps = Rc::new(apps::discover(&apps::Env::current()));
     let application = Application::builder()
-        .application_id("dev.saravenpi.Launcher")
+        .application_id("studio.facile.flux.Launcher")
         .build();
     let shared = apps.clone();
     application.connect_activate(move |app| activate(app, &shared));
@@ -42,57 +43,50 @@ fn activate(application: &Application, apps: &Rc<Vec<App>>) {
     }
     theme::init(STYLE, "launcher");
 
-    let launcher = layer_window(application);
-    let window = launcher.window.clone();
+    let window = layer_window(application).window;
     let (entry, list) = popup::build();
-    popup::install(&window, &entry, &list, apps);
 
     let surface = Box::new(Orientation::Vertical, 0);
     surface.add_css_class("surface");
     surface.add_css_class("popup");
+    surface.add_css_class("fx-reveal");
     surface.set_width_request(WIDTH);
+    surface.set_halign(gtk4::Align::Center);
+    surface.set_valign(gtk4::Align::Start);
     surface.append(&entry);
-    surface.append(&list);
+    surface.append(&list.scroll);
+    surface.append(&list.empty);
     window.set_child(Some(&surface));
 
-    popup::fill(&list, apps, "");
+    popup::install(&window, &surface, &entry, &list, apps);
+    place_on_map(&window, &surface);
     window.present();
+    motion::reveal(&surface);
     entry.grab_focus();
 }
 
-/// The overlay the launcher floats on: full width under the top edge, with the
-/// field a third of the way down rather than flush against the statusbar.
+/// The transparent overlay the launcher floats on. It covers the whole output,
+/// so a click beside the palette closes it.
 fn layer_window(application: &Application) -> LayerWindow {
     let launcher = LayerWindow::new(application).layer(Layer::Overlay);
-    launcher.anchors(true, true, true, false);
+    launcher.anchors(true, true, true, true);
     launcher.exclusive_zone(false);
     launcher.keyboard_mode(KeyboardMode::Exclusive);
-    let (top, side) = margins();
-    launcher.window.set_margin(Edge::Top, top);
-    launcher.window.set_margin(Edge::Left, side);
-    launcher.window.set_margin(Edge::Right, side);
     launcher
 }
 
-/// Where the field sits: a third down the monitor, and the width it keeps in
-/// the middle of it. Without a monitor to ask, the placeholders are 1920x1080.
-fn margins() -> (i32, i32) {
-    let display = match gdk::Display::default() {
-        Some(display) => display,
-        None => return (0, 0),
-    };
-    let monitors = display.monitors();
-    let monitor = monitors
-        .item(0)
-        .and_then(|object| object.downcast::<gdk::Monitor>().ok());
-    let (width, height) = match monitor {
-        Some(monitor) => {
-            let geometry = monitor.geometry();
-            (geometry.width(), geometry.height())
-        }
-        None => (1920, 1080),
-    };
-    let top = (height as f64 * TOP_RATIO) as i32;
-    let side = ((width - WIDTH) / 2).max(0);
-    (top, side)
+/// Once the compositor has put the overlay on an output, drop the palette a
+/// little over a quarter of the way down that output.
+fn place_on_map(window: &gtk4::ApplicationWindow, surface: &Box) {
+    let surface = surface.clone();
+    window.connect_map(move |window| {
+        let height = window
+            .surface()
+            .and_then(|gdk_surface| {
+                gdk::Display::default().and_then(|display| display.monitor_at_surface(&gdk_surface))
+            })
+            .map(|monitor| monitor.geometry().height())
+            .unwrap_or(1080);
+        surface.set_margin_top((f64::from(height) * TOP_RATIO) as i32);
+    });
 }

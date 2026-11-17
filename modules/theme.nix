@@ -53,6 +53,15 @@ in
       "flux/gtk-4.0/gtk.css".source = "${share}/gtk-4.0/gtk.css";
       "flux/ghostty/config".text = ''
         theme = light:${share}/ghostty/themes/flux-light,dark:${share}/ghostty/themes/flux-dark
+        font-family = ${monoFont}
+        font-size = 11
+        window-padding-x = 8
+        window-padding-y = 8
+        window-padding-balance = true
+        cursor-style = block
+        cursor-style-blink = false
+        shell-integration-features = no-cursor
+        window-decoration = none
       '';
       "xdg/fuzzel/fuzzel.ini".text = ''
         [main]

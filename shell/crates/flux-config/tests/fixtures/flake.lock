@@ -1,0 +1,46 @@
+{
+  "nodes": {
+    "flux": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1763300000,
+        "narHash": "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "owner": "FacileStudio",
+        "repo": "Flux",
+        "rev": "b00595e4a1c0d2b3c4d5e6f708192a3b4c5d6e7f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "FacileStudio",
+        "ref": "stable",
+        "repo": "Flux",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1763000000,
+        "narHash": "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1111111111111111111111111111111111111111",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flux": "flux"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

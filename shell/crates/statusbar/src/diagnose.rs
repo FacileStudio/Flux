@@ -1,13 +1,10 @@
 //! What the bar placed and what it did not: `statusbar --diagnose`.
 //!
-//! A control pill is placed only when its backend answers, and its icon is
-//! painted only when the artwork reaches a texture. From outside the bar those
-//! two look the same — a gap in the row, or a pill with a label and no glyph —
-//! and neither one says anything while it happens. This prints which control is
-//! in the row, which is not and why, whether the glyphs painted, the compositor,
-//! and whether the machine is virtualised: a backend that is missing and a
-//! graphics stack that cannot draw are the two ways a bar ends up without the
-//! icons it was built with.
+//! A control pill shows only while its backend answers, and its icon is painted
+//! only when the artwork reaches a texture. From outside the bar those two look
+//! the same: a gap in the row, or a pill with a label and no glyph. This prints
+//! which control answers, which does not and why, whether the glyphs painted,
+//! whether niri is reachable, and whether the machine is virtualised.
 //!
 //! It reads and reports; it changes nothing.
 
@@ -15,37 +12,29 @@ use std::fmt::Write as _;
 
 use gtk4::prelude::*;
 
-use crate::{battery, brightness, icons, ipc, logout, network, volume};
+use crate::{control, icons, niri};
 
-/// What to install when `pactl` answers for nothing.
-const NO_PACTL: &str =
-    "no pactl, or nothing for it to answer for (pulseaudio-utils, pipewire-pulse)";
-
-/// Why a machine may have no backlight, which is every virtual one.
-const NO_BACKLIGHT: &str = "nothing writable in /sys/class/backlight (a virtual machine has none)";
-
-/// Why a machine may have no battery, which is every virtual one.
-const NO_BATTERY: &str = "no BAT device in /sys/class/power_supply (a virtual machine has none)";
-
-/// Why the kernel's interfaces may not answer either.
-const NO_NETWORK: &str = "no NetworkManager, no systemd-networkd, no non-loopback interface";
-
-/// Why the session cannot be ended through `loginctl`.
-const NO_LOGINCTL: &str = "$XDG_SESSION_ID is unset, or loginctl is missing (elogind)";
-
-/// The controls the row can carry: each one's name, what a reader should look for
-/// when it is in the row, and what to install when it is not.
-const CONTROLS: [(&str, &str, &str); 5] = [
-    ("volume", "pactl answers for the default sink", NO_PACTL),
-    (
-        "brightness",
-        "a writable backlight is present",
-        NO_BACKLIGHT,
-    ),
-    ("battery", "a BAT device is present", NO_BATTERY),
-    ("network", "a link answers", NO_NETWORK),
-    ("logout", "loginctl answers for the session", NO_LOGINCTL),
-];
+/// What to look for when a control answers, and what to install when it does not.
+fn reasons(name: &str) -> (&'static str, &'static str) {
+    match name {
+        "volume" => (
+            "pactl answers for the default sink",
+            "no pactl, or nothing for it to answer for (pulseaudio, pipewire-pulse)",
+        ),
+        "brightness" => (
+            "a backlight is present",
+            "nothing in /sys/class/backlight (a virtual machine has none)",
+        ),
+        "battery" => (
+            "a BAT device is present",
+            "no BAT device in /sys/class/power_supply (a virtual machine has none)",
+        ),
+        _ => (
+            "a link answers",
+            "no NetworkManager, no systemd-networkd, no non-loopback interface",
+        ),
+    }
+}
 
 /// The vendors whose guests are virtual machines, as the firmware names them.
 const VIRTUAL_VENDORS: [&str; 9] = [
@@ -63,13 +52,9 @@ const VIRTUAL_VENDORS: [&str; 9] = [
 /// The whole report, one block per question, in the order someone reads it.
 pub fn report() -> String {
     let mut text = String::new();
-    let _ = writeln!(
-        text,
-        "{} {}",
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_PKG_VERSION")
-    );
-    let _ = writeln!(text, "compositor: {:?}", ipc::detect());
+    let _ = writeln!(text, "{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    let niri = if niri::present() { "NIRI_SOCKET is set" } else { "NIRI_SOCKET is unset" };
+    let _ = writeln!(text, "niri: {niri}");
     let _ = writeln!(text, "machine: {}", machine());
     let _ = writeln!(text, "display: {}", display());
     let _ = writeln!(text, "GSK_RENDERER: {}", renderer());
@@ -78,29 +63,19 @@ pub fn report() -> String {
     text
 }
 
-/// The control pills, each one placed or absent, with the reason either way, and
-/// what the network pill is reading — a pill with no label is a second way to
-/// look like a control that is not there.
+/// The control pills, each one answering or not, with the reason either way
+/// and what it reads.
 fn pills() -> String {
     let mut text = String::from("pills\n");
-    for (name, found, missing) in CONTROLS {
-        let _ = writeln!(text, "{}", row(name, placed(name), found, missing));
+    for control in &control::CONTROLS {
+        let reading = (control.label)();
+        let (found, missing) = reasons(control.name);
+        let _ = writeln!(text, "{}", row(control.name, reading.is_some(), found, missing));
+        if let Some(reading) = reading {
+            let _ = writeln!(text, "  {:<11}reads {reading}", "");
+        }
     }
-    let live = network::label_text().unwrap_or_else(|| "nothing to read".to_string());
-    let _ = writeln!(text, "  the network pill reads: {live}");
     text
-}
-
-/// Whether one control's backend answers, which is what decides its place in the
-/// row. The names are the ones [`CONTROLS`] carries.
-fn placed(name: &str) -> bool {
-    match name {
-        "volume" => volume::available(),
-        "brightness" => brightness::available(),
-        "battery" => battery::available(),
-        "network" => network::available(),
-        _ => logout::available(),
-    }
 }
 
 /// One control's line: its name, whether it is in the row, and the reason.

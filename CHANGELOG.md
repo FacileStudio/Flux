@@ -6,6 +6,10 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Login: ReGreet replaces tuigreet. A muse card over the default wallpaper with the Flux mark, clock, password field and quiet restart and power buttons, in light or dark from `flux.theme.scheme`. A machine with one user goes straight to the password.
+
 ## [0.1.1] - 2026-11-16
 
 ### Security

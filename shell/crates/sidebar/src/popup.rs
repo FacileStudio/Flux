@@ -1,13 +1,14 @@
 //! The top-right toasts.
 //!
 //! The panel keeps the history, but a notification that arrives while the panel
-//! is closed would otherwise be invisible until `mod+n`. These toasts surface it
+//! is closed would otherwise be invisible until `Mod+N`. These toasts surface it
 //! where a notification daemon is expected to: a stack in the top-right, below
 //! the statusbar, each one expiring on its own and dismissable with a click.
-//! They are ephemeral and live in memory only — the state file the panel reads
-//! is untouched by them.
+//! Each toast fades and slides in on arrival and fades out on leaving; the
+//! others stay put. They live in memory only.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use gtk4::glib;
@@ -15,7 +16,7 @@ use gtk4::prelude::*;
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 use shell_common::layer::LayerWindow;
-use shell_common::theme;
+use shell_common::{motion, theme};
 
 use crate::model::{self, Notification};
 
@@ -46,6 +47,8 @@ pub struct Popups {
     window: gtk4::ApplicationWindow,
     list: gtk4::Box,
     toasts: RefCell<Vec<Toast>>,
+    rows: RefCell<HashMap<u32, gtk4::Box>>,
+    suppressed: Cell<bool>,
     on_closed: Box<dyn Fn(u32, u32)>,
 }
 
@@ -73,112 +76,152 @@ impl Popups {
             window: layer.window,
             list,
             toasts: RefCell::new(Vec::new()),
+            rows: RefCell::new(HashMap::new()),
+            suppressed: Cell::new(false),
             on_closed: Box::new(on_closed),
         });
 
-        let ticking = popups.clone();
+        let ticking = Rc::downgrade(&popups);
         glib::timeout_add_seconds_local(1, move || {
-            ticking.expire();
+            let Some(popups) = ticking.upgrade() else {
+                return glib::ControlFlow::Break;
+            };
+            popups.expire();
             glib::ControlFlow::Continue
         });
 
         popups
     }
 
-    /// Show a notification as a toast, replacing an earlier toast with the same
-    /// id (`replaces_id`) and dropping the oldest toast if the stack is full.
+    /// Show a notification as a toast. A toast with the same id
+    /// (`replaces_id`) is redrawn in place; past [`MAX_TOASTS`] the oldest
+    /// leaves.
     pub fn add(self: &Rc<Self>, notification: Notification) {
+        let id = notification.id;
         let deadline = model::now().saturating_add(lifetime(&notification));
-        let mut toasts = self.toasts.borrow_mut();
-        toasts.retain(|toast| toast.notification.id != notification.id);
-        toasts.insert(0, Toast {
-            notification,
-            deadline,
-        });
-        toasts.truncate(MAX_TOASTS);
-        drop(toasts);
-        self.rebuild();
+        let replaced = self.rows.borrow().get(&id).cloned();
+        let toast = Toast { notification, deadline };
+        match replaced {
+            Some(row) => {
+                fill_row(&row, &toast.notification);
+                let mut toasts = self.toasts.borrow_mut();
+                toasts.retain(|existing| existing.notification.id != id);
+                toasts.insert(0, toast);
+            }
+            None => {
+                let row = self.row(&toast.notification);
+                self.list.prepend(&row);
+                self.rows.borrow_mut().insert(id, row.clone());
+                self.toasts.borrow_mut().insert(0, toast);
+                if !self.suppressed.get() {
+                    self.window.present();
+                }
+                motion::reveal(&row);
+            }
+        }
+        let overflow: Vec<u32> = self
+            .toasts
+            .borrow()
+            .iter()
+            .skip(MAX_TOASTS)
+            .map(|toast| toast.notification.id)
+            .collect();
+        for id in overflow {
+            self.remove(id);
+        }
+    }
+
+    /// Keep the stack off screen while the panel is open: the panel lists the
+    /// same notifications, and the toasts would sit on top of it.
+    pub fn suppress(&self, on: bool) {
+        self.suppressed.set(on);
+        if on {
+            self.window.set_visible(false);
+        } else if self.list.first_child().is_some() {
+            self.window.present();
+        }
     }
 
     /// Remove a toast that left through the panel instead of the toast itself.
     pub fn dismiss(self: &Rc<Self>, id: u32) {
-        let mut toasts = self.toasts.borrow_mut();
-        let before = toasts.len();
-        toasts.retain(|toast| toast.notification.id != id);
-        let changed = toasts.len() != before;
-        drop(toasts);
-        if changed {
-            self.rebuild();
-        }
+        self.remove(id);
     }
 
     /// Drop every toast whose time is up. Runs once a second.
     pub(crate) fn expire(self: &Rc<Self>) {
         let now = model::now();
-        let expired: Vec<u32> = {
-            let toasts = self.toasts.borrow();
-            toasts
-                .iter()
-                .filter(|toast| toast.deadline <= now)
-                .map(|toast| toast.notification.id)
-                .collect()
-        };
-        if expired.is_empty() {
-            return;
-        }
-        self.toasts.borrow_mut().retain(|toast| toast.deadline > now);
-        self.rebuild();
+        let expired: Vec<u32> = self
+            .toasts
+            .borrow()
+            .iter()
+            .filter(|toast| toast.deadline <= now)
+            .map(|toast| toast.notification.id)
+            .collect();
         for id in expired {
+            self.remove(id);
             (self.on_closed)(id, REASON_EXPIRED);
         }
     }
 
-    /// Repaint the stack and show the surface only while it carries something.
-    fn rebuild(self: &Rc<Self>) {
-        while let Some(child) = self.list.first_child() {
-            self.list.remove(&child);
-        }
-        let toasts = self.toasts.borrow().clone();
-        for toast in &toasts {
-            self.list.append(&self.row(toast));
-        }
-        if toasts.is_empty() {
-            self.window.set_visible(false);
-        } else {
-            self.window.present();
-        }
+    /// Take one toast off the stack: it fades out, then leaves the list, and
+    /// the surface hides once nothing is left on it.
+    fn remove(self: &Rc<Self>, id: u32) {
+        self.toasts.borrow_mut().retain(|toast| toast.notification.id != id);
+        let Some(row) = self.rows.borrow_mut().remove(&id) else {
+            return;
+        };
+        let this = Rc::downgrade(self);
+        let leaving = row.clone();
+        motion::conceal(&row, move || {
+            let Some(this) = this.upgrade() else {
+                return;
+            };
+            this.list.remove(&leaving);
+            if this.list.first_child().is_none() {
+                this.window.set_visible(false);
+            }
+        });
     }
 
-    fn row(self: &Rc<Self>, toast: &Toast) -> gtk4::Box {
-        let notification = &toast.notification;
+    fn row(self: &Rc<Self>, notification: &Notification) -> gtk4::Box {
         let row = gtk4::Box::new(gtk4::Orientation::Vertical, 2);
         row.add_css_class("toast");
-        if notification.urgent {
-            row.add_css_class("urgent");
-        }
-
-        row.append(&label(&notification.app_name, "dim", false));
-        row.append(&label(&notification.summary, "summary", true));
-        if !notification.body.is_empty() {
-            row.append(&label(&notification.body, "body", true));
-        }
+        row.add_css_class("fx-reveal-side");
+        fill_row(&row, notification);
 
         let click = gtk4::GestureClick::new();
-        let this = self.clone();
+        let this = Rc::downgrade(self);
         let id = notification.id;
         click.connect_released(move |_, _, _, _| {
-            this.dismiss(id);
+            let Some(this) = this.upgrade() else {
+                return;
+            };
+            this.remove(id);
             (this.on_closed)(id, REASON_DISMISSED);
         });
         row.add_controller(click);
-
         row
     }
 }
 
-/// One line of a toast. The leading alignment and the wrap are the same on
-/// every one of them, so only the text and the class differ — and the class is
-/// what gives the line its place in the toast's type scale.
+/// Draw `notification` into a toast row, replacing what it showed before.
+fn fill_row(row: &gtk4::Box, notification: &Notification) {
+    while let Some(child) = row.first_child() {
+        row.remove(&child);
+    }
+    if notification.urgent {
+        row.add_css_class("urgent");
+    } else {
+        row.remove_css_class("urgent");
+    }
+    row.append(&label(&notification.app_name, "dim", false));
+    row.append(&label(&notification.summary, "summary", true));
+    if !notification.body.is_empty() {
+        row.append(&label(&notification.body, "body", true));
+    }
+}
+
+/// One line of a toast. The class gives the line its place in the type scale.
 fn label(text: &str, class: &str, wrap: bool) -> gtk4::Label {
     let label = gtk4::Label::new(Some(text));
     label.add_css_class(class);
@@ -188,8 +231,8 @@ fn label(text: &str, class: &str, wrap: bool) -> gtk4::Label {
     label
 }
 
-/// How long a toast lives, in seconds. A critical notification stays until it
-/// is dismissed, which is what a client sending `urgency == 3` expects.
+/// How long a toast lives, in seconds. A critical notification (urgency 2)
+/// stays until it is dismissed, as the specification asks.
 fn lifetime(notification: &Notification) -> i64 {
     if notification.urgent {
         i64::MAX / 2

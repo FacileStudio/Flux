@@ -1,0 +1,153 @@
+@keyframes bt-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.bt-enter {
+  animation: bt-fade 180ms ease-out;
+}
+
+button.bt-head {
+  margin: 0 -12px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  font-size: 14px;
+  transition: background-color 150ms ease-out;
+}
+
+button.bt-head:hover {
+  background-color: @fc_surface;
+}
+
+button.bt-head:active {
+  background-color: mix(@fc_surface, @fc_fg, 0.08);
+}
+
+.bt-icon {
+  color: @fc_fg_muted;
+}
+
+.bt-connected .bt-icon {
+  color: @fc_fg;
+}
+
+.bt-battery {
+  font-size: 12px;
+  color: @fc_fg_muted;
+}
+
+button.bt-expand {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  margin-right: 4px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg_muted;
+  transition: background-color 150ms ease-out;
+}
+
+button.bt-expand:hover {
+  background-color: @fc_surface;
+  color: @fc_fg;
+}
+
+button.bt-expand image {
+  transition: -gtk-icon-transform 180ms ease-out;
+}
+
+button.bt-expand.bt-open image {
+  -gtk-icon-transform: rotate(180deg);
+}
+
+.bt-details {
+  margin: 0 8px 8px 44px;
+  padding: 4px 0;
+  border-radius: 8px;
+  background-color: @fc_page;
+}
+
+.bt-details .fx-row {
+  padding: 8px 12px;
+}
+
+.bt-scrim {
+  background-color: @fc_scrim;
+}
+
+.bt-sheet {
+  padding: 24px;
+  border-radius: 12px;
+  background-color: @fc_bg;
+  color: @fc_fg;
+}
+
+.bt-sheet-icon {
+  color: @fc_fg_muted;
+}
+
+.bt-sheet-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: @fc_fg;
+}
+
+.bt-code {
+  margin: 8px 0;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: @fc_component;
+  font-family: monospace;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: @fc_fg;
+}
+
+entry.bt-entry {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background-color: @fc_surface;
+  color: @fc_fg;
+  font-size: 16px;
+  outline: 0 solid transparent;
+}
+
+entry.bt-entry:focus-within {
+  outline: 2px solid @fc_ring;
+  outline-offset: 2px;
+}
+
+entry.bt-entry text placeholder {
+  color: @fc_fg_muted;
+}
+
+.bt-quick {
+  padding: 12px;
+  min-width: 300px;
+}
+
+.bt-quick-header {
+  padding: 4px 4px 4px 8px;
+}
+
+.bt-quick-status {
+  padding: 0 8px;
+}
+
+.bt-quick-item {
+  padding: 8px 12px;
+}
+
+window.bt-quick-window {
+  background-color: @fc_bg;
+}

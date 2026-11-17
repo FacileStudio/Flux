@@ -1,0 +1,16 @@
+[package]
+name = "settings-display"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "settings_display"
+path = "src/lib.rs"
+
+[dependencies]
+gtk4.workspace = true
+shell-common.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+roxmltree = "0.21"

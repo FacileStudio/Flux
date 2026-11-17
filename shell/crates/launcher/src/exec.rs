@@ -3,15 +3,30 @@
 //! An `Exec` value is not a shell line: the desktop entry specification defines
 //! its own quoting, so this honours double quotes and backslash escapes and
 //! nothing else. Field codes (`%u`, `%f`, `%i` and friends) describe arguments
-//! the launcher has no way to supply, and are stripped.
+//! the launcher has no way to supply, and are stripped; `%%` is a literal `%`.
+//! A `Terminal=true` entry runs inside the Flux terminal.
 
 use std::io;
 use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 
-/// Start the program an `Exec` value names, detached from the launcher.
-pub fn launch(exec: &str) -> io::Result<()> {
+/// The terminal a `Terminal=true` entry runs in, and the flag that hands it the
+/// command line.
+const TERMINAL: [&str; 2] = ["ghostty", "-e"];
+
+/// The argument vector an `Exec` value stands for, wrapped in the terminal when
+/// the entry asks for one.
+pub fn command_line(exec: &str, terminal: bool) -> Vec<String> {
     let parts = split_exec(&strip_field_codes(exec));
+    if !terminal || parts.is_empty() {
+        return parts;
+    }
+    TERMINAL.iter().map(|part| part.to_string()).chain(parts).collect()
+}
+
+/// Start the program an `Exec` value names, detached from the launcher.
+pub fn launch(exec: &str, terminal: bool) -> io::Result<()> {
+    let parts = command_line(exec, terminal);
     let (program, args) = parts
         .split_first()
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "empty Exec line"))?;
@@ -38,17 +53,18 @@ fn detach(command: &mut Command) {
     }
 }
 
-/// Drop the field codes: `%` plus one character, the escape for a literal `%`
-/// included.
+/// Drop the field codes, `%` plus one character, and turn `%%` into `%`.
 fn strip_field_codes(exec: &str) -> String {
     let mut out = String::with_capacity(exec.len());
     let mut chars = exec.chars();
     while let Some(current) = chars.next() {
-        if current == '%' {
-            chars.next();
+        if current != '%' {
+            out.push(current);
             continue;
         }
-        out.push(current);
+        if chars.next() == Some('%') {
+            out.push('%');
+        }
     }
     out
 }

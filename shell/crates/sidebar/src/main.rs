@@ -7,6 +7,7 @@ mod dbus;
 mod model;
 mod panel;
 mod popup;
+mod text;
 mod wallpaper;
 
 use std::cell::RefCell;
@@ -47,9 +48,11 @@ fn main() {
     }
 }
 
+/// Toggle the running daemon, or become it. A bare `sidebar` (`show` false)
+/// leaves a running daemon alone instead of opening its panel.
 fn toggle_or_start(show: bool) {
     if let Some(pid) = instance::running(WIDGET) {
-        if unsafe { libc::kill(pid, libc::SIGUSR1) } == 0 {
+        if !show || unsafe { libc::kill(pid, libc::SIGUSR1) } == 0 {
             std::process::exit(0);
         }
     }
@@ -85,7 +88,7 @@ fn run_daemon(show: bool) {
         .unwrap_or(0)
         .saturating_add(1);
     let application = Application::builder()
-        .application_id("dev.saravenpi.Sidebar")
+        .application_id("studio.facile.flux.Sidebar")
         .build();
     application.connect_activate(move |app| activate(app, items.clone(), next_id, show));
     let code = run_app(&application, env!("CARGO_PKG_NAME"));
@@ -95,7 +98,7 @@ fn run_daemon(show: bool) {
 
 fn activate(app: &Application, items: Vec<model::Notification>, next_id: u32, show: bool) {
     if let Some(existing) = APP.with(|slot| slot.borrow().clone()) {
-        existing.window.present();
+        existing.show();
         return;
     }
     if !shell_common::layer::ensure_supported() {
@@ -115,11 +118,46 @@ fn activate(app: &Application, items: Vec<model::Notification>, next_id: u32, sh
     window.set_margin(Edge::Bottom, shell_common::theme::GAP);
 
     let handle = dbus::start(next_id);
-    let built = App::build(layer.window.clone(), items, handle);
+    let built = App::build(app, layer.window.clone(), items, handle);
     if show {
-        built.window.present();
+        built.show();
+    }
+    if preview() {
+        for notification in sample() {
+            apply_event(&built, &Event::Added(notification));
+        }
     }
     APP.with(|slot| *slot.borrow_mut() = Some(built));
+}
+
+/// Whether the panel opens with sample notifications for a screenshot.
+/// `FLUX_SHELL_PREVIEW=1 XDG_STATE_HOME=/tmp/x sidebar toggle` keeps the
+/// sample out of the real history.
+fn preview() -> bool {
+    std::env::var_os("FLUX_SHELL_PREVIEW").is_some_and(|value| !value.is_empty())
+}
+
+/// Two notifications, one of them critical.
+fn sample() -> Vec<model::Notification> {
+    let now = model::now();
+    vec![
+        model::Notification {
+            id: 1,
+            app_name: "Calendar".into(),
+            summary: "Design review in 10 minutes".into(),
+            body: "Room 2, with the Flux team".into(),
+            ts: now - 900,
+            urgent: false,
+        },
+        model::Notification {
+            id: 2,
+            app_name: "Battery".into(),
+            summary: "Battery at 5%".into(),
+            body: "Plug in the charger now".into(),
+            ts: now,
+            urgent: true,
+        },
+    ]
 }
 
 fn toggle_from_signal() {

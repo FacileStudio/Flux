@@ -1,184 +1,243 @@
-//! The bar itself: the modules on it, the timers that keep them current, and the
-//! workspace chips that follow the compositor.
+//! One bar: its window on one monitor, the modules on it and the timers that
+//! keep them current.
+//!
+//! Left: the workspace chips of this monitor's output and the title of the
+//! window in front. Middle: the date and time, which open the sidebar. Right:
+//! CPU and memory, the keyboard layout when there is more than one, and the
+//! control row.
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{Application, Box, CenterBox, Label};
+use gtk4::{gdk, glib, Application, Box, Button, CenterBox, Label};
+use gtk4_layer_shell::Layer;
 
-use shell_common::theme::MODULE_GAP;
+use shell_common::layer::LayerWindow;
+use shell_common::spawn;
+use shell_common::theme::{BAR_HEIGHT, MODULE_GAP};
 
-use crate::ipc;
-use crate::popup;
-use crate::{control, icons, stats};
+use crate::niri::{self, Chip, State};
+use crate::popup::Popup;
+use crate::{control, icons, stats, text, volume};
 
-/// Everything on the bar that has to outlive the function that builds it. The
-/// label fields are the ones a ticker reaches back into.
-pub struct Ui {
-    pub root: CenterBox,
-    pub workspaces: Box,
-    clock: Label,
-    ram: Label,
-    cpu: Label,
-    battery_label: Option<Label>,
-    network_label: Option<Label>,
+/// The longest window title the bar shows, in characters, before it ellipsizes.
+const TITLE_CHARS: i32 = 48;
+
+/// One monitor's bar.
+pub struct Bar {
+    pub monitor: gdk::Monitor,
+    window: gtk4::ApplicationWindow,
+    popup: Popup,
+    connector: Option<String>,
+    workspaces: Box,
+    chips: RefCell<Vec<(u64, Button)>>,
+    title: Label,
+    layout: Button,
 }
 
-/// Build the bar: the workspace strip, the clock, the CPU/RAM readings and the
-/// control row, in that order.
-///
-/// The three are the bar's modules: workspaces on the left, the clock in the
-/// middle, the CPU and memory pills and the control row on the right. A centre
-/// box rather than a row of expanding children is what actually holds the clock
-/// in the middle of the bar — three children sharing the spare width put it
-/// wherever the wider end left it, a good 100 px off centre — and one
-/// [`MODULE_GAP`] separates every pair of modules and every pair of items
-/// inside one.
-pub fn build(app: &Application, compositor: ipc::Compositor) -> Ui {
-    let root = CenterBox::new();
-    root.add_css_class("bar");
+impl Bar {
+    /// Build and show the bar for `monitor`.
+    pub fn new(app: &Application, monitor: &gdk::Monitor, painted: &Rc<RefCell<icons::Painted>>) -> Rc<Self> {
+        let layer = LayerWindow::new(app).layer(Layer::Top);
+        layer.anchors(true, true, true, false);
+        layer.exclusive_zone(true);
+        layer.monitor(Some(monitor));
+        layer.window.set_height_request(BAR_HEIGHT);
 
+        let popup = Popup::new(app, Some(monitor));
+        let root = CenterBox::new();
+        root.add_css_class("bar");
+
+        let (left, workspaces, title) = left_module();
+        let layout = layout_pill();
+        let right = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
+        right.set_halign(gtk4::Align::End);
+        right.append(&stats_row());
+        right.append(&layout);
+        right.append(&control::build(&popup, painted));
+
+        root.set_start_widget(Some(&left));
+        root.set_center_widget(Some(&clock()));
+        root.set_end_widget(Some(&right));
+        layer.window.set_child(Some(&root));
+        layer.window.present();
+        if preview() {
+            let sample = popup.clone();
+            glib::timeout_add_seconds_local_once(1, move || {
+                volume::draw(&sample, volume::Level { percent: 60, muted: false });
+            });
+        }
+
+        Rc::new(Self {
+            monitor: monitor.clone(),
+            window: layer.window,
+            popup,
+            connector: monitor.connector().map(|name| name.to_string()),
+            workspaces,
+            chips: RefCell::new(Vec::new()),
+            title,
+            layout,
+        })
+    }
+
+    /// Draw this bar's view of the niri state.
+    pub fn render(&self, state: &State) {
+        let view = state.view(self.connector.as_deref());
+        self.render_chips(&view.chips);
+        self.title.set_text(view.title.as_deref().unwrap_or_default());
+        self.title.set_visible(view.title.is_some());
+        match state.layout() {
+            Some((code, name)) => {
+                self.layout.set_label(&code);
+                self.layout.set_tooltip_text(Some(&format!("{}: {name}", text::get().layout_tooltip)));
+                self.layout.set_visible(true);
+            }
+            None => self.layout.set_visible(false),
+        }
+    }
+
+    /// Update the chips in place when the same workspaces are shown, so the
+    /// focus moves with a transition; rebuild them when the set changed.
+    fn render_chips(&self, chips: &[Chip]) {
+        let mut current = self.chips.borrow_mut();
+        let same = current.len() == chips.len()
+            && current.iter().zip(chips).all(|((id, _), chip)| *id == chip.id);
+        if !same {
+            while let Some(child) = self.workspaces.first_child() {
+                self.workspaces.remove(&child);
+            }
+            *current = chips
+                .iter()
+                .map(|chip| {
+                    let button = chip_button(chip.id);
+                    self.workspaces.append(&button);
+                    (chip.id, button)
+                })
+                .collect();
+        }
+        for ((_, button), chip) in current.iter().zip(chips) {
+            button.set_label(&chip.label);
+            set_class(button, "active", chip.active);
+            set_class(button, "focused", chip.focused);
+            set_class(button, "urgent", chip.urgent);
+        }
+    }
+
+    /// Close the bar for good, when its monitor goes away.
+    pub fn destroy(&self) {
+        self.popup.destroy();
+        self.window.destroy();
+    }
+}
+
+/// The left module: the workspace chips, then the window title.
+fn left_module() -> (Box, Box, Label) {
     let workspaces = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
     workspaces.add_css_class("workspaces");
-    workspaces.set_halign(gtk4::Align::Start);
-    if compositor == ipc::Compositor::Unknown {
-        workspaces.set_visible(false);
-    }
-
-    let clock = Label::new(None);
-    clock.add_css_class("clock");
-    clock.set_halign(gtk4::Align::Center);
-
-    // The pills collect their glyphs in here, and the hook holds the same set:
-    // the icons are drawn rather than styled, so they cannot follow the cascade
-    // the way the labels do, and this is what repaints them every time the
-    // stylesheet is rebuilt.
-    let painted = Rc::new(RefCell::new(icons::Painted::default()));
-    icons::follow_palette(painted.clone());
-    let controls = control::build(&popup::Popup::new(app), &painted);
-    let (right, ram, cpu) = right_row(&controls.container);
-
-    root.set_start_widget(Some(&workspaces));
-    root.set_center_widget(Some(&clock));
-    root.set_end_widget(Some(&right));
-
-    Ui {
-        root,
-        workspaces,
-        clock,
-        ram,
-        cpu,
-        battery_label: controls.battery_label,
-        network_label: controls.network_label,
-    }
+    workspaces.set_visible(niri::present());
+    let title = Label::new(None);
+    title.add_css_class("title");
+    title.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+    title.set_max_width_chars(TITLE_CHARS);
+    let left = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP * 2);
+    left.set_halign(gtk4::Align::Start);
+    left.append(&workspaces);
+    left.append(&title);
+    (left, workspaces, title)
 }
 
-/// The bar's right-hand module: the CPU and memory readings as two pills, then
-/// the control row, one gap apart — with the two labels a ticker refreshes.
-///
-/// They are one piece rather than two. Appended to the bar one after the other
-/// they had no gap between them at all, so the RAM pill sat flush against the
-/// volume pill while every other pair on the bar kept its own gap.
-fn right_row(controls: &Box) -> (Box, Label, Label) {
-    let ram = Label::new(None);
-    ram.add_css_class("stat");
-    let cpu = Label::new(None);
-    cpu.add_css_class("stat");
-
-    let stats = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
-    stats.add_css_class("stats");
-    stats.append(&ram);
-    stats.append(&cpu);
-
-    let right = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
-    right.add_css_class("right");
-    right.set_halign(gtk4::Align::End);
-    right.append(&stats);
-    right.append(controls);
-    (right, ram, cpu)
+/// The keyboard layout pill, hidden until niri reports several layouts. A
+/// click moves to the next one.
+fn layout_pill() -> Button {
+    let layout = Button::new();
+    layout.add_css_class("pill");
+    layout.add_css_class("layout");
+    layout.set_visible(false);
+    layout.set_tooltip_text(Some(text::get().layout_tooltip));
+    layout.connect_clicked(|_| niri::send(niri::NEXT_LAYOUT.to_string()));
+    layout
 }
 
-/// Put the clock, the CPU/RAM readings and the battery and network pills on their
-/// own timers. Only battery and network tick: volume and brightness update when
-/// they are clicked, because for those the popup is the source of truth.
-pub fn start_tickers(ui: &Ui) {
-    let battery = ui.battery_label.clone();
-    glib::timeout_add_seconds_local(30, move || {
-        if let Some(ref label) = battery {
-            crate::battery::refresh(label);
-        }
-        glib::ControlFlow::Continue
-    });
-
-    let network = ui.network_label.clone();
-    glib::timeout_add_seconds_local(15, move || {
-        if let Some(ref label) = network {
-            crate::network::refresh(label);
-        }
-        glib::ControlFlow::Continue
-    });
-
-    update_clock(&ui.clock);
-    let clock = ui.clock.clone();
-    glib::timeout_add_seconds_local(30, move || {
-        update_clock(&clock);
-        glib::ControlFlow::Continue
-    });
-
-    // The CPU share is a delta, so the first reading only sets the baseline;
-    // every tick after it reports the busy share since the previous one.
-    let ram = ui.ram.clone();
-    let cpu = ui.cpu.clone();
-    let mut sampler = stats::Sampler::new();
-    update_stats(&ram, &cpu, &mut sampler);
-    glib::timeout_add_seconds_local(2, move || {
-        update_stats(&ram, &cpu, &mut sampler);
-        glib::ControlFlow::Continue
-    });
+/// Whether the bar opens its volume card with a sample level, for a
+/// screenshot: `FLUX_SHELL_PREVIEW=popup`.
+fn preview() -> bool {
+    std::env::var("FLUX_SHELL_PREVIEW").is_ok_and(|value| value == "popup")
 }
 
-/// Subscribe to the compositor's workspace events and redraw the chips to match.
-pub fn follow(compositor: ipc::Compositor, container: &Box) {
-    let (tx, rx) = async_channel::unbounded::<Vec<ipc::Workspace>>();
-    let container = container.clone();
-    glib::spawn_future_local(async move {
-        while let Ok(state) = rx.recv().await {
-            rebuild(&container, &state, compositor);
-        }
-    });
-    ipc::start(compositor, tx);
-}
-
-fn rebuild(container: &Box, state: &[ipc::Workspace], compositor: ipc::Compositor) {
-    while let Some(child) = container.first_child() {
-        container.remove(&child);
-    }
-    for workspace in state {
-        container.append(&chip(workspace, compositor));
+fn set_class(widget: &impl IsA<gtk4::Widget>, class: &str, on: bool) {
+    if on {
+        widget.add_css_class(class);
+    } else {
+        widget.remove_css_class(class);
     }
 }
 
-/// One workspace chip: its label, whether it is focused or urgent, and a click
-/// that asks the compositor to focus it.
-fn chip(workspace: &ipc::Workspace, compositor: ipc::Compositor) -> gtk4::Button {
-    let button = gtk4::Button::with_label(&workspace.label);
+/// A workspace chip that asks niri to focus workspace `id` on its own output.
+fn chip_button(id: u64) -> Button {
+    let button = Button::new();
     button.add_css_class("ws");
     button.set_valign(gtk4::Align::Center);
-    if workspace.focused {
-        button.add_css_class("focused");
-    }
-    if workspace.urgent {
-        button.add_css_class("urgent");
-    }
-    let key = workspace.key.clone();
-    button.connect_clicked(move |_| ipc::focus(compositor, &key));
+    button.connect_clicked(move |_| niri::send(niri::focus_request(id)));
+    button
+}
+
+/// The clock: the date and the time, checked every second so the minute turns
+/// on time, and opening the sidebar on click.
+fn clock() -> Button {
+    let label = Label::new(None);
+    let button = Button::new();
+    button.set_child(Some(&label));
+    button.add_css_class("clock");
+    button.set_tooltip_text(Some(text::get().clock_tooltip));
+    button.connect_clicked(|_| spawn::detached(spawn::sibling("sidebar"), &["toggle"]));
+
+    update_clock(&label);
+    let weak = label.downgrade();
+    glib::timeout_add_seconds_local(1, move || {
+        let Some(label) = weak.upgrade() else {
+            return glib::ControlFlow::Break;
+        };
+        update_clock(&label);
+        glib::ControlFlow::Continue
+    });
     button
 }
 
 fn update_clock(label: &Label) {
-    label.set_text(&chrono::Local::now().format("%H:%M").to_string());
+    let Some(now) = glib::DateTime::now_local()
+        .ok()
+        .and_then(|now| now.format(text::get().clock_format).ok())
+    else {
+        return;
+    };
+    if label.text() != now {
+        label.set_text(&now);
+    }
+}
+
+/// The CPU and memory readings, as two pills on a two-second timer.
+fn stats_row() -> Box {
+    let ram = Label::new(None);
+    ram.add_css_class("stat");
+    let cpu = Label::new(None);
+    cpu.add_css_class("stat");
+    let row = Box::new(gtk4::Orientation::Horizontal, MODULE_GAP);
+    row.add_css_class("stats");
+    row.append(&cpu);
+    row.append(&ram);
+
+    let mut sampler = stats::Sampler::new();
+    update_stats(&ram, &cpu, &mut sampler);
+    let (ram, cpu) = (ram.downgrade(), cpu.downgrade());
+    glib::timeout_add_seconds_local(2, move || {
+        let (Some(ram), Some(cpu)) = (ram.upgrade(), cpu.upgrade()) else {
+            return glib::ControlFlow::Break;
+        };
+        update_stats(&ram, &cpu, &mut sampler);
+        glib::ControlFlow::Continue
+    });
+    row
 }
 
 fn update_stats(ram: &Label, cpu: &Label, sampler: &mut stats::Sampler) {

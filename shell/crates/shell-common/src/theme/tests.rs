@@ -50,7 +50,7 @@ fn widget_sheet(widget: &str) -> String {
     std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("cannot read {path}: {error}"))
 }
 
-/// Every stylesheet the widgets ship has to parse, on any machine: a rule
+/// Every stylesheet the shell ships has to parse, on any machine: a rule
 /// GTK rejects stops applying silently, so nothing else would notice.
 ///
 /// The toolkit is taken for the length of this check, and every other check that
@@ -94,7 +94,7 @@ fn palette_with(fg: &str) -> String {
 
 /// The files have to reach a *running* widget, not just a reload function: this
 /// drives the real `GFileMonitor` over a real `palette.css` and a real user
-/// sheet, the way `palette sync` and a hand edit do, and watches the provider
+/// sheet, the way a hand edit does, and watches the provider
 /// take the change.
 ///
 /// A reload that loaded back the document built at start-up would leave the
@@ -106,11 +106,11 @@ fn palette_with(fg: &str) -> String {
 #[test]
 fn a_rewritten_palette_reaches_a_running_provider() {
     let _gtk = gtk();
-    let home = std::env::temp_dir().join("widgets-theme-monitor-test");
+    let home = std::env::temp_dir().join("flux-theme-monitor-test");
     // Start from nothing: a file a run that failed part way leaves behind would
     // answer for this one.
     let _ = std::fs::remove_dir_all(&home);
-    let config = home.join(".config/widgets");
+    let config = home.join(".config/flux");
     std::fs::create_dir_all(&config).expect("the test config directory");
     let previous = std::env::var_os("HOME");
     std::env::set_var("HOME", &home);
@@ -180,7 +180,7 @@ fn the_portal_scheme_picks_its_palette_file() {
     assert_eq!(Scheme::from_portal(2), Scheme::Light);
     assert_eq!(Scheme::from_portal(0), Scheme::Light);
 
-    let dir = std::env::temp_dir().join(format!("widgets-scheme-test-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("flux-scheme-test-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).expect("the test palette directory");
     std::fs::write(dir.join("palette-dark.css"), "").expect("a dark palette");

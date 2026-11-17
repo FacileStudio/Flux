@@ -24,37 +24,23 @@ use crate::sysfs;
 /// Where the kernel publishes its power supplies on a running machine.
 const SUPPLY_DIR: &str = "/sys/class/power_supply";
 
-/// Whether a battery device is present at all.
-pub(super) fn present() -> bool {
-    device(Path::new(SUPPLY_DIR)).is_some()
-}
-
 /// The battery device under `root`, if any.
 ///
 /// A machine can carry more than one (a second battery in a bay, a peripheral
 /// that presents itself as one), and they are listed in no particular order, so
 /// the fullest one is the one the bar speaks for.
 fn device(root: &Path) -> Option<PathBuf> {
-    let rd = std::fs::read_dir(root).ok()?;
-    let mut best: Option<PathBuf> = None;
-    let mut best_cap: u64 = 0;
-    for entry in rd.flatten() {
-        let os_name = entry.file_name();
-        let Some(name) = os_name.to_str() else {
-            continue;
-        };
-        if !name.starts_with("BAT") {
-            continue;
-        }
-        let capability = sysfs::read_u64(&root.join(name), "capacity").filter(|cap| *cap <= 100);
-        if let Some(cap) = capability {
-            if cap > best_cap {
-                best_cap = cap;
-                best = Some(root.join(name));
-            }
-        }
-    }
-    best
+    std::fs::read_dir(root)
+        .ok()?
+        .flatten()
+        .filter(|entry| entry.file_name().to_string_lossy().starts_with("BAT"))
+        .filter_map(|entry| {
+            let path = root.join(entry.file_name());
+            let cap = sysfs::read_u64(&path, "capacity").filter(|cap| *cap <= 100)?;
+            Some((cap, path))
+        })
+        .max_by_key(|(cap, _)| *cap)
+        .map(|(_, path)| path)
 }
 
 /// Whether an external supply is feeding the machine.

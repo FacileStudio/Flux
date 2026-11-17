@@ -1,0 +1,14 @@
+[package]
+name = "settings-network"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+gtk4.workspace = true
+shell-common.workspace = true
+async-channel = "2"
+serde = "1"
+futures-util = { version = "0.3", default-features = false }
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "time"] }
+zbus = { version = "5", default-features = false, features = ["tokio"] }

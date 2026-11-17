@@ -24,6 +24,14 @@ pub enum Event {
     Removed(u32),
 }
 
+/// The specification's urgency levels are 0 (low), 1 (normal) and 2 (critical).
+const CRITICAL: u8 = 2;
+
+/// Whether an `urgency` hint marks the notification critical.
+fn is_critical(urgency: u8) -> bool {
+    urgency >= CRITICAL
+}
+
 /// The interface's own signal emitter, captured once the connection is up so
 /// the widget layers can report a close without holding the connection.
 static EMITTER: OnceLock<SignalEmitter<'static>> = OnceLock::new();
@@ -71,7 +79,7 @@ impl Notifications {
         let urgent = hints
             .get("urgency")
             .and_then(|value| u8::try_from(value).ok())
-            .map(|urgency| urgency >= 3)
+            .map(is_critical)
             .unwrap_or(false);
         let notification = Notification {
             id,
@@ -105,8 +113,8 @@ impl Notifications {
     /// (name, vendor, version, specification version).
     fn get_server_information(&self) -> (String, String, String, String) {
         (
-            "widgets".to_string(),
-            "saravenpi".to_string(),
+            "Flux".to_string(),
+            "Facile Studio".to_string(),
             env!("CARGO_PKG_VERSION").to_string(),
             "1.2".to_string(),
         )
@@ -118,4 +126,16 @@ impl Notifications {
         id: u32,
         reason: u32,
     ) -> zbus::Result<()>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_critical;
+
+    #[test]
+    fn only_urgency_two_is_critical() {
+        assert!(!is_critical(0));
+        assert!(!is_critical(1));
+        assert!(is_critical(2));
+    }
 }

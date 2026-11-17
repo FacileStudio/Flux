@@ -1,0 +1,28 @@
+[package]
+name = "settings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "flux-settings"
+path = "src/main.rs"
+
+[features]
+default = ["page-network", "page-bluetooth", "page-audio", "page-display", "page-power", "page-system"]
+page-network = ["dep:settings-network"]
+page-bluetooth = ["dep:settings-bluetooth"]
+page-audio = ["dep:settings-audio"]
+page-display = ["dep:settings-display"]
+page-power = ["dep:settings-power"]
+page-system = ["dep:settings-system"]
+
+[dependencies]
+gtk4.workspace = true
+shell-common.workspace = true
+settings-network = { path = "../settings-network", optional = true }
+settings-bluetooth = { path = "../settings-bluetooth", optional = true }
+settings-audio = { path = "../settings-audio", optional = true }
+settings-display = { path = "../settings-display", optional = true }
+settings-power = { path = "../settings-power", optional = true }
+settings-system = { path = "../settings-system", optional = true }

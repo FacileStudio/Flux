@@ -27,16 +27,3 @@ pub(crate) fn read_str(dir: &Path, name: &str) -> Option<String> {
 pub(crate) fn write_u64(dir: &Path, name: &str, value: u64) -> std::io::Result<()> {
     std::fs::write(dir.join(name), value.to_string())
 }
-
-/// Whether `dir/name` can be opened for writing.
-///
-/// Opening it settles writability without touching the value. A probe that
-/// writes to the attribute proves it can write by changing what it reads, which
-/// for a backlight means dimming the screen to answer a question about the
-/// screen.
-pub(crate) fn writable(dir: &Path, name: &str) -> bool {
-    std::fs::OpenOptions::new()
-        .write(true)
-        .open(dir.join(name))
-        .is_ok()
-}

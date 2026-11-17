@@ -1,0 +1,93 @@
+.fx-sound list.fx-choices {
+  background-color: transparent;
+}
+
+.fx-sound list.fx-choices row {
+  min-height: 32px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: @fc_fg;
+  outline: 0 solid transparent;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.fx-sound list.fx-choices row:hover {
+  background-color: @fc_surface;
+}
+
+.fx-sound list.fx-choices row:selected {
+  background-color: @fc_accent;
+  color: @fc_accent_fg;
+}
+
+.fx-sound list.fx-choices row:selected .fx-row-title {
+  color: @fc_accent_fg;
+}
+
+.fx-sound list.fx-choices row:selected .dim {
+  color: alpha(@fc_accent_fg, 0.72);
+}
+
+.fx-sound list.fx-choices row:focus-visible {
+  outline: 2px solid @fc_ring;
+  outline-offset: -2px;
+}
+
+.fx-sound list.fx-choices row .fx-check {
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.fx-sound list.fx-choices row:selected .fx-check {
+  opacity: 1;
+}
+
+.fx-sound button.fx-icon-button:checked {
+  background-color: alpha(@fc_danger, 0.1);
+  color: @fc_danger;
+}
+
+.fx-sound scale marks indicator {
+  min-height: 4px;
+  min-width: 1px;
+  color: @fc_fg_muted;
+}
+
+.fx-sound .fx-volume.muted scale highlight,
+.fx-sound .fx-volume.muted scale slider {
+  background-color: @fc_fg_muted;
+}
+
+.fx-sound .fx-volume.muted .fx-value {
+  text-decoration: line-through;
+}
+
+.fx-sound levelbar.fx-meter trough {
+  min-height: 3px;
+  padding: 0;
+  border-radius: 999px;
+  background-color: @fc_surface;
+}
+
+.fx-sound levelbar.fx-meter block {
+  min-height: 3px;
+  border-radius: 999px;
+}
+
+.fx-sound levelbar.fx-meter block.filled {
+  background-color: @fc_success;
+}
+
+.fx-sound levelbar.fx-meter block.empty {
+  background-color: transparent;
+}
+
+.fx-quick {
+  padding: 12px;
+  min-width: 320px;
+}
+
+.fx-quick .fx-row {
+  padding: 4px 8px;
+}

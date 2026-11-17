@@ -12,8 +12,8 @@ jobs:
   filet:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: FacileStudio/filet@v0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: FacileStudio/filet@67985d3338109b47cf2ef29151a7a6f1e73806af # v0.21.0
         with:
           version: v0
           fail-on: error
