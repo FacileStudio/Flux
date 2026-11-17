@@ -6,6 +6,21 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The installer asks what to install. Facile tools and everyday apps are on, and turning them off gives a minimal desktop. Gaming (Steam with Proton, GameMode, Gamescope, MangoHud and the ntsync kernel module) is off until you turn it on. The NVIDIA driver is offered, and preselected, only on GTX 16, RTX 20 and newer cards.
+- A world map on the time zone step: click near your city, or search the list.
+- The computer name sits next to the username. It follows the username until you edit it.
+- Icons on the installer's buttons.
+- `settings.json` gains `software` and `hardware`, so these choices stay editable after the install.
+
+### Fixed
+
+- Installs failed at the last step with "--disk is required": leaving the disk screen cleared the chosen disk. Install now also stays disabled until every choice is made.
+- The lock screen kept only one typed character. Its password field is redesigned, with a button to unlock.
+- The live USB session no longer locks itself, sleeps after a while or suspends on lid close during an install.
+- The NVIDIA driver option could not build: Flux now allows exactly the unfree packages that Steam and the NVIDIA driver need, and nothing else.
+
 ## [0.3.2] - 2026-11-17
 
 ### Changed
