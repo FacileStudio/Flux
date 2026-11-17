@@ -13,6 +13,10 @@ hashed=""
 timezone=""
 keymap=""
 locale=""
+facile=true
+apps=true
+gaming=false
+nvidia=false
 yes=0
 dry_run=0
 progress=text
@@ -33,8 +37,10 @@ usage: flux-install                      interactive install
        flux-install --disk DEV --hostname NAME --full-name NAME --user NAME
                     --password-hash HASH --timezone ZONE --keymap MAP
                     --locale LOCALE --yes [--progress json|text] [--dry-run]
+                    [--facile yes|no] [--apps yes|no] [--gaming yes|no] [--nvidia yes|no]
 
 --password-hash takes a yescrypt ($y$) or sha-512 ($6$) crypt hash.
+--facile and --apps default to yes, --gaming and --nvidia to no.
 EOF
 }
 
@@ -170,6 +176,14 @@ need_value() {
   [ "$#" -ge 2 ] || fail "$1 needs a value"
 }
 
+switch() {
+  case "$2" in
+    yes) printf -v "$1" true ;;
+    no) printf -v "$1" false ;;
+    *) fail "--$1 takes yes or no" ;;
+  esac
+}
+
 parse() {
   local previous="" arg
   for arg in "$@"; do
@@ -186,6 +200,10 @@ parse() {
       --timezone) need_value "$@"; timezone=$2; shift ;;
       --keymap) need_value "$@"; keymap=$2; shift ;;
       --locale) need_value "$@"; locale=$2; shift ;;
+      --facile) need_value "$@"; switch facile "$2"; shift ;;
+      --apps) need_value "$@"; switch apps "$2"; shift ;;
+      --gaming) need_value "$@"; switch gaming "$2"; shift ;;
+      --nvidia) need_value "$@"; switch nvidia "$2"; shift ;;
       --progress) need_value "$@"; progress=$2; shift ;;
       --yes) yes=1 ;;
       --dry-run) dry_run=1 ;;
@@ -348,7 +366,9 @@ settings_json() {
   printf '  "formats": null,\n  "keymap": "%s",\n  "users": [\n' "$keymap"
   printf '    { "name": "%s", "fullName": "%s", "admin": true, "groups": ["networkmanager", "video", "audio", "lp"] }\n' \
     "$username" "$(json_escape "$full_name")"
-  printf '  ],\n  "updates": { "automatic": false }\n}\n'
+  printf '  ],\n  "updates": { "automatic": false },\n'
+  printf '  "software": { "facile": %s, "apps": %s, "gaming": %s },\n' "$facile" "$apps" "$gaming"
+  printf '  "hardware": { "nvidia": %s }\n}\n' "$nvidia"
 }
 
 drvs_to_build() {

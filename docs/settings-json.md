@@ -34,7 +34,9 @@ modules = [
   "users": [
     { "name": "ada", "fullName": "Ada Lovelace", "admin": true, "groups": ["networkmanager", "video", "audio"] }
   ],
-  "updates": { "automatic": false }
+  "updates": { "automatic": false },
+  "software": { "facile": true, "apps": true, "gaming": false },
+  "hardware": { "nvidia": false }
 }
 ```
 
@@ -51,6 +53,10 @@ modules = [
 | `users[].admin` | bool | default `false`; at least one user must be `true` | adds `wheel` to `extraGroups` |
 | `users[].groups` | list | default `["networkmanager", "video", "audio"]`; drawn from `rules.json` | `users.users.<name>.extraGroups` (replaces the list) |
 | `updates.automatic` | bool | default `false` | read at run time by `flux-auto-update.service`; no rebuild needed |
+| `software.facile` | bool | default `true`; optional | `flux.software.facile` (the Facile command line tools) |
+| `software.apps` | bool | default `true`; optional | `flux.software.apps` (Firefox, Files and the everyday apps; `false` gives a minimal desktop) |
+| `software.gaming` | bool | default `false`; optional | `flux.software.gaming` (Steam, GameMode, Gamescope, MangoHud, ntsync) |
+| `hardware.nvidia` | bool | default `false`; optional | `flux.hardware.nvidia.enable` (the NVIDIA driver, open module on Turing and newer) |
 
 Unknown keys are refused on both sides. The module reports every broken rule at once, as assertions that start with `settings.json (flux.settingsFile):`.
 

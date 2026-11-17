@@ -35,7 +35,7 @@ source "$bin"
 
 run() {
   local args=(--disk /dev/sda --hostname flux --full-name "Ada Lovelace" --user ada
-    --password-hash "$hash" --timezone UTC --keymap fr --locale fr_FR.UTF-8 --yes --dry-run --progress json)
+    --password-hash "$hash" --timezone UTC --keymap fr --locale fr_FR.UTF-8 --gaming no --nvidia no --yes --dry-run --progress json)
   local key value i
   while [ "$#" -gt 1 ]; do
     key=$1 value=$2
@@ -116,6 +116,21 @@ rejects "bad progress mode" --progress xml
 accepts "valid plan" "user=ada"
 accepts "yescrypt hash" "user=ada" --password-hash "$yescrypt"
 accepts "hostname with an inner dash" "hostname=my-flux" --hostname my-flux
+rejects "gaming takes yes or no" --gaming maybe
+rejects "nvidia takes yes or no" --nvidia 1
+
+settings_test() {
+  local json
+  json=$(hostname=flux timezone=UTC locale=en_US.UTF-8 keymap=us username=ada full_name="Ada Lovelace" \
+    facile=true apps=false gaming=true nvidia=true settings_json)
+  if printf '%s' "$json" | jq -e '.software == {"facile": true, "apps": false, "gaming": true} and .hardware.nvidia == true' >/dev/null; then
+    printf 'ok   settings.json carries the software choices\n'
+  else
+    printf 'FAIL settings.json software choices: %s\n' "$json"
+    failures=$((failures + 1))
+  fi
+}
+settings_test
 
 tail_test() {
   local output

@@ -34,6 +34,36 @@ pub struct Updates {
     pub automatic: bool,
 }
 
+/// The optional software groups Flux installs.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct Software {
+    #[serde(default = "yes")]
+    pub facile: bool,
+    #[serde(default = "yes")]
+    pub apps: bool,
+    #[serde(default)]
+    pub gaming: bool,
+}
+
+impl Default for Software {
+    fn default() -> Self {
+        Software { facile: true, apps: true, gaming: false }
+    }
+}
+
+/// Drivers the machine needs beyond the free defaults.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct Hardware {
+    #[serde(default)]
+    pub nvidia: bool,
+}
+
+fn yes() -> bool {
+    true
+}
+
 /// The whole file.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -50,6 +80,10 @@ pub struct Settings {
     pub users: Vec<User>,
     #[serde(default)]
     pub updates: Updates,
+    #[serde(default)]
+    pub software: Software,
+    #[serde(default)]
+    pub hardware: Hardware,
 }
 
 /// The groups a new account gets besides `wheel`.
@@ -68,6 +102,8 @@ impl Default for Settings {
             keymap: "us".to_string(),
             users: Vec::new(),
             updates: Updates::default(),
+            software: Software::default(),
+            hardware: Hardware::default(),
         }
     }
 }
@@ -256,6 +292,20 @@ mod tests {
         assert_eq!(settings.timezone, None);
         assert_eq!(settings.users[0].groups, default_groups());
         assert!(settings.to_json().contains("\"fullName\": \"Ada\""));
+    }
+
+    #[test]
+    fn software_defaults_keep_old_files_valid() {
+        let json = r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us"}"#;
+        let settings = Settings::parse(json, None).unwrap_or_default();
+        assert_eq!(settings.software, Software { facile: true, apps: true, gaming: false });
+        assert!(!settings.hardware.nvidia);
+        let minimal = r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us",
+            "software":{"apps":false,"gaming":true},"hardware":{"nvidia":true}}"#;
+        let settings = Settings::parse(minimal, None).unwrap_or_default();
+        assert_eq!(settings.software, Software { facile: true, apps: false, gaming: true });
+        assert!(settings.hardware.nvidia);
+        assert!(Settings::parse(r#"{"version":1,"hostname":"pc","locale":"en_US.UTF-8","keymap":"us","software":{"games":true}}"#, None).is_err());
     }
 
     #[test]
