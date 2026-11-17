@@ -37,7 +37,13 @@ fn main() {
     let _ = run_app(&application, env!("CARGO_PKG_NAME"));
 }
 
+/// Open the palette. A second `launcher` hands its activation to this
+/// process, so an activation while the palette is open is the key pressed
+/// again, and closes it.
 fn activate(application: &Application, apps: &Rc<Vec<App>>) {
+    if !application.windows().is_empty() {
+        std::process::exit(0);
+    }
     if !ensure_supported() {
         std::process::exit(1);
     }
