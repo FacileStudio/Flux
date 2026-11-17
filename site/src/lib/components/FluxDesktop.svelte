@@ -32,7 +32,7 @@
 	<div class="wall base"></div>
 	<div class="wall alt" class:show={scene.wallpaper === ALTERNATE} style:background-image="url('/wallpapers/{ALTERNATE}-large.jpg')"></div>
 
-	<div class="bar">
+	<div class="bar" style:inset="{gap}px {gap}px auto">
 		<div class="left">
 			{#each compact ? [1, 2, 3] : [1, 2, 3, 4] as ws (ws)}
 				<span class="ws" class:on={ws === scene.workspace}>{ws}</span>
@@ -51,9 +51,9 @@
 		</div>
 	</div>
 
-	<div class="cols" class:away={scene.workspace !== 2}>
-		<div class="strip" style:gap="{gap}px" style:padding-left="{gap}px" style:transform="translateX({-offset}px)">
-			<div class="col term" style:width="{half}px">
+	<div class="cols" class:away={scene.workspace !== 2} style:top="{2 * gap + (compact ? 30 : 32)}px">
+		<div class="strip" style:padding-left="{gap}px" style:transform="translateX({-offset}px)">
+			<div class="col term" style:width="{half}px" style:margin-right="{gap}px">
 				<div class="tline"><span class="mute">~</span> <span class="ok">❯</span> ls</div>
 				<div class="tline mute">Code&nbsp;&nbsp;Documents&nbsp;&nbsp;Nuage&nbsp;&nbsp;Photos</div>
 				<div class="tline"><span class="mute">~</span> <span class="ok">❯</span> nuage status</div>
@@ -68,7 +68,12 @@
 				{/if}
 			</div>
 
-			<div class="col grower" class:open={scene.opened} style:width="{scene.opened ? full : 0}px">
+			<div
+				class="col grower"
+				class:open={scene.opened}
+				style:width="{scene.opened ? full : 0}px"
+				style:margin-right="{scene.opened ? gap : 0}px"
+			>
 				<div class="inner" style:width="{full}px">
 					<FluxSettings page={scene.page} wifi={scene.wifi} wallpaper={scene.wallpaper} {compact} deskDark={!scene.swapped} />
 				</div>
@@ -132,9 +137,6 @@
 	.bar {
 		position: absolute;
 		z-index: 1;
-		top: 8px;
-		left: 8px;
-		right: 8px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -199,8 +201,7 @@
 	}
 	.cols {
 		position: absolute;
-		top: 50px;
-		bottom: 12px;
+		bottom: 14px;
 		left: 0;
 		right: 0;
 		overflow: hidden;
@@ -213,8 +214,7 @@
 		transform: translateY(-40px);
 	}
 	.compact .cols {
-		top: 46px;
-		bottom: 8px;
+		bottom: 12px;
 	}
 	.strip {
 		display: flex;
@@ -250,6 +250,7 @@
 		opacity: 0;
 		transition:
 			width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+			margin-right 320ms cubic-bezier(0.22, 1, 0.36, 1),
 			opacity 200ms ease-out;
 	}
 	.grower.open {

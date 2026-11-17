@@ -21,10 +21,10 @@ export const page = {
 		'Offene Beta · stabile Version um März 2027'
 	],
 	'landing.slogan': [
-		'A calm Linux desktop with every Facile app already there.',
-		'Un bureau Linux calme, avec toutes les apps Facile déjà là.',
-		'Un escritorio Linux tranquilo, con todas las apps de Facile ya instaladas.',
-		'Ein ruhiger Linux-Desktop, auf dem alle Facile-Apps schon da sind.'
+		'Linux, finally Facile.',
+		'Linux, enfin Facile.',
+		'Linux, por fin Facile.',
+		'Linux, endlich Facile.'
 	],
 	'landing.subtitle': [
 		'Sablier, Nuage, Casier and Bulle are ready from the first boot. Your windows line up side by side and never overlap.',
