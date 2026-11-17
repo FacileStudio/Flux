@@ -66,6 +66,7 @@
 					{t('downloads.heading')}
 				</h1>
 				<p class="max-w-2xl text-fc-lg text-balance text-fc-fg-muted">{t('downloads.line')}</p>
+				<a class="text-fc-sm font-medium underline underline-offset-4" href="/docs/before-you-switch">{t('downloads.before')}</a>
 				<p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-fc-sm text-fc-fg-muted">
 					<span>{t('downloads.version')} <span class="font-fc-mono text-fc-fg">{VERSION}</span></span>
 					<a class="underline underline-offset-4 hover:text-fc-fg" href={RELEASE_NOTES}>{t('downloads.notes')}</a>

@@ -6,20 +6,44 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-17
+
+A polish release after a full review of the shell, Settings, the installer, the system and kit.
+
 ### Added
 
 - The installer asks what to install. Facile tools and everyday apps are on, and turning them off gives a minimal desktop. Gaming (Steam with Proton, GameMode, Gamescope, MangoHud and the ntsync kernel module) is off until you turn it on. The NVIDIA driver is offered, and preselected, only on GTX 16, RTX 20 and newer cards.
+- Settings has a Software section, so those choices can change after the install.
+- An Apps button and a close-window button on the bar, for people who use the mouse.
 - A world map on the time zone step: click near your city, or search the list.
-- The computer name sits next to the username. It follows the username until you edit it.
-- Icons on the installer's buttons.
-- `settings.json` gains `software` and `hardware`, so these choices stay editable after the install.
+- The computer name sits next to the username in the installer. It follows the username until you edit it.
+- Scroll direction, natural or traditional, for the touchpad and the mouse in Settings.
+- A low-battery warning, and the battery level on the bar.
+- A "Before you switch" page in the docs: what will not run on Linux, and what Flux does to your disk.
+- The installer keeps the Wi-Fi you joined in the live session.
+
+### Changed
+
+- `Super+L` locks the screen and `Alt+F4` closes the window. Moving focus with H, J, K, L is now `Super+Alt` plus the letter. `Super+Space` and `Super+D` open the same launcher.
+- The launcher lists every app, scrolls with the keyboard, and finds apps by their translated name and keywords.
+- One design for buttons, fields, switches and lists across the installer, Settings, the lock screen and the login screen. Off switches are visible in dark mode.
+- After a hard power-off, the boot menu shows by itself so you can pick an earlier version. Otherwise hold Esc or Shift while starting.
+- Gaming no longer opens Steam's network ports by default.
+- kit no longer tries to install ardoise, boite and gare, which need tools Flux does not ship. Its first sync waits for the network.
+- Docs for installing, updating and going back describe the graphical screens.
 
 ### Fixed
 
-- Installs failed at the last step with "--disk is required": leaving the disk screen cleared the chosen disk. Install now also stays disabled until every choice is made.
-- The lock screen kept only one typed character. Its password field is redesigned, with a button to unlock.
-- The live USB session no longer locks itself, sleeps after a while or suspends on lid close during an install.
-- The NVIDIA driver option could not build: Flux now allows exactly the unfree packages that Steam and the NVIDIA driver need, and nothing else.
+- Installs failed at the last step with "--disk is required": leaving the disk screen cleared the chosen disk. Install now stays disabled until every choice is made.
+- A failed update left the system pinned to the version that failed. Going back to an earlier version now stays in place when you change a setting.
+- A change in Settings could switch off the NVIDIA driver or other options set by hand, and removed groups such as docker from accounts.
+- The lock screen kept only one typed character, and dropped keys typed while it checked a password. Its password field is redesigned.
+- The live USB session no longer locks itself, sleeps or suspends on lid close during an install.
+- A wrong password in Settings no longer shows "This incident has been reported". Errors are plain sentences, in English and French.
+- The time zone step fits small laptop screens. A legacy BIOS start and disks that are too small are caught at the start of the installer.
+- The network indicator no longer makes Wi-Fi rescan every 30 seconds.
+- The NVIDIA driver option could not build: Flux now allows exactly the unfree packages that Steam and the NVIDIA driver need.
+- New accounts get their Documents, Downloads and Pictures folders.
 
 ## [0.4.0] - 2026-11-17
 
