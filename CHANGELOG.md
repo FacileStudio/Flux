@@ -6,6 +6,20 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-17
+
+### Fixed
+
+- The installer's buttons work again. In 0.2.0, Install Flux, Continue and Back did nothing, and the account fields never enabled Continue.
+- Terminal, Settings and every other window open at full width instead of half the screen. Super + R still cycles half, two thirds and full.
+
+### Changed
+
+- Flux starts in dark mode, from the boot menu and splash screen to the desktop. Light mode stays one click away in Settings.
+- New default wallpaper, a concrete maze courtyard, with five new wallpapers beside it.
+- Solar is the Flux icon theme: settings, the installer and the bar use its glyphs, with Adwaita behind it for everything else.
+- The installer shows which step you are on, icons on its choices and disks, and its own icon in the launcher.
+
 ## [0.2.0] - 2026-11-17
 
 Flux now looks and works like its own system, from the boot menu to the desktop. Still an open beta: tested end to end in virtual machines, not yet on a wide range of real hardware.
