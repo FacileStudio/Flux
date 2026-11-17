@@ -6,6 +6,12 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-17
+
+### Changed
+
+- Folders in Files use Solar's bold-duotone folder, drawn lighter in dark mode and darker in light mode. The Files sidebar uses the matching icons.
+
 ## [0.3.1] - 2026-11-17
 
 The first published release of the 0.3 changes below. The 0.3.0 tag was never published: its boot test could not see the new dark splash.
