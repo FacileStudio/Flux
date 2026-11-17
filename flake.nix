@@ -21,6 +21,14 @@
         iso = if lib.elem "iso" hosts then (build system "iso").isoImage else null;
         boite = if lib.elem "boite" hosts then (build system "boite").images.qemu else null;
       };
+      variants = system: {
+        minimal.flux.software = { apps = false; facile = false; };
+      } // lib.optionalAttrs (system == "x86_64-linux") {
+        gaming.flux.software.gaming = true;
+        gaming-nvidia = { flux.software.gaming = true; flux.hardware.nvidia.enable = true; };
+      };
+      variantDrv = system: module: builtins.unsafeDiscardStringContext
+        (self.nixosConfigurations."vm-${system}".extendModules { modules = [ module ]; }).config.system.build.toplevel.drvPath;
     in
     {
       overlays.default = import ./pkgs;
@@ -35,6 +43,11 @@
       packages = forAllSystems (system:
         let pkgs = import nixpkgs { inherit system; overlays = [ self.overlays.default ]; };
         in hostPackages system // lib.genAttrs (dirsIn ./pkgs) (name: pkgs.${name}));
+
+      checks = forAllSystems (system: {
+        variants = nixpkgs.legacyPackages.${system}.writeText "flux-variants.json"
+          (builtins.toJSON (lib.mapAttrs (_: variantDrv system) (variants system)));
+      });
 
       apps = forAllSystems (system: {
         vm = {
