@@ -6,9 +6,31 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-17
+
+Flux now looks and works like its own system, from the boot menu to the desktop. Still an open beta: tested end to end in virtual machines, not yet on a wide range of real hardware.
+
+### Added
+
+- Graphical installer in muse: try or install, language and keyboard, disk with an erase confirmation, account, time zone and progress. It refuses the USB stick it runs from and checks the system before touching the disk.
+- Settings app with Network, Bluetooth, Sound, Displays, Keyboard and mouse, Appearance, Power, System, Users, Updates and About.
+- Our own lock screen, idle and lid rules, power modes and night light.
+- Muse boot menu, Flux splash screen, quiet boot, and a muse login screen over the wallpaper.
+- Default apps: Firefox, Files, image, PDF and video viewers, archive manager, text editor, calculator, clipboard history.
+- Printing, Bluetooth, NetworkManager, polkit prompts, keyring, automatic USB mounting, firmware updates, zram and weekly store cleanup.
+- Shell, editor, tmux and git defaults: a two-line zsh prompt, fzf and zoxide, Neovim with telescope, treesitter and gitsigns.
+- Keys for volume, brightness, media, screenshots, lock, workspaces 5 to 10 and Settings (Super + comma).
+
 ### Changed
 
-- Login: ReGreet replaces tuigreet. A muse card over the default wallpaper with the Flux mark, clock, password field and quiet restart and power buttons, in light or dark from `flux.theme.scheme`. A machine with one user goes straight to the password.
+- Installs are pinned to the release on the ISO and work without a network. Updates follow the `stable` branch.
+- Your password is never written to `/etc/flux` or the Nix store.
+- The bar, launcher, sidebar and exit menu now work under niri, on every monitor.
+- Flux runs in virtual machines without 3D acceleration.
+
+### Fixed
+
+- Many shell fixes: workspaces, volume, the launcher finding apps, the sidebar toggle, notifications urgency.
 
 ## [0.1.1] - 2026-11-16
 
@@ -44,6 +66,7 @@ First open beta. Expect rough edges and breaking changes before 1.0.
 - A machine flake template: `nix flake init -t github:FacileStudio/Flux`.
 - Release ISOs for both systems, with a `SHA256SUMS` file.
 
-[Unreleased]: https://github.com/FacileStudio/Flux/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/FacileStudio/Flux/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/FacileStudio/Flux/releases/tag/v0.2.0
 [0.1.1]: https://github.com/FacileStudio/Flux/releases/tag/v0.1.1
 [0.1.0]: https://github.com/FacileStudio/Flux/releases/tag/v0.1.0
