@@ -3,7 +3,7 @@ use std::rc::Rc;
 use gtk4::prelude::*;
 use gtk4::{Box, Orientation, Widget};
 
-use super::{button, label, page};
+use super::{button, label, network, page};
 use crate::app::{App, Screen};
 use crate::model::{keymap_name, Disk, LANGUAGES};
 
@@ -49,7 +49,12 @@ pub fn build(app: &Rc<App>) -> Widget {
     panel.append(&line(text.summary_software, &software, "value"));
     drop(state);
     let install = button("drive-harddisk-symbolic", text.install, "primary");
-    install.set_sensitive(app.state.borrow().ready());
+    let ready = app.state.borrow().ready();
+    let gate = install.clone();
+    let (notice, _) = network::build(app, false, move |waits| gate.set_sensitive(ready && !waits));
+    let body = Box::new(Orientation::Vertical, 12);
+    body.append(&panel);
+    body.append(&notice);
     let weak = Rc::downgrade(app);
     install.connect_clicked(move |_| {
         if let Some(app) = weak.upgrade() {
@@ -57,5 +62,5 @@ pub fn build(app: &Rc<App>) -> Widget {
         }
     });
     super::default(app, &install);
-    page(app, text.summary_title, text.summary_subtitle, &panel, &[&install])
+    page(app, text.summary_title, text.summary_subtitle, &body, &[&install])
 }

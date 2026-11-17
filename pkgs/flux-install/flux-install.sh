@@ -4,6 +4,8 @@ locales="en_US.UTF-8 en_GB.UTF-8 fr_FR.UTF-8 fr_BE.UTF-8 fr_CH.UTF-8 fr_CA.UTF-8
 reserved_users=$(jq -r '.reservedUsers | join(" ")' "$FLUX_RULES")
 reserved_hosts="localhost localdomain"
 cache=https://cache.nixos.org
+min_disk=20000000000
+connections=/etc/NetworkManager/system-connections
 
 disk=""
 hostname=""
@@ -248,7 +250,7 @@ prompt() {
 }
 
 validate_disk() {
-  local boot path type found=0 name mountpoint
+  local boot path type found=0 name mountpoint size
   [ -n "$disk" ] || fail "--disk is required"
   disk=$(realpath -m -- "$disk")
   while read -r path type; do
@@ -260,11 +262,15 @@ validate_disk() {
   esac
   boot=$(boot_disk)
   [ -z "$boot" ] || [ "$boot" != "$disk" ] || fail "$disk holds the Flux live system, pick another disk"
+  size=$(lsblk -bdno SIZE "$disk" 2>/dev/null | head -n1 | tr -d ' ' || true)
+  [[ "$size" =~ ^[0-9]+$ ]] || fail "could not read the size of $disk"
+  [ "$size" -ge "$min_disk" ] \
+    || fail "$disk is too small: Flux needs 20 GB and it has $((size / 1000000000)) GB; pick a larger disk"
   while read -r name type mountpoint; do
     case "$mountpoint" in
       "") ;;
       /iso|/iso/*) fail "$disk holds the Flux live system, pick another disk" ;;
-      /mnt|/mnt/*) ;;
+      /mnt|/mnt/*|/run/media/*) ;;
       *) fail "$name ($type) on $disk is in use at $mountpoint; unmount it or pick another disk" ;;
     esac
   done < <(children "$disk")
@@ -376,6 +382,28 @@ drvs_to_build() {
     | tee -a "$log" | grep -E '^[[:space:]]+/nix/store/[^[:space:]]+\.drv$' || true
 }
 
+changed_choices() {
+  local list=""
+  [ "$facile" = true ] || list+=", Facile tools off"
+  [ "$apps" = true ] || list+=", everyday apps off"
+  [ "$gaming" = false ] || list+=", gaming on"
+  [ "$nvidia" = false ] || list+=", the NVIDIA driver on"
+  printf '%s' "${list#, }"
+}
+
+offline_message() {
+  local changed
+  changed=$(changed_choices)
+  if [ -n "$changed" ]; then
+    printf 'no internet, and these choices are not on the install medium: %s (%s downloads). ' "$changed" "$1"
+    printf 'Connect to the internet, or install with Facile tools and everyday apps on, gaming and the NVIDIA driver off. '
+  else
+    printf 'no internet, and this machine needs %s downloads the install medium does not carry. ' "$1"
+    printf 'Connect to the internet and try again. '
+  fi
+  printf 'Nothing was touched.'
+}
+
 preflight() {
   local drvs sources
   step=config
@@ -394,8 +422,7 @@ preflight() {
       sources=$(nix "${nix_flags[@]}" derivation show "${drvs[@]}" 2>>"$log" \
         | jq '[.. | objects | select(has("outputs")) | .outputs[] | objects | select(has("hash"))] | length')
     fi
-    [ "$sources" -eq 0 ] \
-      || fail "this machine needs $sources downloads the installer does not carry; connect to the internet and try again, nothing was touched"
+    [ "$sources" -eq 0 ] || fail "$(offline_message "$sources")"
     emit config 8 "Offline install: ${#drvs[@]} small builds, nothing to download"
   else
     emit config 8 "System checked"
@@ -405,6 +432,12 @@ preflight() {
 release_holders() {
   local name type mountpoint
   umount -R /mnt >>"$log" 2>&1 || true
+  while read -r name type mountpoint; do
+    case "$mountpoint" in
+      /run/media/*) umount "$name" >>"$log" 2>&1 \
+        || fail "$name is open at $mountpoint and could not be unmounted; close the files on it and try again" ;;
+    esac
+  done < <(children "$disk" | tac)
   while read -r name type mountpoint; do
     case "$type" in
       lvm|crypt|dm) dmsetup remove --retry "$name" >>"$log" 2>&1 || true ;;
@@ -496,6 +529,16 @@ install_system() {
   fi
 }
 
+keep_networks() {
+  local from=$1 to=$2 file
+  [ -d "$from" ] || return 0
+  install -d -m 0700 "$to"
+  for file in "$from"/*.nmconnection; do
+    [ -f "$file" ] || continue
+    install -m 0600 "$file" "$to/"
+  done
+}
+
 set_password() {
   step=bootloader
   emit bootloader 96 "Setting the password of $username"
@@ -514,7 +557,8 @@ main() {
     exit 0
   fi
   [ "$(id -u)" -eq 0 ] || fail "run me as root: sudo flux-install"
-  [ -d /sys/firmware/efi ] || fail "this machine booted in legacy BIOS mode; Flux installs on UEFI only"
+  [ -d /sys/firmware/efi ] \
+    || fail "this machine booted in legacy BIOS mode and Flux installs on UEFI only; restart and pick the UEFI entry of the install medium in the boot menu"
   [ "$interactive" -eq 0 ] || confirm
   : >"$log"
   logging=1
@@ -524,6 +568,8 @@ main() {
   format
   place
   install_system
+  keep_networks "$connections" "/mnt$connections" >>"$log" 2>&1 \
+    || printf 'could not copy the saved networks to %s\n' "$disk" >>"$log"
   set_password
   step="done"
   emit "done" 100 "Flux is installed. Your system flake lives in /etc/flux."

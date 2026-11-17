@@ -39,10 +39,23 @@ pub fn build(app: &Rc<App>) -> Widget {
     });
     choices.append(&try_flux);
     choices.append(&install);
-    super::default(app, &install);
-    let focus = install.clone();
+    let content = Box::new(Orientation::Vertical, 16);
+    content.append(&choices);
+    let uefi = app.state.borrow().uefi;
+    if uefi {
+        content.append(&label(text.welcome_note, "note"));
+        super::default(app, &install);
+    } else {
+        install.set_sensitive(false);
+        let stop = Box::new(Orientation::Vertical, 8);
+        stop.add_css_class("danger-panel");
+        stop.append(&label(text.bios_title, "danger-title"));
+        stop.append(&label(text.bios_body, "danger-body"));
+        content.append(&stop);
+    }
+    let focus = if uefi { install } else { try_flux };
     gtk4::glib::idle_add_local_once(move || {
         focus.grab_focus();
     });
-    hero(text.welcome_title, text.welcome_subtitle, &choices)
+    hero(text.welcome_title, text.welcome_subtitle, &content)
 }

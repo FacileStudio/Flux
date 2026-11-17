@@ -4,10 +4,9 @@ use gtk4::prelude::*;
 use gtk4::{Align, Box, Orientation, Switch, Widget};
 use shell_common::ui::icon;
 
-use super::{label, page};
+use super::{label, network, page};
 use crate::app::{App, Screen};
-use crate::model::Software;
-use crate::system;
+use crate::model::{self, Software};
 
 fn card(glyph: &str, title: &str, body: &str, tag: Option<&str>, on: bool, set: impl Fn(bool) + 'static) -> Box {
     let line = Box::new(Orientation::Horizontal, 16);
@@ -38,21 +37,24 @@ fn card(glyph: &str, title: &str, body: &str, tag: Option<&str>, on: bool, set: 
     line
 }
 
-fn choose(app: &Rc<App>, change: fn(&mut Software, bool)) -> impl Fn(bool) + 'static {
+fn choose(app: &Rc<App>, redraw: &Rc<dyn Fn()>, change: fn(&mut Software, bool)) -> impl Fn(bool) + 'static {
     let weak = Rc::downgrade(app);
+    let redraw = redraw.clone();
     move |on| {
         if let Some(app) = weak.upgrade() {
             change(&mut app.state.borrow_mut().software, on);
+            redraw();
         }
     }
 }
 
 pub fn build(app: &Rc<App>) -> Widget {
     let text = app.text();
-    let (software, nvidia_gpu, preview) = {
+    let (software, nvidia_gpu) = {
         let state = app.state.borrow();
-        (state.software, state.nvidia_gpu, state.preview)
+        (state.software, state.nvidia_gpu)
     };
+    let (notice, redraw) = network::build(app, true, |_| ());
     let panel = Box::new(Orientation::Vertical, 4);
     panel.add_css_class("panel");
     panel.set_valign(Align::Start);
@@ -62,7 +64,7 @@ pub fn build(app: &Rc<App>) -> Widget {
         text.software_facile_body,
         None,
         software.facile,
-        choose(app, |software, on| software.facile = on),
+        choose(app, &redraw, |software, on| software.facile = on),
     ));
     panel.append(&card(
         "folder-open-symbolic",
@@ -70,16 +72,18 @@ pub fn build(app: &Rc<App>) -> Widget {
         text.software_apps_body,
         None,
         software.apps,
-        choose(app, |software, on| software.apps = on),
+        choose(app, &redraw, |software, on| software.apps = on),
     ));
-    panel.append(&card(
-        "input-gaming-symbolic",
-        text.software_gaming,
-        text.software_gaming_body,
-        None,
-        software.gaming,
-        choose(app, |software, on| software.gaming = on),
-    ));
+    if model::X86 {
+        panel.append(&card(
+            "input-gaming-symbolic",
+            text.software_gaming,
+            text.software_gaming_body,
+            None,
+            software.gaming,
+            choose(app, &redraw, |software, on| software.gaming = on),
+        ));
+    }
     if nvidia_gpu {
         panel.append(&card(
             "video-display-symbolic",
@@ -87,13 +91,12 @@ pub fn build(app: &Rc<App>) -> Widget {
             text.software_nvidia_body,
             Some(text.recommended),
             software.nvidia,
-            choose(app, |software, on| software.nvidia = on),
+            choose(app, &redraw, |software, on| software.nvidia = on),
         ));
     }
     let body = Box::new(Orientation::Vertical, 12);
     body.append(&panel);
-    let online = preview || system::online();
-    body.append(&label(if online { text.software_online } else { text.software_offline }, "dim"));
+    body.append(&notice);
     let next = super::next(text.next);
     let weak = Rc::downgrade(app);
     next.connect_clicked(move |_| {

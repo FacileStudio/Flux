@@ -103,7 +103,7 @@ fn draw(cr: &cairo::Context, area: &DrawingArea, rings: &[Vec<(f64, f64)>], poin
 pub fn build(points: Rc<Vec<ZonePoint>>, chosen: Rc<RefCell<String>>, pick: impl Fn(String) + 'static) -> DrawingArea {
     let area = DrawingArea::new();
     area.add_css_class("map");
-    area.set_content_height(260);
+    area.set_content_height(200);
     area.set_hexpand(true);
     let rings = Rc::new(land());
     let (drawn, marked) = (points.clone(), chosen.clone());
