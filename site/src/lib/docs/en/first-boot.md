@@ -8,6 +8,6 @@ Flux starts on the niri desktop, with the status bar at the top.
 
 **Mod** is the Super key (Windows or Cmd).
 
-kit installs every Facile tool in your account when you first log in, then checks for updates once a day. Remove one with `kit del <tool>`, add one with `kit add <tool>`. Run `sablier`, `nuage` or `casier` in the terminal, then sign in with your Facile account.
+kit installs every Facile tool in your account when you first log in, then checks for updates every hour. Remove one with `kit del <tool>`, add one with `kit add <tool>`. Run `sablier`, `nuage` or `casier` in the terminal, then sign in with your Facile account.
 
 Change the password with `passwd`.
