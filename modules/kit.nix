@@ -53,12 +53,12 @@ in
     };
 
     systemd.user.timers.kit-sync = lib.mkIf (tools ? kit) {
-      description = "Run kit sync daily";
+      description = "Run kit sync every hour";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnCalendar = "daily";
+        OnCalendar = "hourly";
         Persistent = true;
-        RandomizedDelaySec = "1h";
+        RandomizedDelaySec = "10m";
       };
     };
   };
