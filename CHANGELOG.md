@@ -6,6 +6,20 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The boot screen is black with the Flux mark in the middle, and no start-up messages show before it. AMD and Intel graphics drivers load at the start of boot, so the splash and the login screen use the screen's own resolution.
+- The app launcher stays ready in the background and opens at once. GTK apps no longer scan every icon folder at start.
+- Arrows and chevrons use the Material Design Icons set, as in muse.
+- The top bar keeps a 4 px inset on every side, and every item on it is 32 px tall.
+- Switch knobs are round.
+- Users and Network use filled buttons for their actions, like the other pages.
+- The wallpaper choice lives only in Settings, Appearance. The sidebar no longer has a picker.
+
+### Fixed
+
+- The installer's Details button no longer jumps when it opens or closes, and the install log follows its newest line. The update log in Settings does the same.
+
 ## [0.5.0] - 2026-11-17
 
 A polish release after a full review of the shell, Settings, the installer, the system and kit.
