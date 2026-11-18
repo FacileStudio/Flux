@@ -373,7 +373,7 @@ fn list(value: &str) -> Vec<String> {
 
 /// Whether `program` is an executable file: as given when it is a path, or in
 /// one of the `path` directories otherwise.
-fn on_path(program: &str, path: Option<&std::ffi::OsStr>) -> bool {
+pub(crate) fn on_path(program: &str, path: Option<&std::ffi::OsStr>) -> bool {
     if program.contains('/') {
         return is_executable(Path::new(program));
     }

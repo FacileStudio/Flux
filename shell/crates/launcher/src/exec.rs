@@ -14,6 +14,9 @@ use std::process::{Command, Stdio};
 /// command line.
 const TERMINAL: [&str; 2] = ["ghostty", "-e"];
 
+/// The command that runs an app in a scope of its own under the user manager.
+const SCOPE: [&str; 5] = ["systemd-run", "--user", "--scope", "--collect", "--quiet"];
+
 /// The argument vector an `Exec` value stands for, wrapped in the terminal when
 /// the entry asks for one.
 pub fn command_line(exec: &str, terminal: bool) -> Vec<String> {
@@ -24,20 +27,28 @@ pub fn command_line(exec: &str, terminal: bool) -> Vec<String> {
     TERMINAL.iter().map(|part| part.to_string()).chain(parts).collect()
 }
 
-/// Start the program an `Exec` value names, detached from the launcher.
+/// Start the program an `Exec` value names, detached from the launcher, and
+/// reap it when it exits so the resident launcher collects no zombies.
 pub fn launch(exec: &str, terminal: bool) -> io::Result<()> {
     let parts = command_line(exec, terminal);
-    let (program, args) = parts
-        .split_first()
+    let program = parts
+        .first()
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "empty Exec line"))?;
-    let mut command = Command::new(program);
-    command
-        .args(args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+    let path = std::env::var_os("PATH");
+    if !crate::apps::on_path(program, path.as_deref()) {
+        return Err(io::Error::new(io::ErrorKind::NotFound, format!("{program} is not installed")));
+    }
+    let scoped = crate::apps::on_path(SCOPE[0], path.as_deref());
+    let mut command = if scoped { Command::new(SCOPE[0]) } else { Command::new(program) };
+    if scoped {
+        command.args(&SCOPE[1..]).arg("--").args(&parts);
+    } else {
+        command.args(&parts[1..]);
+    }
+    command.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     detach(&mut command);
-    command.spawn()?;
+    let mut child = command.spawn()?;
+    std::thread::spawn(move || child.wait());
     Ok(())
 }
 
