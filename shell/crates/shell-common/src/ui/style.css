@@ -255,7 +255,7 @@ dropdown > button:focus-visible {
 
 switch {
   min-width: 40px;
-  min-height: 24px;
+  min-height: 20px;
   padding: 2px;
   border-radius: 999px;
   background-color: alpha(@fc_fg, 0.24);

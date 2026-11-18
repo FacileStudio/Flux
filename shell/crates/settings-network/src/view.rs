@@ -405,7 +405,7 @@ fn scan_header(text: &Text, header: &Box) -> (Spinner, Button, Label) {
     scanning.set_valign(Align::Center);
     scanning.set_hexpand(false);
     header.append(&scanning);
-    let button = ui::ghost_button(text.scan);
+    let button = ui::secondary_button(text.scan);
     button.set_valign(Align::Center);
     header.append(&button);
     (spinner, button, scanning)

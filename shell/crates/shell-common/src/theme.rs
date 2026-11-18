@@ -43,13 +43,13 @@ pub const MODULE_GAP: i32 = 8;
 /// Height of the statusbar, and the strip it reserves at the top of the
 /// screen. A widget that docks to an edge keeps its content out of that strip
 /// so it never sits underneath the bar. The bar itself is a floating pill, so
-/// this is the pill (32px) plus a `GAP` above and below it.
+/// this is the pill (32px items inside a 4px inset) plus a `GAP` above it.
 ///
 /// The bar's window is exactly this tall, so this is not an estimate the
-/// sidebar has to guess around: `.bar` fills 32px of content between two `GAP`
-/// margins and no vertical padding, which sums to this. `statusbar` reserves it
+/// sidebar has to guess around: `.bar` holds 32px of content inside 4px of padding
+/// under a `GAP` margin, which sums to this. `statusbar` reserves it
 /// as its exclusive zone, so windows and the sidebar both start below it.
-pub const BAR_HEIGHT: i32 = 32 + GAP;
+pub const BAR_HEIGHT: i32 = 32 + 2 * 4 + GAP;
 pub const WINDOW_TOP_GAP: i32 = BAR_HEIGHT + GAP;
 
 /// Loaded before every widget stylesheet, which may override any of it.
