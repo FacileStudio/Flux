@@ -1,9 +1,10 @@
 """Write the Flux icon theme from the Solar icon set.
 
-Usage: python3 -I scripts/solar-icons.py <icons.json>
+Usage: python3 -I scripts/solar-icons.py <solar icons.json> <mdi icons.json>
 
-<icons.json> comes from the @iconify-json/solar npm package. The script writes
-pkgs/flux-icons/icons/<name>-symbolic.svg for every freedesktop name in MAP,
+The two files come from the @iconify-json/solar and @iconify-json/mdi npm packages. The
+script writes pkgs/flux-icons/icons/<name>-symbolic.svg for every freedesktop name in MAP,
+and for every name in MDI from Material Design Icons, whose chevrons muse uses,
 pkgs/flux-icons/places/<name>.svg and places-dark/<name>.svg in the PLACE_INK of
 each scheme for every name in PLACES (the full-colour folders Files draws), then rewrites the statusbar masks from
 STATUSBAR with ImageMagick.
@@ -47,15 +48,7 @@ MAP = {
     "drive-harddisk": "ssd-round",
     "drive-removable-media": "flash-drive",
     "media-removable": "flash-drive",
-    "go-up": "alt-arrow-up",
-    "go-down": "alt-arrow-down",
-    "go-next": "alt-arrow-right",
-    "go-previous": "alt-arrow-left",
     "go-home": "home-2",
-    "pan-up": "alt-arrow-up",
-    "pan-down": "alt-arrow-down",
-    "pan-end": "alt-arrow-right",
-    "pan-start": "alt-arrow-left",
     "help-about": "info-circle",
     "dialog-information": "info-circle",
     "dialog-warning": "danger-triangle",
@@ -126,6 +119,17 @@ MAP = {
     "notifications-disabled": "bell-off",
     "x-office-calendar": "calendar",
     "preferences-system-time": "clock-circle",
+}
+
+MDI = {
+    "go-up": "chevron-up",
+    "go-down": "chevron-down",
+    "go-next": "chevron-right",
+    "go-previous": "chevron-left",
+    "pan-up": "chevron-up",
+    "pan-down": "chevron-down",
+    "pan-end": "chevron-right",
+    "pan-start": "chevron-left",
 }
 
 PLACES = {
@@ -216,14 +220,17 @@ def write_masks(icons):
     path.write_text("\n".join(out))
 
 
-def main(source):
+def main(source, mdi_source):
     icons = json.loads(pathlib.Path(source).read_text())["icons"]
+    mdi = json.loads(pathlib.Path(mdi_source).read_text())["icons"]
     target = ROOT / "pkgs/flux-icons/icons"
     target.mkdir(parents=True, exist_ok=True)
     for old in target.glob("*.svg"):
         old.unlink()
     for name, solar in sorted(MAP.items()):
         (target / f"{name}-symbolic.svg").write_text(svg(body(icons, solar), 16))
+    for name, chevron in sorted(MDI.items()):
+        (target / f"{name}-symbolic.svg").write_text(svg(mdi[chevron]["body"], 16))
     for folder, ink in PLACE_INK.items():
         places = ROOT / "pkgs/flux-icons" / folder
         places.mkdir(parents=True, exist_ok=True)
@@ -232,8 +239,8 @@ def main(source):
         for name, solar in sorted(PLACES.items()):
             (places / f"{name}.svg").write_text(svg(body(icons, solar), 64, ink))
     write_masks(icons)
-    print(f"wrote {len(MAP)} icons, {len(PLACES)} places and {len(STATUSBAR)} masks")
+    print(f"wrote {len(MAP) + len(MDI)} icons, {len(PLACES)} places and {len(STATUSBAR)} masks")
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:2])
+    main(*sys.argv[1:3])
