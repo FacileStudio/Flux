@@ -5,7 +5,7 @@
 
 use gtk4::prelude::*;
 
-use super::{build, fill, move_selection, scrolled_to_show};
+use super::{build, fill, move_selection, scrolled_to_show, Catalog};
 use crate::apps::App;
 
 fn apps() -> Vec<App> {
@@ -53,7 +53,7 @@ fn the_surface_follows_the_query() {
     let list = &results.list;
     assert!(entry.text().is_empty(), "the field opens empty");
 
-    let apps = apps();
+    let apps = Catalog::new(apps());
     assert_eq!(fill(&results, &apps, ""), vec![0, 1]);
     assert_eq!(rows(list), 2);
     assert_eq!(selected(list), Some(0), "the first match is selected");

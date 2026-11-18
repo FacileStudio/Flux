@@ -347,6 +347,20 @@ pub fn actions(buttons: &[&gtk4::Button]) -> gtk4::Box {
     line
 }
 
+/// Replaces the text of a log view and keeps its newest line on show, unless the reader
+/// scrolled up to read an older one.
+pub fn set_log(log: &gtk4::TextView, text: &str) {
+    let follow = log.vadjustment().is_none_or(|adjustment| {
+        adjustment.value() + adjustment.page_size() >= adjustment.upper() - 4.0
+    });
+    let buffer = log.buffer();
+    buffer.set_text(text);
+    if follow {
+        buffer.place_cursor(&buffer.end_iter());
+        log.scroll_mark_onscreen(&buffer.get_insert());
+    }
+}
+
 /// A labelled input with an error line under it: returns the field and the error label for [`set_error`].
 pub fn field(title: &str, input: &impl IsA<gtk4::Widget>) -> (gtk4::Box, gtk4::Label) {
     let column = gtk4::Box::new(Orientation::Vertical, 6);

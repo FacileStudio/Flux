@@ -3,7 +3,7 @@
 let
   version = lib.fileContents ../version;
   inherit (config.flux.theme) scheme;
-  plymouth = pkgs.flux-plymouth.override { inherit scheme; };
+  plymouth = pkgs.flux-plymouth;
   grub = config.boot.loader.grub;
   editenv = "${if grub.efiSupport then pkgs.grub2_efi else pkgs.grub2}/bin/grub-editenv /boot/grub/grubenv";
 in
@@ -74,7 +74,8 @@ in
       };
 
       boot.consoleLogLevel = 0;
-      boot.kernelParams = [ "quiet" "rd.udev.log_level=3" "udev.log_priority=3" "plymouth.use-simpledrm" ];
+      boot.initrd.kernelModules = lib.mkIf pkgs.stdenv.hostPlatform.isx86_64 [ "amdgpu" "i915" "xe" ];
+      boot.kernelParams = [ "quiet" "systemd.show_status=false" "rd.systemd.show_status=false" "rd.udev.log_level=3" "udev.log_priority=3" "vt.global_cursor_default=0" "plymouth.use-simpledrm" ];
     })
   ];
 }

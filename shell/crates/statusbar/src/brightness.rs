@@ -128,7 +128,7 @@ fn draw(popup: &Popup, level: u16) {
 
 /// A `-` or `+` button that steps the backlight and redraws the popup.
 fn step_button(value: &gtk4::Label, fill: &FillBar, up: bool) -> Button {
-    let button = Button::with_label(if up { "+" } else { "-" });
+    let button = Button::with_label(if up { "+" } else { "−" });
     button.add_css_class("step");
     let (value, fill) = (value.clone(), fill.clone());
     button.connect_clicked(move |_| {

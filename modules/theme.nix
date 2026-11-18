@@ -47,6 +47,7 @@ in
   config = lib.mkIf (config.flux.profile == "desktop") {
     environment.systemPackages = [ theme fluxScheme pkgs.flux-icons ];
     environment.pathsToLink = [ "/share/themes" ];
+    gtk.iconCache.enable = true;
 
     environment.etc = {
       "flux/palette.css".source = "${share}/palette-${cfg.scheme}.css";

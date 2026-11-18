@@ -37,4 +37,5 @@ fn terminal_entries_run_in_the_terminal() {
 fn launch_spawns_detached() {
     assert!(launch("echo ok", false).is_ok());
     assert!(launch("", false).is_err());
+    assert!(launch("flux-no-such-program", false).is_err());
 }

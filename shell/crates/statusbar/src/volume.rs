@@ -150,7 +150,7 @@ pub fn draw(popup: &Popup, level: Level) {
         mute.add_css_class("wide");
 
         let row = Box::new(Orientation::Horizontal, 8);
-        row.append(&action_button("-", value.clone(), fill.clone(), mute.clone(), || step(false)));
+        row.append(&action_button("−", value.clone(), fill.clone(), mute.clone(), || step(false)));
         row.append(&fill.root);
         row.append(&action_button("+", value.clone(), fill.clone(), mute.clone(), || step(true)));
         let (mute_value, mute_fill, mute_label) = (value.clone(), fill.clone(), mute.clone());

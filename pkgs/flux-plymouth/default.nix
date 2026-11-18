@@ -24,7 +24,7 @@ stdenvNoCC.mkDerivation {
       printf '%d %d %d\n' 0x''${1:1:2} 0x''${1:3:2} 0x''${1:5:2} \
         | awk '{ printf "%.4f, %.4f, %.4f", $1 / 255, $2 / 255, $3 / 255 }'
     }
-    page=$(color page)
+    page="#000000"
     fg=$(color fg)
     muted=$(color fg_muted)
     field=$(color field)
@@ -52,7 +52,7 @@ stdenvNoCC.mkDerivation {
     cat > $dir/flux.plymouth <<EOF
     [Plymouth Theme]
     Name=Flux
-    Description=The Flux mark on the muse page
+    Description=The Flux mark on black
     ModuleName=script
 
     [script]
@@ -66,7 +66,7 @@ stdenvNoCC.mkDerivation {
   passthru = { inherit scheme; };
 
   meta = {
-    description = "Plymouth theme for Flux: the Flux mark on the muse page with a quiet spinner";
+    description = "Plymouth theme for Flux: the Flux mark on black with a quiet spinner";
     platforms = lib.platforms.linux;
   };
 }

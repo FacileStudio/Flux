@@ -18,6 +18,7 @@ const MAX_MATCHES: usize = 50;
 const DEFAULT_DATA_DIRS: &str = "/usr/local/share:/usr/share";
 
 /// One launchable application, as its `.desktop` file describes it.
+#[derive(PartialEq)]
 pub struct App {
     pub name: String,
     pub generic: Option<String>,
@@ -372,7 +373,7 @@ fn list(value: &str) -> Vec<String> {
 
 /// Whether `program` is an executable file: as given when it is a path, or in
 /// one of the `path` directories otherwise.
-fn on_path(program: &str, path: Option<&std::ffi::OsStr>) -> bool {
+pub(crate) fn on_path(program: &str, path: Option<&std::ffi::OsStr>) -> bool {
     if program.contains('/') {
         return is_executable(Path::new(program));
     }

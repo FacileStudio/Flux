@@ -4,9 +4,7 @@
 //! The choice is one file, `~/.config/flux/wallpaper`, holding a path on one
 //! line (a symlink to the image is read too). The service reads it on start, so
 //! setting a wallpaper is writing that file and restarting the service. The
-//! panel's picker and the `sidebar wallpaper` subcommand both go through here.
-
-pub mod picker;
+//! `sidebar wallpaper` subcommand, which Settings calls as `flux-wallpaper`, goes through here.
 
 #[cfg(test)]
 mod tests;
@@ -146,21 +144,8 @@ pub fn set(image: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// Copy `source` into the user's folder and return the copy's path, so an
-/// image added from anywhere stays listed after the original moves.
-pub fn import(source: &Path) -> Result<PathBuf, String> {
-    let dir = user_dir().ok_or("HOME is not set")?;
-    let name = source.file_name().ok_or("the file has no name")?;
-    std::fs::create_dir_all(&dir).map_err(|error| format!("{}: {error}", dir.display()))?;
-    let target = dir.join(name);
-    if std::fs::canonicalize(source).ok() != std::fs::canonicalize(&target).ok() {
-        std::fs::copy(source, &target).map_err(|error| format!("{}: {error}", target.display()))?;
-    }
-    Ok(target)
-}
-
-/// `sidebar wallpaper <list|set FILE|current>`, the command-line side of the
-/// picker. Returns the process exit code.
+/// `sidebar wallpaper <list|set FILE|current>`, which Settings calls as
+/// `flux-wallpaper`. Returns the process exit code.
 pub fn cli(args: &[String]) -> i32 {
     match args {
         [command] if command == "list" => {

@@ -21,6 +21,20 @@ mod tests;
 /// The pixel size of a result's icon.
 const ICON_SIZE: i32 = 24;
 
+/// The installed apps and one result row for each, built once so a query only
+/// reorders rows that already exist.
+pub(super) struct Catalog {
+    pub apps: Vec<App>,
+    rows: Vec<ListBoxRow>,
+}
+
+impl Catalog {
+    pub fn new(apps: Vec<App>) -> Self {
+        let rows = apps.iter().map(row).collect();
+        Self { apps, rows }
+    }
+}
+
 /// The result rows, their scroller and the line shown when nothing matches or
 /// an app could not start.
 #[derive(Clone)]
@@ -64,40 +78,42 @@ pub(super) fn install(
     surface: &Box,
     entry: &Entry,
     results: &Results,
-    apps: &Rc<Vec<App>>,
-) {
-    let matches = Rc::new(RefCell::new(fill(results, apps, "")));
+    catalog: &Rc<RefCell<Catalog>>,
+) -> Rc<RefCell<Vec<usize>>> {
+    let matches = Rc::new(RefCell::new(fill(results, &catalog.borrow(), "")));
 
     let found = matches.clone();
     let found_results = results.clone();
-    let found_apps = apps.clone();
+    let found_catalog = catalog.clone();
     entry.connect_changed(move |entry| {
-        *found.borrow_mut() = fill(&found_results, &found_apps, &entry.text());
+        *found.borrow_mut() = fill(&found_results, &found_catalog.borrow(), &entry.text());
     });
 
-    let row_apps = apps.clone();
+    let row_catalog = catalog.clone();
     let row_matches = matches.clone();
     let row_results = results.clone();
+    let row_surface = surface.clone();
     results.list.connect_row_activated(move |_, row| {
-        launch_at(&row_results, &row_apps, &row_matches.borrow(), row.index());
+        launch_at(&row_surface, &row_results, &row_catalog.borrow().apps, &row_matches.borrow(), row.index());
     });
 
-    window.add_controller(keys(surface, results, apps, matches));
+    window.add_controller(keys(surface, results, catalog, matches.clone()));
     window.add_controller(click_outside(surface));
+    matches
 }
 
 /// The keys: `Esc` closes, the arrows move, `Return` launches the selection.
 fn keys(
     surface: &Box,
     results: &Results,
-    apps: &Rc<Vec<App>>,
+    catalog: &Rc<RefCell<Catalog>>,
     matches: Rc<RefCell<Vec<usize>>>,
 ) -> gtk4::EventControllerKey {
     let controller = gtk4::EventControllerKey::new();
     controller.set_propagation_phase(PropagationPhase::Capture);
     let surface = surface.clone();
     let results = results.clone();
-    let apps = apps.clone();
+    let catalog = catalog.clone();
     controller.connect_key_pressed(move |_, key, _, _| match key {
         gdk::Key::Escape => {
             close(&surface);
@@ -113,7 +129,7 @@ fn keys(
         }
         gdk::Key::Return | gdk::Key::KP_Enter => {
             let position = results.list.selected_row().map(|row| row.index()).unwrap_or(0);
-            launch_at(&results, &apps, &matches.borrow(), position);
+            launch_at(&surface, &results, &catalog.borrow().apps, &matches.borrow(), position);
             glib::Propagation::Stop
         }
         _ => glib::Propagation::Proceed,
@@ -139,21 +155,26 @@ fn click_outside(surface: &Box) -> gtk4::GestureClick {
     click
 }
 
-/// Fade the palette out, then leave.
-fn close(surface: &Box) {
-    motion::conceal(surface, || std::process::exit(0));
+/// Fade the palette out, then hide it until the next activation.
+pub(super) fn close(surface: &Box) {
+    let window = surface.root().and_downcast::<gtk4::Window>();
+    motion::conceal(surface, move || {
+        if let Some(window) = window {
+            window.set_visible(false);
+        }
+    });
 }
 
 /// Refill the list with the apps matching `query`, select the first, and report
 /// which apps are on screen now.
-pub(super) fn fill(results: &Results, apps: &[App], query: &str) -> Vec<usize> {
+pub(super) fn fill(results: &Results, catalog: &Catalog, query: &str) -> Vec<usize> {
     let list = &results.list;
     while let Some(child) = list.first_child() {
         list.remove(&child);
     }
-    let found = apps::matches(apps, query);
+    let found = apps::matches(&catalog.apps, query);
     for &index in &found {
-        list.append(&row(&apps[index]));
+        list.append(&catalog.rows[index]);
     }
     if let Some(first) = list.row_at_index(0) {
         list.select_row(Some(&first));
@@ -238,9 +259,9 @@ fn scrolled_to_show(value: f64, page: f64, top: f64, height: f64) -> f64 {
     }
 }
 
-/// Launch the app shown at `position`, then leave: the launcher has done its
+/// Launch the app shown at `position`, then hide: the launcher has done its
 /// job. When the app cannot start, stay open and say so under the list.
-fn launch_at(results: &Results, apps: &[App], matches: &[usize], position: i32) {
+fn launch_at(surface: &Box, results: &Results, apps: &[App], matches: &[usize], position: i32) {
     let Some(app) = usize::try_from(position)
         .ok()
         .and_then(|position| matches.get(position))
@@ -249,7 +270,7 @@ fn launch_at(results: &Results, apps: &[App], matches: &[usize], position: i32) 
         return;
     };
     match exec::launch(&app.exec, app.terminal) {
-        Ok(()) => std::process::exit(0),
+        Ok(()) => close(surface),
         Err(error) => {
             eprintln!("launcher: {}: {}", app.name, error);
             results.empty.set_text(&text::get().failed.replace("{name}", &app.name));

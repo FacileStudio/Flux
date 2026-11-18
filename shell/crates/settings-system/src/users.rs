@@ -172,7 +172,7 @@ impl Page {
             tag.set_valign(Align::Center);
             line.append(&tag);
         }
-        let more = ui::ghost_button(text.change);
+        let more = ui::secondary_button(text.change);
         line.append(&more);
         column.append(&line);
         let panel = self.user_panel(user, me, last_admin);
