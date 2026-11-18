@@ -9,8 +9,8 @@ the muse palette, running under niri.
 | Crate | Binary | What it does |
 | --- | --- | --- |
 | `statusbar` | `statusbar` | One bar per monitor: that output's niri workspaces, the focused window title, the date and time (click opens the sidebar), CPU and memory, the keyboard layout when there are several, and pills for volume, brightness, battery, network and the session menu |
-| `sidebar` | `sidebar`, `flux-wallpaper` | The `org.freedesktop.Notifications` daemon: toasts in the top-right, a history panel, the light and dark toggle and the wallpaper picker |
-| `launcher` | `launcher` | The application palette over every `.desktop` entry in `$XDG_DATA_DIRS` |
+| `sidebar` | `sidebar`, `flux-wallpaper` | The `org.freedesktop.Notifications` daemon: toasts in the top-right, a history panel and the light and dark toggle. `flux-wallpaper` sets the wallpaper for Settings |
+| `launcher` | `launcher` | The application palette over every `.desktop` entry in `$XDG_DATA_DIRS`. `launcher --background` keeps it built for the session, and each app it starts gets its own systemd scope |
 | `exit` | `exit` | The session menu: lock, suspend, log out, restart, power off |
 | `installer` | `flux-installer` | The graphical installer on the live ISO |
 | `shell-common` | (library) | Layer windows, the palette and scheme, shared CSS and motion, locale, single-instance and spawn helpers |
@@ -19,7 +19,7 @@ Every binary answers `--version` before it opens a display.
 
 ## How it runs on Flux
 
-`modules/desktop-shell.nix` starts `statusbar`, `sidebar` and the wallpaper as
+`modules/desktop-shell.nix` starts `statusbar`, `sidebar`, `launcher --background` and the wallpaper as
 systemd user units bound to `graphical-session.target`. The units get
 `/run/current-system/sw/bin` on their `PATH`, because NixOS writes a minimal
 `PATH` into every user unit.

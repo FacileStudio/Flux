@@ -6,6 +6,10 @@ Every notable change to Flux is listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-18
+
+A polish release: a quiet boot, a launcher that opens at once, and steadier installer and shell details.
+
 ### Changed
 
 - The boot screen is black with the Flux mark in the middle, and no start-up messages show before it. AMD and Intel graphics drivers load at the start of boot, so the splash and the login screen use the screen's own resolution.
@@ -19,6 +23,7 @@ Every notable change to Flux is listed here. The format follows
 ### Fixed
 
 - The installer's Details button no longer jumps when it opens or closes, and the install log follows its newest line. The update log in Settings does the same.
+- Apps started from the launcher run in their own systemd scope, so they keep running if the launcher restarts.
 
 ## [0.5.0] - 2026-11-17
 
@@ -157,7 +162,8 @@ First open beta. Expect rough edges and breaking changes before 1.0.
 - A machine flake template: `nix flake init -t github:FacileStudio/Flux`.
 - Release ISOs for both systems, with a `SHA256SUMS` file.
 
-[Unreleased]: https://github.com/FacileStudio/Flux/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/FacileStudio/Flux/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/FacileStudio/Flux/releases/tag/v0.5.1
 [0.2.0]: https://github.com/FacileStudio/Flux/releases/tag/v0.2.0
 [0.1.1]: https://github.com/FacileStudio/Flux/releases/tag/v0.1.1
 [0.1.0]: https://github.com/FacileStudio/Flux/releases/tag/v0.1.0
