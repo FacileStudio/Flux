@@ -88,33 +88,3 @@ button.control:hover {
 button.control image {
   color: @fc_fg;
 }
-
-.wallpapers {
-  padding-top: 12px;
-}
-
-.wallpapers flowbox {
-  padding: 4px;
-}
-
-.wallpapers flowboxchild {
-  padding: 0;
-  background-color: transparent;
-}
-
-button.wallpaper {
-  padding: 0;
-  min-width: 0;
-  min-height: 0;
-  background-color: @fc_surface;
-  border-radius: 8px;
-}
-
-button.wallpaper picture {
-  border-radius: 8px;
-}
-
-button.wallpaper.current {
-  outline: 2px solid @fc_ring;
-  outline-offset: 2px;
-}

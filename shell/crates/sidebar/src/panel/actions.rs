@@ -6,7 +6,6 @@ use std::rc::Rc;
 use gtk4::prelude::*;
 use shell_common::motion;
 
-use crate::wallpaper::picker::Picker;
 use crate::{dbus, model, text};
 
 use super::App;
@@ -55,7 +54,6 @@ impl App {
     }
 
     pub(crate) fn show(&self) {
-        Picker::reload(&self.picker);
         self.refresh_times();
         self.toasts.suppress(true);
         self.window.present();
