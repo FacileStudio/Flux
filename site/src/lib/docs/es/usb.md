@@ -14,7 +14,7 @@ Elija la ISO, elija la memoria y empiece la grabación.
 Busque el nombre de la memoria con `lsblk` y sustituya `/dev/sdX` por ese nombre:
 
 ```sh
-sudo dd if=flux-0.5.0-x86_64-linux.iso of=/dev/sdX bs=4M status=progress oflag=sync
+sudo dd if=flux-0.5.1-x86_64-linux.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 
 Compruebe el nombre dos veces: `dd` sobrescribe el disco indicado sin preguntar.

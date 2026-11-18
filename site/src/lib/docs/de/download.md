@@ -2,13 +2,13 @@
 
 Laden Sie das ISO für Ihren Prozessor auf der [Download-Seite](/downloads) herunter:
 
-- `flux-0.5.0-x86_64-linux.iso` für Intel und AMD
-- `flux-0.5.0-aarch64-linux.iso` für ARM64 UEFI (VMs und Server)
+- `flux-0.5.1-x86_64-linux.iso` für Intel und AMD
+- `flux-0.5.1-aarch64-linux.iso` für ARM64 UEFI (VMs und Server)
 
 Prüfen Sie dann, ob die Datei unversehrt ist. Im Ordner mit dem ISO:
 
 ```sh
-curl -LO https://flux.facile.studio/releases/v0.5.0/SHA256SUMS
+curl -LO https://flux.facile.studio/releases/v0.5.1/SHA256SUMS
 sha256sum --check --ignore-missing SHA256SUMS
 ```
 
