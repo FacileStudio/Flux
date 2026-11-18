@@ -194,9 +194,9 @@ impl Task {
         if !self.details.is_expanded() {
             return;
         }
-        let buffer = self.log.buffer();
+        let log = self.log.clone();
         let raw = self.raw.borrow().clone();
-        backend::spawn(|| backend::log_tail(200), move |tail| buffer.set_text(&details_text(&tail, &raw)));
+        backend::spawn(|| backend::log_tail(200), move |tail| ui::set_log(&log, &details_text(&tail, &raw)));
     }
 
     fn show(&self, line: &Line) {

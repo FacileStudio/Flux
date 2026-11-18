@@ -81,7 +81,7 @@ fn poll(app: &Rc<App>, view: View, receiver: Receiver<Message>) {
     glib::timeout_add_local(Duration::from_millis(100), move || {
         ticks = ticks.wrapping_add(1);
         if view.details.is_expanded() && ticks.is_multiple_of(10) {
-            view.log.buffer().set_text(&model::tail(&system::log(), 200));
+            show_log(&view.log);
         }
         for message in receiver.try_iter() {
             if handle(&app, &view, message).is_break() {
@@ -92,7 +92,11 @@ fn poll(app: &Rc<App>, view: View, receiver: Receiver<Message>) {
     });
 }
 
-/// The Details expander over the install log. It shows the log's tail when opened, unless  already holds text.
+fn show_log(log: &TextView) {
+    shell_common::ui::set_log(log, &model::tail(&system::log(), 200));
+}
+
+/// The Details expander over the install log. It shows the log's tail when opened, unless the log already holds text.
 pub(super) fn details(text: &Text) -> (Expander, TextView) {
     let log = TextView::new();
     log.add_css_class("log");
@@ -110,7 +114,7 @@ pub(super) fn details(text: &Text) -> (Expander, TextView) {
     let view = log.clone();
     expander.connect_expanded_notify(move |expander| {
         if expander.is_expanded() && view.buffer().char_count() == 0 {
-            view.buffer().set_text(&model::tail(&system::log(), 200));
+            show_log(&view);
         }
     });
     (expander, log)
