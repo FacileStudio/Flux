@@ -45,6 +45,9 @@ lib.mkIf (config.flux.profile == "desktop") {
   systemd.user.services.flux-sidebar =
     shellService "Flux notification sidebar" "${pkgs.flux-shell}/bin/sidebar";
 
+  systemd.user.services.flux-launcher =
+    shellService "Flux app launcher, kept ready so it opens at once" "${pkgs.flux-shell}/bin/launcher --background";
+
   systemd.user.services.flux-wallpaper =
     shellService "Flux wallpaper" "${wallpaper}";
 }

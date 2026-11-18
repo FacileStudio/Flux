@@ -18,6 +18,7 @@ const MAX_MATCHES: usize = 50;
 const DEFAULT_DATA_DIRS: &str = "/usr/local/share:/usr/share";
 
 /// One launchable application, as its `.desktop` file describes it.
+#[derive(PartialEq)]
 pub struct App {
     pub name: String,
     pub generic: Option<String>,
